@@ -188,7 +188,7 @@ export default function UserDashboard() {
     const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?");
     if (!confirmLogout) return;
     await supabase.auth.signOut();
-    router.push('/home');
+    router.push('/');
   };
 
   const uploadSingleFile = async (file: File): Promise<string | null> => {
