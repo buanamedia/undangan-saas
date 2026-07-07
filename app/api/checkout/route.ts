@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'; // Mencegah Vercel meng-cache API ini
+export const dynamic = 'force-dynamic'; // Mencegah Vercel meng-cache API Route ini
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
@@ -9,16 +9,16 @@ export async function POST(request: Request) {
 
     const va = process.env.IPAYMU_VA;
     const apiKey = process.env.IPAYMU_API_KEY;
-    const url = process.env.IPAYMU_URL;
+    const url = process.env.IPAYMU_URL || 'https://my.ipaymu.com/api/v2/payment';
 
-    if (!va || !apiKey || !url) {
+    if (!va || !apiKey) {
       return NextResponse.json(
-        { error: 'Kredensial iPaymu belum terpasang di Environment Variables Vercel/.env.local' },
+        { error: 'Kredensial iPaymu (VA / API Key) belum terpasang di Environment Variables Vercel.' },
         { status: 500 }
       );
     }
 
-    // 1. Siapkan data body untuk dikirim ke iPaymu
+    // 1. Siapkan data body persis seperti standarisasi iPaymu API v2
     const body = {
       product: [productNames || 'Paket Premium Undangan'],
       qty: ['1'],
@@ -33,29 +33,36 @@ export async function POST(request: Request) {
 
     const jsonBody = JSON.stringify(body);
     
-    // 2. ⚡ Perbaikan Enkripsi Signature SHA256 standar iPaymu
+    // 2. Format enkripsi Signature SHA256 murni standar iPaymu (Bukan HMAC)
     const bodyHash = crypto.createHash('sha256').update(jsonBody).digest('hex').toLowerCase();
+    
+    // Format rumus gabungan: va + ":" + bodyHash + ":" + apiKey
     const stringToSign = `${va}:${bodyHash}:${apiKey}`;
-    const signature = crypto.createHmac('sha256', apiKey).update(stringToSign).digest('hex').toLowerCase();
+    
+    // Hasil akhir signature dalam bentuk string lowercase
+    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toLowerCase();
 
-    // 3. Kirim data transaksi ke API Server iPaymu
+    // 3. Kirim request transaksi ke Server iPaymu
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'va': va,
-        'signature': signature,
+        'va': String(va),
+        'signature': String(signature),
       },
       body: jsonBody,
     });
 
     const result = await response.json();
 
-    // Jika iPaymu sukses membuatkan tautan pembayaran
+    // Jika iPaymu sukses membuatkan tautan sesi transaksi
     if (result && result.status === 200) {
       return NextResponse.json({ paymentUrl: result.data.url });
     } else {
-      return NextResponse.json({ error: result?.message || 'Gagal dari server iPaymu' }, { status: 400 });
+      return NextResponse.json(
+        { error: result?.message || 'Ditolak atau gagal dari sistem iPaymu' }, 
+        { status: response.status }
+      );
     }
 
   } catch (error: any) {
