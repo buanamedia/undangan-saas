@@ -199,7 +199,7 @@ export default function PremiumUpgradePage() {
 
             <div className="space-y-4 border-y border-slate-100 py-5 text-slate-700 leading-relaxed">
               <div className="flex flex-col sm:flex-row sm:items-center gap-1">
-                <span className="font-bold text-slate-900 min-w-[120px]">Nama Akut / User :</span>
+                <span className="font-bold text-slate-900 min-w-[120px]">Nama Akun / User :</span>
                 <span className="text-slate-600">{userProfile?.full_name} ({userProfile?.email})</span>
               </div>
               
