@@ -17,6 +17,10 @@ export default function UserDashboard() {
   const [isWishesModalOpen, setIsWishesModalOpen] = useState(false);
   const [selectedWishes, setSelectedWishes] = useState<any[]>([]);
 
+  // ⚡ STATE BARU: POPUP MODAL DETAIL PROFILE & PENGATURAN PASSWORD
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   // ==========================================
   // STATE BARU: MANAJEMEN KIRIM UNDANGAN TAMU KUSTOM
   // ==========================================
@@ -126,7 +130,6 @@ export default function UserDashboard() {
       .order('created_at', { ascending: false });
     if (!error) {
       setInvitations(invList || []);
-      // Set otomatis pemicu share kustom ke list pertama jika ada
       if (invList && invList.length > 0 && !selectedInvForShare) {
         triggerActiveSharePanel(invList[0]);
       }
@@ -152,7 +155,10 @@ export default function UserDashboard() {
       }
 
       if (profile) {
-        setUserProfile(profile);
+        setUserProfile({
+          ...profile,
+          email: session.user.email
+        });
       } else {
         const newProfile = {
           id: session.user.id,
@@ -172,7 +178,8 @@ export default function UserDashboard() {
           setUserProfile({
             full_name: session.user.email?.split('@')[0],
             is_premium: false,
-            role: 'user'
+            role: 'user',
+            email: session.user.email
           });
         }
       }
@@ -189,6 +196,43 @@ export default function UserDashboard() {
     if (!confirmLogout) return;
     await supabase.auth.signOut();
     router.push('/');
+  };
+
+  // ⚡ FUNGSI BARU: MODUL PENGGANTIAN PASSWORD SECARA INSTAN TANPA TAUTAN EMAIL
+  const handleUserChangePasswordDirect = async () => {
+    if (!userProfile?.id) return;
+
+    const newPassword = prompt('Masukkan Password Baru Anda (Minimal 6 karakter):', '');
+    if (newPassword === null) return; 
+
+    if (newPassword.trim().length < 6) {
+      return alert('🚨 Gagal: Kata sandi baru minimal harus berisi 6 karakter!');
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userProfile.id,
+          newPassword: newPassword.trim()
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal mengubah password.');
+      }
+
+      alert('✨ Sukses! Kata sandi akun Anda berhasil diganti secara langsung.');
+      setShowProfileModal(false);
+    } catch (err: any) {
+      alert(`Gagal memperbarui password: ${err.message}`);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const uploadSingleFile = async (file: File): Promise<string | null> => {
@@ -281,9 +325,6 @@ export default function UserDashboard() {
     }
   };
 
-  // ==========================================
-  // FUNGSI BARU: LOGIKA KELOLA DAFTAR TAMU USER
-  // ==========================================
   const triggerActiveSharePanel = (inv: any) => {
     setSelectedInvForShare(inv);
     setGuestName('');
@@ -507,7 +548,7 @@ export default function UserDashboard() {
       alert('✨ Undangan berhasil diperbarui!');
     } catch (err: any) { 
       alert(`Gagal: ${err.message}`); 
-    } finally { 
+    } else { 
       setEditLoading(false); 
     }
   };
@@ -533,10 +574,15 @@ export default function UserDashboard() {
       {/* HEADER NAVIGASI */}
       <nav className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 sticky top-0 z-40 shadow-xs">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
-          <h1 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 truncate">
-            <span>Halo, {userProfile?.full_name || 'User'} 👤</span>
+          
+          {/* ⚡ LOGIKA PENGGABUNGAN: AREA KLIK NAMA & ICON USER UNTUK POPUP PROFILE MODAL */}
+          <h1 
+            onClick={() => setShowProfileModal(true)}
+            className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 truncate cursor-pointer hover:opacity-80 transition-opacity select-none"
+          >
+            <span>Halo, {userProfile?.full_name || userProfile?.username || 'User'} 👤</span>
             {userProfile?.is_premium ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-950 bg-linear-to-r from-amber-300 via-yellow-400 to-amber-500 rounded-full shadow-md shadow-amber-500/20 border border-amber-200 select-none animate-in fade-in duration-300">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-950 bg-linear-to-r from-amber-300 via-yellow-400 to-amber-500 rounded-full shadow-md shadow-amber-500/20 border border-amber-200">
                 <svg className="w-3 h-3 text-amber-950 drop-shadow-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                   <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 001.036 1.748l6.5 3.5a2 2 0 001.928 0l6.5-3.5A2 2 0 0020 11.268V4a1 1 0 00-2 0v6.732l-7.036 3.788a1 1 0 01-.928 0L3 10.732V4z" />
                   <path d="M10 2a1 1 0 011 1v7.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 10.586V3a1 1 0 011-1z" />
@@ -549,6 +595,7 @@ export default function UserDashboard() {
               </span>
             )}
           </h1>
+
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button 
               onClick={() => router.push('/premium')}
@@ -578,11 +625,11 @@ export default function UserDashboard() {
         </div>
       </nav>
 
-      {/* KONTEN UTAMA: DIBAGI MENJADI GRID 3 KOLOM AGAR FORM TAMU BERADA DI SISI KANAN */}
+      {/* KONTEN UTAMA */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
-          {/* KOLOM 1 & 2: DAFTAR KOLEKSI KARTU UNDANGAN USER */}
+          {/* KOLOM 1 & 2: LIST KARTU UNDANGAN */}
           <div className="lg:col-span-2 space-y-4">
             <div>
               <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide">
@@ -628,9 +675,7 @@ export default function UserDashboard() {
             )}
           </div>
 
-          {/* =======================================================
-              ⚡ KOLOM 3 (SISI KANAN): FORM INPUT DATA NAMA & ALAMAT TAMU
-             ======================================================= */}
+          {/* KOLOM 3 (SISI KANAN): PANEL KELOLA DATA TAMU */}
           <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-4">
             {!selectedInvForShare ? (
               <div className="text-center text-slate-400 py-12 text-xs">
@@ -643,23 +688,23 @@ export default function UserDashboard() {
                   <p className="text-[10px] text-slate-400 mt-0.5">Undangan aktif: <span className="font-semibold text-slate-600">{selectedInvForShare.title}</span></p>
                 </div>
 
-                {/* FORM GENERATOR INPUT */}
                 <form onSubmit={handleAddGuestLocal} className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <div className="space-y-1">
-                  <p className="text-[10px] text-slate-500 mt-1 font-medium">Kirimkan undangan dengan nama penerima agar lebih personal di sini.</p>
-                  <br></br>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Tamu Undangan</label>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="Contoh: Agus Saputra"
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-800 focus:outline-none focus:border-teal-600"
-                    />
+                  <div className="space-y-3">
+                    <p className="text-[10px] text-slate-500 mt-1 font-medium">Kirimkan undangan dengan nama penerima agar lebih personal di sini.</p>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Tamu Undangan</label>
+                      <input 
+                        type="text"
+                        required
+                        placeholder="Contoh: Agus Saputra"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-800 focus:outline-none focus:border-teal-600"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Alamat / Keterangan Lokasi</label>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alamat / Keterangan Lokasi</label>
                     <input 
                       type="text"
                       placeholder="Contoh: Di Tempat / Jakarta"
@@ -676,7 +721,6 @@ export default function UserDashboard() {
                   </button>
                 </form>
 
-                {/* TEXT CATATAN SHARE LINK STATIS MANUAL */}
                 <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 text-[10px] text-slate-600 leading-relaxed">
                   <span className="font-bold text-slate-700">Catatan:</span> 
                   <br></br>Selain anda menggunakan fitur ini, anda juga bisa langsung share URL domain anda yaitu dengan menshare url:
@@ -686,7 +730,6 @@ export default function UserDashboard() {
                   <br></br>Anda tinggal mengganti Nama Teman dan Tempat disesuikan dengan tujuan anda.
                 </div>
 
-                {/* DAFTAR TABLE DATA NAMA TAMU & TOMBOL SATU PER SATU */}
                 <div className="space-y-2">
                   <p className="font-bold text-slate-700 text-[10px] uppercase tracking-wider">Daftar Tautan Tamu ({guestsList.length})</p>
                   <div className="border border-slate-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto bg-white">
@@ -754,6 +797,62 @@ export default function UserDashboard() {
 
         </div>
       </main>
+
+      {/* =======================================================
+          ⚡ MODAL BARU INTERAKTIF: DETAIL AKUN PROFIL & RESET PASSWORD INSTAN
+         ======================================================= */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 text-xs">
+            
+            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <span className="font-bold text-slate-800 uppercase tracking-wider">📋 Detail Akun Pengguna</span>
+              <button 
+                onClick={() => setShowProfileModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold bg-slate-200/60 px-2 py-0.5 rounded-md cursor-pointer text-[10px]"
+              >
+                Tutup
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div className="space-y-2.5 border-b border-slate-100 pb-4 text-slate-700">
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-slate-900">Nama Akun Lengkap:</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.full_name || '-'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-slate-900">Username Terdaftar:</span>
+                  <span className="text-slate-600 font-mono bg-slate-50 p-2 rounded-lg border">{userProfile?.username || '-'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-slate-900">Alamat Email:</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.email || '-'}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-slate-900">Nomor Kontak WhatsApp:</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.phone || '-'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={isUpdatingPassword}
+                  onClick={handleUserChangePasswordDirect}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl transition-all shadow-xs text-center cursor-pointer"
+                >
+                  🔑 {isUpdatingPassword ? 'Mengamankan Server...' : 'Ganti & Reset Password'}
+                </button>
+                <p className="text-[10px] text-center text-slate-400 px-2">
+                  *Perubahan password diproses langsung pada database tanpa tautan konfirmasi email.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* POPUP MODAL MODULAR: TAMBAH UNDANGAN BARU */}
       {isCreateModalOpen && (
@@ -902,7 +1001,7 @@ export default function UserDashboard() {
                       />
                     )}
                   </div>
-                  <textarea rows={2} placeholder="Prolog Informasi Acara" className="w-full p-2 border rounded-lg resize-none" value={eventProlog} onChange={(e) => eventProlog} />
+                  <textarea rows={2} placeholder="Prolog Informasi Acara" className="w-full p-2 border rounded-lg resize-none" value={eventProlog} onChange={(e) => setEventProlog(e.target.value)} />
                   
                   {(invitationType === 'pernikahan' || invitationType === 'lamaran') ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
