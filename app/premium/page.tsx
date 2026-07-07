@@ -229,7 +229,7 @@ export default function PremiumUpgradePage() {
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Masukkan kode voucher (Contoh: NEWMEMBER)"
+                      placeholder="Masukkan kode voucher (Contoh: HEMAT20)"
                       value={voucherCode}
                       onChange={(e) => setVoucherCode(e.target.value)}
                       className="flex-1 px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-blue-500 text-xs font-mono uppercase placeholder:normal-case placeholder:font-sans"
