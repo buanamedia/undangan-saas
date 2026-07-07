@@ -198,7 +198,7 @@ export default function UserDashboard() {
     router.push('/');
   };
 
-  // ⚡ FUNGSI BARU: MODUL PENGGANTIAN PASSWORD SECARA INSTAN TANPA TAUTAN EMAIL
+  // Fungsi: MODUL PENGGANTIAN PASSWORD SECARA INSTAN TANPA TAUTAN EMAIL
   const handleUserChangePasswordDirect = async () => {
     if (!userProfile?.id) return;
 
@@ -548,7 +548,8 @@ export default function UserDashboard() {
       alert('✨ Undangan berhasil diperbarui!');
     } catch (err: any) { 
       alert(`Gagal: ${err.message}`); 
-    } else { 
+    } finally { 
+      // ⚡ PERBAIKAN UTAMA: Mengubah dari block 'else' ilegal menjadi 'finally' agar lolos compile build Next.js
       setEditLoading(false); 
     }
   };
@@ -575,7 +576,7 @@ export default function UserDashboard() {
       <nav className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 sticky top-0 z-40 shadow-xs">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
           
-          {/* ⚡ LOGIKA PENGGABUNGAN: AREA KLIK NAMA & ICON USER UNTUK POPUP PROFILE MODAL */}
+          {/* AREA KLIK NAMA & ICON USER UNTUK POPUP PROFILE MODAL */}
           <h1 
             onClick={() => setShowProfileModal(true)}
             className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 truncate cursor-pointer hover:opacity-80 transition-opacity select-none"
@@ -798,9 +799,7 @@ export default function UserDashboard() {
         </div>
       </main>
 
-      {/* =======================================================
-          ⚡ MODAL BARU INTERAKTIF: DETAIL AKUN PROFIL & RESET PASSWORD INSTAN
-         ======================================================= */}
+      {/* MODAL DETAIL AKUN PROFIL & RESET PASSWORD INSTAN */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 text-xs">
