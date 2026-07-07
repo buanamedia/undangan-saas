@@ -9,8 +9,16 @@ export default function PremiumUpgradePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [step, setStep] = useState(1); // Step 1: Pricelist (image_c5f7a2.png), Step 2: Confirmation Checkout (image_c5fb03.png)
+  const [step, setStep] = useState(1); // Step 1: Pricelist, Step 2: Confirmation Checkout
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // State tambahan untuk manajemen Voucher & Harga Dinamis
+  const basePrice = 50000; // Harga dasar promo Rp.50.000
+  const [voucherCode, setVoucherCode] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState('');
+  const [discountPercent, setDiscountPercent] = useState(0);
+  const [finalAmount, setFinalAmount] = useState(basePrice);
+  const [voucherError, setVoucherError] = useState('');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -29,11 +37,43 @@ export default function PremiumUpgradePage() {
       if (profile) {
         setUserProfile(profile);
       }
-      setLoading(false);
+      loading && setLoading(false);
     };
 
     checkUser();
   }, []);
+
+  // Fungsi memvalidasi voucher dan mengubah harga secara real-time
+  const handleApplyVoucher = () => {
+    setVoucherError('');
+    const code = voucherCode.trim().toUpperCase();
+
+    if (!code) {
+      setAppliedVoucher('');
+      setDiscountPercent(0);
+      setFinalAmount(basePrice);
+      return;
+    }
+
+    if (code === 'NEWMEMBER') {
+      setDiscountPercent(75);
+      setFinalAmount(basePrice - (basePrice * 75) / 100);
+      setAppliedVoucher('NEWMEMBER');
+    } else if (code === 'HEMAT20') {
+      setDiscountPercent(20);
+      setFinalAmount(basePrice - (basePrice * 20) / 100);
+      setAppliedVoucher('HEMAT20');
+    } else if (code === 'HEMAT50') {
+      setDiscountPercent(50);
+      setFinalAmount(basePrice - (basePrice * 50) / 100);
+      setAppliedVoucher('HEMAT50');
+    } else {
+      setVoucherError('Kode voucher tidak valid atau kedaluwarsa.');
+      setAppliedVoucher('');
+      setDiscountPercent(0);
+      setFinalAmount(basePrice);
+    }
+  };
 
   const handleUpgradeAccount = async () => {
     setIsProcessing(true);
@@ -44,15 +84,17 @@ export default function PremiumUpgradePage() {
         return;
       }
 
-      // 1. Panggil API Route Checkout iPaymu yang baru dibuat
+      // 1. Panggil API Route Checkout iPaymu dengan nominal finalAmount yang dinamis
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: 50000, // Harga promo sesuai pricelist Anda
-          productNames: 'Undangan Digital Premium (Akses Unlimited)',
+          amount: finalAmount, // Nominal otomatis berkurang jika voucher aktif
+          productNames: appliedVoucher 
+            ? `Undangan Digital Premium (Voucher: ${appliedVoucher})`
+            : 'Undangan Digital Premium (Akses Unlimited)',
           buyerName: userProfile?.full_name || 'Pembeli',
           buyerEmail: userProfile?.email || session.user.email,
           buyerPhone: userProfile?.phone || '',
@@ -78,7 +120,7 @@ export default function PremiumUpgradePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-xs font-bold text-teal-700 animate-pulse">MENYIAPKAN HALAMAN PREMIUM...</p>
+        <p className="text-xs font-bold text-blue-700 animate-pulse">MENYIAPKAN HALAMAN PREMIUM...</p>
       </div>
     );
   }
@@ -102,12 +144,12 @@ export default function PremiumUpgradePage() {
             {/* Banner Harga Promo */}
             <div className="bg-black text-white py-4 space-y-0.5">
               <p className="text-xs line-through text-slate-400 font-medium tracking-wide">Rp.250 Ribu</p>
-              <p className="text-lg font-black tracking-wider text-teal-400">Rp.100 Ribu</p>
+              <p className="text-lg font-black tracking-wider text-blue-500">Rp.100 Ribu</p>
             </div>
 
             {/* List Fitur Lengkap & Akses Pembuatan Unlimited */}
             <div className="p-6 bg-slate-50/50 border-b border-slate-100 text-slate-600 text-xs leading-loose space-y-1 font-medium">
-              <p className="text-teal-700 font-extrabold bg-teal-50 py-1 px-3 rounded-full inline-block text-[11px] mb-2 border border-teal-200/50">
+              <p className="text-blue-700 font-extrabold bg-blue-50 py-1 px-3 rounded-full inline-block text-[11px] mb-2 border border-blue-200/50">
                 ⭐ BISA BUAT UNDANGAN UNLIMITED (TANPA BATAS JUMLAH)
               </p>
               <p>Pilihan Template Premium</p>
@@ -124,12 +166,12 @@ export default function PremiumUpgradePage() {
               <p>Sematkan Video Galeri YouTube</p>
               <p>Kado Acara (Rekening Digital/E-Wallet)</p>
               <p>Kustom Blok Informasi Tambahan</p>
-              </div>
+            </div>
 
             <div className="p-4 bg-white">
               <button
                 onClick={() => setStep(2)}
-                className="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl shadow-md transition-all cursor-pointer text-xs uppercase tracking-wider"
+                className="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition-all cursor-pointer text-xs uppercase tracking-wider"
               >
                 Upgrade Sekarang
               </button>
@@ -164,13 +206,13 @@ export default function PremiumUpgradePage() {
               <div className="flex flex-col sm:flex-row sm:items-start gap-1">
                 <span className="font-bold text-slate-900 min-w-[120px]">Domain Utama :</span>
                 <span className="text-slate-600 break-all select-all font-mono bg-slate-50 px-1.5 py-0.5 rounded border">
-                  {window.location.origin}/undangan/[slug-anda]
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/undangan/[slug-anda]
                 </span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-1">
                 <span className="font-bold text-slate-900 min-w-[120px]">Nama Paket :</span>
-                <span className="text-teal-700 font-bold bg-teal-50 px-2 py-0.5 rounded">Undangan Digital Premium (Akses Unlimited)</span>
+                <span className="text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">Undangan Digital Premium (Akses Unlimited)</span>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-start gap-1">
@@ -180,9 +222,47 @@ export default function PremiumUpgradePage() {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 pt-2 border-t border-slate-100 text-sm">
+              {/* ⚡ SEKSI INPUT VOUCHER BARU (DENGAN TEMA BIRU) */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-bold text-slate-900">Punya Kode Voucher?</span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Masukkan kode voucher (Contoh: NEWMEMBER)"
+                      value={voucherCode}
+                      onChange={(e) => setVoucherCode(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:border-blue-500 text-xs font-mono uppercase placeholder:normal-case placeholder:font-sans"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyVoucher}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors cursor-pointer"
+                    >
+                      Gunakan
+                    </button>
+                  </div>
+                  {voucherError && <p className="text-[11px] text-red-600 font-medium">{voucherError}</p>}
+                  {appliedVoucher && (
+                    <p className="text-[11px] text-blue-600 font-bold flex items-center gap-1 animate-pulse">
+                      ✓ Voucher {appliedVoucher} berhasil digunakan! Potongan {discountPercent}%.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 pt-3 border-t border-slate-100 text-sm">
                 <span className="font-bold text-slate-900 min-w-[120px]">Harga :</span>
-                <span className="font-black text-slate-900">Rp.50.000</span>
+                <div className="flex items-center gap-2">
+                  {discountPercent > 0 && (
+                    <span className="text-xs line-through text-slate-400 font-medium">
+                      Rp.{(50000).toLocaleString('id-ID')}
+                    </span>
+                  )}
+                  <span className="font-black text-slate-900 text-base">
+                    Rp.{finalAmount.toLocaleString('id-ID')}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -199,7 +279,7 @@ export default function PremiumUpgradePage() {
                 type="button"
                 disabled={isProcessing}
                 onClick={handleUpgradeAccount}
-                className="w-full flex-1 py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
+                className="w-full flex-1 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
                   <span className="animate-pulse">Memproses Transaksi...</span>
