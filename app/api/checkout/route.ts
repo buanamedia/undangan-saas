@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'; // Mencegah Vercel meng-cache API ini
+
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
@@ -21,9 +23,9 @@ export async function POST(request: Request) {
       product: [productNames || 'Paket Premium Undangan'],
       qty: ['1'],
       price: [amount.toString()],
-      returnUrl: 'https://undig.buanamedia.my.id/user', // Halaman kembali setelah sukses bayar
-      cancelUrl: 'https://undig.buanamedia.my.id/premium', // Halaman jika batal
-      notifyUrl: 'https://undig.buanamedia.my.id/api/callback-ipaymu', // Webhook pembaruan database otomatis
+      returnUrl: 'https://undig.buanamedia.my.id/user',
+      cancelUrl: 'https://undig.buanamedia.my.id/premium',
+      notifyUrl: 'https://undig.buanamedia.my.id/api/callback-ipaymu',
       name: buyerName || 'Pembeli Undangan',
       email: buyerEmail || 'customer@mail.com',
       phone: buyerPhone || '08123456789',
@@ -31,10 +33,10 @@ export async function POST(request: Request) {
 
     const jsonBody = JSON.stringify(body);
     
-    // 2. Format enkripsi Signature SHA256 standar iPaymu
+    // 2. ⚡ Perbaikan Enkripsi Signature SHA256 standar iPaymu
     const bodyHash = crypto.createHash('sha256').update(jsonBody).digest('hex').toLowerCase();
-    const stringToSign = `POST:${va}:${bodyHash}:${apiKey}`;
-    const signature = crypto.createHmac('sha256', apiKey).update(stringToSign).digest('hex');
+    const stringToSign = `${va}:${bodyHash}:${apiKey}`;
+    const signature = crypto.createHmac('sha256', apiKey).update(stringToSign).digest('hex').toLowerCase();
 
     // 3. Kirim data transaksi ke API Server iPaymu
     const response = await fetch(url, {
