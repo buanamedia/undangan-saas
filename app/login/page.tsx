@@ -1,4 +1,3 @@
-// app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
@@ -16,7 +15,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    loading(true);
     setMessage('');
 
     // 1. Jalankan autentikasi login ke Supabase
@@ -54,6 +53,20 @@ export default function LoginPage() {
     }
   };
 
+  // Fitur Reset Password via WhatsApp Admin
+  const handleForgotPassword = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    const adminNumber = '6281414159500'; // Menggunakan format kode negara 62
+    const textMessage = encodeURIComponent(
+      `Halo Admin, saya ingin mengajukan reset password.\n\n` +
+      `Email Akun: ${email || '[Masukkan Email Anda di sini]'}\n\n` +
+      `(Mohon pastikan Anda mengirim pesan ini dari nomor telepon yang terdaftar di akun agar Admin dapat memberikan password baru).`
+    );
+    
+    window.open(`https://wa.me/${adminNumber}?text=${textMessage}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-6 font-sans">
       {/* DIUBAH DI SINI: Menjadi border-2 border-slate-200 agar pembungkus kartu luar terlihat tebal & jelas */}
@@ -82,7 +95,14 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-0.5">
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Password</label>
-              <a href="#" className="text-[11px] text-sky-600 hover:underline">Lupa?</a>
+              {/* DIUBAH DI SINI: Ditambahkan onClick event handler untuk redirect ke WhatsApp Admin */}
+              <a 
+                href="#" 
+                onClick={handleForgotPassword}
+                className="text-[11px] text-sky-600 hover:underline cursor-pointer"
+              >
+                Lupa?
+              </a>
             </div>
             <input
               type="password"
