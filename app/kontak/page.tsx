@@ -57,8 +57,8 @@ export default function ContactPage() {
                   <p className="font-bold text-slate-900">Alamat Kantor Usaha</p>
                   <p className="text-slate-600 leading-relaxed mt-0.5">
                     Buanamedia Studio <br />
-                    Jl. Utama No. 45, Kompleks Bisnis Digital, <br />
-                    DKI Jakarta, Indonesia
+                    Jl. Buana Perkasa II Blok C4 No.35 RT.005 RW.004 <br />
+                    Pinang, Koita Tangerang, Indonesia
                   </p>
                 </div>
               </div>
