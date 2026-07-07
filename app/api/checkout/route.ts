@@ -18,7 +18,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 1. Validasi & Pembersihan Email
+    // 1. ⚡ PERBAIKAN VALIDASI NAMA PEMBELI (iPaymu mewajibkan minimal 3 karakter)
+    let cleanedName = buyerName ? buyerName.trim() : '';
+    if (cleanedName.length < 3) {
+      cleanedName = 'Pelanggan Premium'; // Pastikan fallback memiliki panjang minimal 3 karakter yang valid
+    }
+
+    // 2. Validasi & Pembersihan Email
     const cleanedEmail = buyerEmail ? buyerEmail.trim() : '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!cleanedEmail || !emailRegex.test(cleanedEmail)) {
@@ -28,21 +34,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. ⚡ PERBAIKAN TOTAL VALIDASI NOMOR TELEPON STANDAR IPAYMU
-    // Ambil nomor hp asli, bersihkan semua karakter non-angka
+    // 3. Validasi & Pembersihan Nomor Telepon
     let cleanedPhone = buyerPhone ? buyerPhone.replace(/[^0-9]/g, '') : '';
-
-    // Jika nomor diawali dengan '08', ubah otomatis menjadi format internasional '628'
     if (cleanedPhone.startsWith('0')) {
       cleanedPhone = '62' + cleanedPhone.slice(1);
     }
-
-    // Jika nomor masih terlalu pendek atau kosong, gunakan fallback format '62' yang valid agar tidak ditolak iPaymu
     if (cleanedPhone.length < 9) {
       cleanedPhone = '6281234567890';
     }
 
-    // 3. Siapkan data body persis seperti standarisasi iPaymu API v2
+    // 4. Siapkan data body persis seperti standarisasi iPaymu API v2
     const body = {
       product: [productNames || 'Paket Premium Undangan'],
       qty: ['1'],
@@ -50,14 +51,14 @@ export async function POST(request: Request) {
       returnUrl: 'https://undig.buanamedia.my.id/user',
       cancelUrl: 'https://undig.buanamedia.my.id/premium',
       notifyUrl: 'https://undig.buanamedia.my.id/api/callback-ipaymu',
-      name: buyerName || 'Pembeli Undangan',
+      name: cleanedName, // Menggunakan nama yang sudah dipastikan minimal 3 karakter
       email: cleanedEmail,
-      phone: cleanedPhone, // Menggunakan nomor hp berformat 62xxx yang sudah bersih
+      phone: cleanedPhone,
     };
 
     const jsonBody = JSON.stringify(body);
     
-    // 4. Format enkripsi Signature SHA256 murni standar iPaymu (Bukan HMAC)
+    // 5. Format enkripsi Signature SHA256 murni standar iPaymu (Bukan HMAC)
     const bodyHash = crypto.createHash('sha256').update(jsonBody).digest('hex').toLowerCase();
     
     // Format rumus gabungan: va + ":" + bodyHash + ":" + apiKey
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     // Hasil akhir signature dalam bentuk string lowercase
     const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toLowerCase();
 
-    // 5. Kirim request transaksi ke Server iPaymu
+    // 6. Kirim request transaksi ke Server iPaymu
     const response = await fetch(url, {
       method: 'POST',
       headers: {
