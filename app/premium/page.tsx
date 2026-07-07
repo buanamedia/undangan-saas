@@ -39,20 +39,37 @@ export default function PremiumUpgradePage() {
     setIsProcessing(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        router.push('/login');
+        return;
+      }
 
-      // Update flag profile user menjadi premium di database
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_premium: true })
-        .eq('id', session.user.id);
+      // 1. Panggil API Route Checkout iPaymu yang baru dibuat
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: 50000, // Harga promo sesuai pricelist Anda
+          productNames: 'Undangan Digital Premium (Akses Unlimited)',
+          buyerName: userProfile?.full_name || 'Pembeli',
+          buyerEmail: userProfile?.email || session.user.email,
+          buyerPhone: userProfile?.phone || '',
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
 
-      alert('🎉 Pembayaran Berhasil! Akun Anda kini aktif sebagai member Premium Unlimited.');
-      router.push('/user');
+      // 2. Jika tautan berhasil dibuat, lemparkan user ke gerbang pembayaran iPaymu
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error(data.error || 'Gagal mendapatkan tautan pembayaran.');
+      }
+
     } catch (err: any) {
-      alert(`Gagal memproses upgrade: ${err.message}`);
+      alert(`Gagal memproses pembayaran iPaymu: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
