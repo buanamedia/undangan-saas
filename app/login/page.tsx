@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    loading(true);
+    setLoading(true); // ⚡ PERBAIKAN: Mengubah dari loading(true) menjadi setLoading(true)
     setMessage('');
 
     // 1. Jalankan autentikasi login ke Supabase
@@ -69,7 +69,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-6 font-sans">
-      {/* DIUBAH DI SINI: Menjadi border-2 border-slate-200 agar pembungkus kartu luar terlihat tebal & jelas */}
       <div className="max-w-sm w-full space-y-4 bg-white p-6 rounded-xl shadow-[0_4px_20px_rgba(2,132,199,0.06)] border-2 border-slate-200">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-sky-50 border border-sky-100 mb-2">
@@ -95,7 +94,6 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-0.5">
               <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">Password</label>
-              {/* DIUBAH DI SINI: Ditambahkan onClick event handler untuk redirect ke WhatsApp Admin */}
               <a 
                 href="#" 
                 onClick={handleForgotPassword}
