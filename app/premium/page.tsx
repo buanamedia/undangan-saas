@@ -101,8 +101,8 @@ export default function PremiumUpgradePage() {
 
             {/* Banner Harga Promo */}
             <div className="bg-black text-white py-4 space-y-0.5">
-              <p className="text-xs line-through text-slate-400 font-medium tracking-wide">Rp.150 Ribu</p>
-              <p className="text-lg font-black tracking-wider text-teal-400">Rp.50 Ribu</p>
+              <p className="text-xs line-through text-slate-400 font-medium tracking-wide">Rp.250 Ribu</p>
+              <p className="text-lg font-black tracking-wider text-teal-400">Rp.100 Ribu</p>
             </div>
 
             {/* List Fitur Lengkap & Akses Pembuatan Unlimited */}
