@@ -18,6 +18,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // ⚡ PERBAIKAN VALIDASI EMAIL: Memastikan email pembeli bersih dari spasi dan menggunakan email asli user
+    const cleanedEmail = buyerEmail ? buyerEmail.trim() : '';
+    
+    // Pola pengecekan format email standar regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanedEmail || !emailRegex.test(cleanedEmail)) {
+      return NextResponse.json(
+        { error: `Format email pembeli tidak valid (${buyerEmail || 'Kosong'}). Silakan perbarui profil akun Anda.` },
+        { status: 400 }
+      );
+    }
+
+    // Bersihkan juga nomor telepon (iPaymu meminta format string angka bersih)
+    const cleanedPhone = buyerPhone ? buyerPhone.replace(/[^0-9]/g, '') : '08123456789';
+
     // 1. Siapkan data body persis seperti standarisasi iPaymu API v2
     const body = {
       product: [productNames || 'Paket Premium Undangan'],
@@ -27,8 +42,8 @@ export async function POST(request: Request) {
       cancelUrl: 'https://undig.buanamedia.my.id/premium',
       notifyUrl: 'https://undig.buanamedia.my.id/api/callback-ipaymu',
       name: buyerName || 'Pembeli Undangan',
-      email: buyerEmail || 'customer@mail.com',
-      phone: buyerPhone || '08123456789',
+      email: cleanedEmail, // Menggunakan email asli yang sudah divalidasi bersih
+      phone: cleanedPhone.length >= 9 ? cleanedPhone : '08123456789',
     };
 
     const jsonBody = JSON.stringify(body);
