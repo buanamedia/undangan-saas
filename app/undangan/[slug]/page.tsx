@@ -420,12 +420,7 @@ export default function PublicInvitationPage() {
                     <iframe width="100%" height="100%" className="border-0" src={cleanMapEmbedUrl(invitation.maps_url, invitation.location_address)} allowFullScreen={true} loading="lazy"></iframe>
                   </div>
                   
-                  {/* ⚡ Diubah: Link tombol maps mengikuti skema warna tema */}
-                  {(invitation.maps_url || invitation.location_address) && (
-                    <a href={cleanExternalRouteUrl(invitation.maps_url, invitation.location_address)} target="_blank" rel="noopener noreferrer" className={`block text-center text-xs ${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-bold py-2.5 rounded-lg shadow-sm transition-all cursor-pointer`}>
-                      🚗 Petunjuk Rute Lokasi {customBlock.event_block_title || 'Akad Nikah'} (Google Maps)
-                    </a>
-                  )}
+                  
                 </div>
 
                 {/* 2. KOTAK ACARA 2: RESEPSI PERNIKAHAN */}
@@ -447,12 +442,7 @@ export default function PublicInvitationPage() {
                         <iframe width="100%" height="100%" className="border-0" src={cleanMapEmbedUrl(customBlock.reception_maps_url, customBlock.reception_address)} allowFullScreen={true} loading="lazy"></iframe>
                       </div>
                       
-                      {/* ⚡ Diubah: Link rute mengikuti warna tombol tema */}
-                      {(customBlock.reception_maps_url || customBlock.reception_address) && (
-                        <a href={cleanExternalRouteUrl(customBlock.reception_maps_url, customBlock.reception_address)} target="_blank" rel="noopener noreferrer" className={`block text-center text-xs ${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-bold py-2.5 rounded-lg shadow-sm transition-all cursor-pointer`}>
-                          🚗 Petunjuk Rute Lokasi Resepsi (Google Maps)
-                        </a>
-                      )}
+                      
                     </div>
                   </>
                 )}
@@ -476,13 +466,7 @@ export default function PublicInvitationPage() {
                 <div className="w-full h-44 rounded-xl overflow-hidden border border-stone-200 bg-white shadow-inner">
                   <iframe width="100%" height="100%" className="border-0" src={cleanMapEmbedUrl(invitation.maps_url, invitation.location_address)} allowFullScreen={true} loading="lazy"></iframe>
                 </div>
-                <div className="pt-1">
-                  <a href={cleanExternalRouteUrl(invitation.maps_url, invitation.location_address)} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center justify-center w-full ${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-bold text-xs py-3 rounded-xl shadow-sm transition-all cursor-pointer`}>
-                    🚗 Petunjuk Rute Lokasi {(!customBlock.event_block_title || customBlock.event_block_title === 'Acara Utama' || customBlock.event_block_title === 'Akad Nikah') 
-                      ? (invitation.type || 'Acara') 
-                      : customBlock.event_block_title}
-                  </a>
-                </div>
+                
               </div>
             )}
           </div>
