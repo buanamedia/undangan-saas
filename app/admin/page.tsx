@@ -41,7 +41,6 @@ export default function AdminDashboard() {
       const { count: invCount } = await supabase.from('invitations').select('*', { count: 'exact', head: true });
       const { count: rsvpCount } = await supabase.from('rsvps').select('*', { count: 'exact', head: true });
       
-      // Hitung jumlah pengguna yang status lisensinya bernilai premium
       const { count: premiumCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_premium', true);
       
       setStats({ 
@@ -118,24 +117,37 @@ export default function AdminDashboard() {
     }
   };
 
-  // Fungsi Aksi Baru: Reset Password Pengguna
-  const handleResetPassword = async (email: string) => {
-    if (!email) return alert('Email pengguna tidak ditemukan.');
-    const konfirmasi = confirm(`Kirimkan tautan instruksi atur ulang kata sandi ke email ${email}?`);
-    if (!konfirmasi) return;
+  // 🔥 UPDATE FITUR: Reset Password Secara Instan dari Sisi Admin (Tanpa Kirim Email)
+  const handleResetPasswordInstan = async (userId: string, email: string) => {
+    if (!userId) return;
+    
+    const newPassword = prompt(`Masukkan Password Baru untuk Akun (${email || 'User'}):`, 'buanamedia123');
+    if (newPassword === null) return; // Batal klik cancel
+    
+    if (newPassword.trim().length < 6) {
+      return alert('🚨 Gagal: Password baru minimal harus berisi 6 karakter!');
+    }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const response = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, newPassword: newPassword.trim() }),
       });
-      if (error) throw error;
-      alert('✓ Tautan instruksi ganti password berhasil terkirim ke email pengguna!');
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal mengubah kata sandi pada server backend.');
+      }
+
+      alert(`✓ Sukses! ${result.message}`);
     } catch (err: any) {
       alert(`Gagal mereset password: ${err.message}`);
     }
   };
 
-  // Fungsi Aksi Baru: Hapus Akun dari Database
+  // Fungsi Aksi: Hapus Akun dari Database profiles
   const handleDecreaseAccount = async (userId: string) => {
     if (!userId) return;
     const konfirmasi = confirm('⚠️ PERINGATAN: Menghapus akun ini akan melenyapkan profile pengguna secara permanen dari database. Lanjutkan?');
@@ -158,7 +170,6 @@ export default function AdminDashboard() {
     return parentUserId === selectedUserId;
   });
 
-  // Filter daftar pengguna khusus premium untuk list modal pesanan
   const premiumUsersOnly = usersList.filter(u => u.is_premium);
 
   if (loading) {
@@ -194,14 +205,13 @@ export default function AdminDashboard() {
           <p className="text-xs text-slate-400">Pantau performa server dan manajemen data aplikasi Anda secara terpusat</p>
         </div>
 
-        {/* ROW STATISTIK TERMASUK MENU PESANAN BARU */}
+        {/* ROW STATISTIK TERMASUK MENU PESANAN */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Total Pengguna Terdaftar</p>
             <p className="text-3xl font-extrabold text-white mt-1">{stats.users} <span className="text-xs font-normal text-slate-400">Orang</span></p>
           </div>
 
-          {/* FITUR BARU: MENU KARTU PESANAN DI SAMPING TOTAL PENGGUNA */}
           <div 
             onClick={() => setShowOrderModal(true)}
             className="bg-slate-900 p-5 rounded-xl border border-blue-500/30 hover:border-blue-500/60 transition-all cursor-pointer group shadow-lg"
@@ -224,7 +234,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* SECTION 1: TABEL MANAJEMEN USER (DENGAN TAMBAHAN USERNAME, WA, & AKSI MANAJEMEN BARU) */}
+        {/* SECTION 1: TABEL MANAJEMEN USER */}
         <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 space-y-4">
           <div>
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Daftar Pengguna Aplikasi</h2>
@@ -253,11 +263,9 @@ export default function AdminDashboard() {
                     <td className="p-3 font-medium text-slate-200">
                       {user.email || <span className="text-slate-500 italic font-mono">{user.id}</span>}
                     </td>
-                    {/* TAMBAHAN DATA BARU: USERNAME */}
                     <td className="p-3 text-slate-300 font-mono">
                       {user.username || <span className="text-slate-600 italic">Belum diset</span>}
                     </td>
-                    {/* TAMBAHAN DATA BARU: NOMOR WHATSAPP */}
                     <td className="p-3 text-slate-300">
                       {user.phone ? (
                         <a 
@@ -283,7 +291,6 @@ export default function AdminDashboard() {
                         {user.is_premium ? '⭐️ Premium' : 'Free User'}
                       </span>
                     </td>
-                    {/* SEKSI AKSI MANAJEMEN YANG DIPERLUAS (DENGAN TOMBOL RESET & HAPUS) */}
                     <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end items-center gap-1.5 flex-wrap sm:flex-nowrap">
                         <button 
@@ -297,16 +304,15 @@ export default function AdminDashboard() {
                           {user.is_premium ? '🔒 Free' : '👑 Premium'}
                         </button>
                         
-                        {/* BUTTON AKSI BARU: RESET PASSWORD */}
+                        {/* AKSI BARU: RESET PASSWORD SECARA INSTAN */}
                         <button 
-                          onClick={() => handleResetPassword(user.email)}
+                          onClick={() => handleResetPasswordInstan(user.id, user.email)}
                           className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
-                          title="Kirim email reset kata sandi"
+                          title="Ganti password langsung dari admin"
                         >
                           🔄 Reset Pass
                         </button>
 
-                        {/* BUTTON AKSI BARU: HAPUS AKUN */}
                         <button 
                           onClick={() => handleDecreaseAccount(user.id)}
                           className="px-2 py-1 bg-rose-950/40 text-rose-400 border border-rose-500/20 hover:bg-rose-600 hover:text-white font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
@@ -410,13 +416,10 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* =======================================================
-          MODAL INTERAKTIF DAFTAR PESANAN PREMIUM & KODE VOUCHER
-         ======================================================= */}
+      {/* MODAL INTERAKTIF DAFTAR PESANAN PREMIUM */}
       {showOrderModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-            {/* Header Modal */}
             <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🛒</span>
@@ -430,7 +433,6 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            {/* Isi Data Transaksi */}
             <div className="p-5 overflow-y-auto flex-1 text-xs space-y-4">
               <p className="text-slate-400 leading-relaxed">
                 Berikut data pengguna terkonfirmasi aktif mengupgrade akun melalui modul gerbang iPaymu atau sistem admin internal:
@@ -474,7 +476,6 @@ export default function AdminDashboard() {
               </div>
             </div>
             
-            {/* Footer Modal */}
             <div className="p-4 bg-slate-950/30 border-t border-slate-800 text-right">
               <span className="text-[11px] text-slate-500 italic mr-4">Total: {premiumUsersOnly.length} Pengguna Premium Terverifikasi</span>
             </div>
