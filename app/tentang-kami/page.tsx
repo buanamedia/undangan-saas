@@ -2,22 +2,19 @@
 
 import { useRouter } from 'next/navigation';
 
-export default function LandingPage() {
+export default function TentangKamiPage() {
   const router = useRouter();
 
-  const features = [
-    { icon: '🎨', title: 'Desain Premium & Elegan', desc: 'Banyak pilihan tema modern dan minimalis yang bisa disesuaikan dengan konsep acara Anda.' },
-    { icon: '🎵', title: 'Musik Latar Belakang', desc: 'Tambahkan musik romantis atau lagu favorit pilihan Anda untuk menghidupkan suasana undangan.' },
-    { icon: '📩', title: 'Tautan Nama Kustom', desc: 'Kirim undangan dengan mencantumkan nama penerima secara otomatis agar terasa lebih personal.' },
-    { icon: '📍', title: 'Peta Lokasi Interaktif', desc: 'Integrasi langsung dengan Google Maps memudahkan para tamu mencari rute terbaik menuju lokasi.' },
-    { icon: '💬', title: 'Buku Tamu & RSVP', desc: 'Pantau konfirmasi kehadiran serta kumpulkan doa/harapan terbaik langsung dari para undangan.' },
-    { icon: '🎁', title: 'Kado Digital (Angpao)', desc: 'Sediakan rekening digital atau QR code e-wallet untuk mempermudah tamu memberikan tanda kasih.' }
+  const nilaiUtama = [
+    { icon: '⚡', title: 'Pembuatan Instan', desc: 'Hanya perlu hitungan menit, undangan impian Anda siap dibagikan secara live.' },
+    { icon: '🎨', title: 'Desain Premium', desc: 'Pilihan tema eksklusif yang responsif dan memukau di perangkat ponsel maupun komputer.' },
+    { icon: '💬', title: 'Manajemen Tamu', desc: 'Fitur kustom nama penerima untuk pesan jabat erat WhatsApp yang lebih personal.' }
   ];
 
   return (
     <div className="min-h-screen bg-white text-slate-800 font-sans antialiased">
       
-      {/* NAVBAR */}
+      {/* NAVBAR (IDENTIK DENGAN LANDING PAGE) */}
       <header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
@@ -38,63 +35,70 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* ⚡ PERBAIKAN: Tombol atas kanan menjadi tombol kembali ke dashboard */}
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => router.push('/login')} 
-              className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              Masuk
-            </button>
             <button 
               onClick={() => router.push('/user')} 
               className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
             >
-              Buat Undangan
+              Dashboard
             </button>
           </div>
         </div>
       </header>
 
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-linear-to-b from-blue-50/40 via-white to-white py-20 lg:py-32">
+      <section className="relative overflow-hidden bg-linear-to-b from-blue-50/40 via-white to-white py-20 lg:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold tracking-wide text-blue-800 bg-blue-100/60 rounded-full border border-blue-200">
             ✨ Platform Undangan Digital No. 1 di Indonesia
           </div>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-none">
-            Buat Undangan Digital <br className="hidden sm:inline" />
-            <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-700 to-sky-500">Mudah, Cepat & Elegan</span>
+            Tentang <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-700 to-sky-500">Kami</span>
           </h1>
           <p className="text-slate-500 max-w-xl mx-auto text-xs sm:text-sm leading-relaxed">
-            Bagikan kebahagiaan momen spesial Anda mulai dari Pernikahan, Ulang Tahun, Akikah, hingga Syukuran dalam hitungan menit dengan fitur terlengkap.
+            Menyediakan solusi pembuatan undangan digital instan yang elegan, praktis, dan ramah lingkungan untuk momen spesial kebersamaan Anda.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-            <button 
-              onClick={() => router.push('/user')} 
-              className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer tracking-wide uppercase"
-            >
-              Mulai Buat Gratis
-            </button>
-            <button 
-              onClick={() => router.push('/demo')} 
-              className="px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-2xs"
-            >
-              Lihat Katalog Demo
-            </button>
+        </div>
+      </section>
+
+      {/* VISI & MISI SEKSI */}
+      <section className="py-12 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm select-none">🎯</div>
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Visi Kami</h2>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Menjadi platform generator undangan digital terdepan di Indonesia yang membantu jutaan orang merayakan kebahagiaan dengan cara yang lebih modern, efisien, dan berkelanjutan.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm select-none">💎</div>
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Misi Kami</h2>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Menyedikan teknologi desain mutakhir yang mudah digunakan oleh siapa saja, menyajikan performa loading undangan secepat kilat, serta menjaga keamanan data personal pengguna.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FEATURE HIGHLIGHTS */}
+      {/* MENGAPA MEMILIH LAYANAN KAMI */}
       <section className="py-16 bg-slate-50 border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Fitur Canggih Untuk Momen Spesial Anda</h2>
-            <p className="text-slate-500 text-xs sm:text-sm">Semua kelengkapan yang Anda butuhkan untuk mempermudah distribusi undangan.</p>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase text-center">Mengapa Memilih Layanan Kami?</h2>
+            <p className="text-slate-500 text-xs sm:text-sm">Komitmen kami untuk memberikan pengalaman digital terbaik di setiap momen berharga.</p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feat, index) => (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {nilaiUtama.map((feat, index) => (
               <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs hover:shadow-md transition-all space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg select-none">
                   {feat.icon}
@@ -108,17 +112,25 @@ export default function LandingPage() {
       </section>
 
       {/* CTA SECTION */}
-      <section className="relative py-20 bg-linear-to-r from-blue-800 to-blue-900 text-white overflow-hidden">
+      <section className="py-20 bg-linear-to-r from-blue-800 to-blue-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-700/40 via-transparent to-transparent opacity-50"></div>
         <div className="max-w-4xl mx-auto px-4 text-center space-y-6 relative z-10">
-          <h2 className="text-2xl sm:text-4xl font-black tracking-tight">Siap Untuk Menyebarkan Kebahagiaan?</h2>
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight">Punya Pertanyaan atau Butuh Bantuan?</h2>
           <p className="text-blue-100/80 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-            Bergabunglah bersama ribuan pengguna lainnya yang telah mempercayakan momen terbaik mereka kepada platform kami.
+            Hubungi tim layanan bantuan kami atau mulai buat undangan gratis pertama Anda secara langsung sekarang juga.
           </p>
-          <div className="pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <a 
+              href="https://wa.me/6281414159500"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer tracking-wider uppercase inline-flex items-center gap-2"
+            >
+              🟢 Hubungi Admin via WA
+            </a>
             <button 
               onClick={() => router.push('/user')} 
-              className="px-8 py-3 bg-white hover:bg-slate-50 text-blue-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all tracking-wider uppercase cursor-pointer"
+              className="px-6 py-3 bg-white hover:bg-slate-50 text-blue-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all tracking-wider uppercase cursor-pointer"
             >
               Mulai Sekarang Juga
             </button>
@@ -126,11 +138,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER */}
+      {/* FOOTER (TERDAPAT TAMBAHAN MENU LINK BARU) */}
       <footer className="border-t border-slate-100 py-8 bg-white text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto px-4 space-y-4">
           
-          {/* MENU NAVIGASI FOOTER */}
+          {/* MENU NAVIGASI FOOTER BARU */}
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
             <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
             <span className="text-slate-300 hidden sm:inline">|</span>
@@ -149,7 +161,7 @@ export default function LandingPage() {
             <p className="font-bold text-slate-700">Undangan Digital &copy; 2026</p>
             <p className="text-[10px] text-slate-400">by Buanamedia</p>
           </div>
-          <p className="pt-1 text-[11px]">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
+          <p className="text-[11px] text-slate-400">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
         </div>
       </footer>
 

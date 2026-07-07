@@ -198,7 +198,6 @@ export default function UserDashboard() {
     router.push('/');
   };
 
-  // Fungsi: MODUL PENGGANTIAN PASSWORD SECARA INSTAN TANPA TAUTAN EMAIL
   const handleUserChangePasswordDirect = async () => {
     if (!userProfile?.id) return;
 
@@ -549,7 +548,6 @@ export default function UserDashboard() {
     } catch (err: any) { 
       alert(`Gagal: ${err.message}`); 
     } finally { 
-      // ⚡ PERBAIKAN UTAMA: Mengubah dari block 'else' ilegal menjadi 'finally' agar lolos compile build Next.js
       setEditLoading(false); 
     }
   };
@@ -570,85 +568,113 @@ export default function UserDashboard() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xs font-bold text-sky-600 animate-pulse">MEMUAT DASHBOARD...</p></div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
+    <div className="min-h-screen bg-white text-slate-800 font-sans antialiased flex flex-col justify-between">
       
-      {/* HEADER NAVIGASI */}
-      <nav className="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 sticky top-0 z-40 shadow-xs">
-        <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
+      {/* ========================================== */}
+      {/* HEADER NAVBAR GLOBAL (BARU & SELARAS) */}
+      {/* ========================================== */}
+      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
-          {/* AREA KLIK NAMA & ICON USER UNTUK POPUP PROFILE MODAL */}
+          {/* LOGO BRANDING */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+            <img 
+              src="/logo/Logo.png" 
+              alt="Logo Undangan Digital" 
+              className="w-8 h-8 object-contain shrink-0" 
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
+                Undangan <span className="text-blue-700">Digital</span>
+              </span>
+              <span className="text-[9px] font-semibold text-slate-400 tracking-wider mt-0.5">
+                by Buanamedia
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.push('/premium')} 
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              Upgrade Paket
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+            >
+              Keluar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* ========================================== */}
+      {/* AREA UTAMA SUB-NAVBAR CONTEXT DASHBOARD */}
+      {/* ========================================== */}
+      <div className="bg-slate-50 border-b border-slate-200/60 px-4 sm:px-6 py-4 shadow-2xs">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+          
+          {/* AREA USER PROFILE CLICKER */}
           <h1 
             onClick={() => setShowProfileModal(true)}
             className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 truncate cursor-pointer hover:opacity-80 transition-opacity select-none"
           >
             <span>Halo, {userProfile?.full_name || userProfile?.username || 'User'} 👤</span>
             {userProfile?.is_premium ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-950 bg-linear-to-r from-amber-300 via-yellow-400 to-amber-500 rounded-full shadow-md shadow-amber-500/20 border border-amber-200">
-                <svg className="w-3 h-3 text-amber-950 drop-shadow-xs" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 001.036 1.748l6.5 3.5a2 2 0 001.928 0l6.5-3.5A2 2 0 0020 11.268V4a1 1 0 00-2 0v6.732l-7.036 3.788a1 1 0 01-.928 0L3 10.732V4z" />
-                  <path d="M10 2a1 1 0 011 1v7.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 10.586V3a1 1 0 011-1z" />
-                </svg>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-950 bg-linear-to-r from-amber-300 via-yellow-400 to-amber-500 rounded-full shadow-md border border-amber-200">
                 PREMIUM
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase bg-slate-100 text-slate-500 rounded-full tracking-wider border border-slate-200">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase bg-slate-200 text-slate-500 rounded-full tracking-wider border border-slate-300/40">
                 FREE
               </span>
             )}
           </h1>
 
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <button 
-              onClick={() => router.push('/premium')}
-              className="px-3 sm:px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] sm:text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
-            >
-              Upgrade
-            </button>
+          <div className="flex items-center gap-2 shrink-0">
             <button 
               onClick={() => { resetForm(); setIsCreateModalOpen(true); }}
-              className="px-3 sm:px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-[10px] sm:text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
             >
-              + Undangan
+              + Buat Undangan
             </button>
             <button 
               onClick={() => router.push('/demo')}
-              className="px-3 sm:px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-[10px] sm:text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
             >
               Lihat Tema
             </button>
-            <button 
-              onClick={handleLogout}
-              className="px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] sm:text-xs rounded-xl transition-all cursor-pointer"
-            >
-              Keluar
-            </button>
           </div>
         </div>
-      </nav>
+      </div>
 
-      {/* KONTEN UTAMA */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      {/* ========================================== */}
+      {/* GRID BODY MAIN KONTEN */}
+      {/* ========================================== */}
+      <main className="grow bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
           {/* KOLOM 1 & 2: LIST KARTU UNDANGAN */}
           <div className="lg:col-span-2 space-y-4">
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-wide uppercase">
                 Koleksi Undangan Anda ({invitations.length})
               </h2>
             </div>
             
             {invitations.length === 0 ? (
-              <div className="bg-white rounded-xl border p-12 text-center text-slate-400 text-xs">
-                Belum ada undangan yang dibuat. Silakan klik tombol "+ Tambah Undangan" di atas untuk memulai.
+              <div className="bg-white rounded-2xl border p-12 text-center text-slate-400 text-xs shadow-2xs">
+                Belum ada undangan yang dibuat. Silakan klik tombol "+ Buat Undangan" di atas untuk memulai.
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {invitations.map((inv) => (
                   <div 
                     key={inv.id} 
                     onClick={() => triggerActiveSharePanel(inv)}
-                    className={`bg-white p-4 sm:p-5 rounded-2xl border flex flex-col justify-between space-y-4 text-xs hover:shadow-md transition-all cursor-pointer ${selectedInvForShare?.id === inv.id ? 'border-teal-600 ring-2 ring-teal-600/10' : 'border-slate-200/70 shadow-sm'}`}
+                    className={`bg-white p-4 sm:p-5 rounded-2xl border flex flex-col justify-between space-y-4 text-xs hover:shadow-md transition-all cursor-pointer ${selectedInvForShare?.id === inv.id ? 'border-teal-600 ring-2 ring-teal-600/10' : 'border-slate-200/70 shadow-2xs'}`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-2">
@@ -668,7 +694,7 @@ export default function UserDashboard() {
                       <a href={`/undangan/${inv.slug}`} target="_blank" className="flex-1 text-center py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-[10px] rounded-xl transition-colors">👁️ Lihat</a>
                       <button onClick={() => handleViewWishes(inv.id)} className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] rounded-xl transition-colors">💬 Doa</button>
                       <button onClick={() => openEditModal(inv)} className="flex-1 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10px] rounded-xl transition-colors">✏️ Edit</button>
-                      <button onClick={() => handleDeleteInvitation(inv.id, inv.title)} className="py-2 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[10px] rounded-xl transition-colors">🗑️ Hapus</button>
+                      <button onClick={() => handleDeleteInvitation(inv.id, inv.title)} className="py-2 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[10px] rounded-xl transition-colors">🗑️</button>
                     </div>
                   </div>
                 ))}
@@ -677,7 +703,7 @@ export default function UserDashboard() {
           </div>
 
           {/* KOLOM 3 (SISI KANAN): PANEL KELOLA DATA TAMU */}
-          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 space-y-4">
+          <div className="bg-white border border-slate-200/70 shadow-2xs rounded-2xl p-5 space-y-4">
             {!selectedInvForShare ? (
               <div className="text-center text-slate-400 py-12 text-xs">
                 👉 Pilih salah satu kartu undangan di sebelah kiri untuk mengaktifkan generator kirim link tautan tamu kustom.
@@ -799,21 +825,43 @@ export default function UserDashboard() {
         </div>
       </main>
 
-      {/* MODAL DETAIL AKUN PROFIL & RESET PASSWORD INSTAN */}
+      {/* ========================================== */}
+      {/* FOOTER NAVIGASI EKSTERNAL (BARU & SELARAS) */}
+      {/* ========================================== */}
+      <footer className="border-t border-slate-100 py-8 bg-white text-center text-xs text-slate-400 w-full mt-auto">
+        <div className="max-w-7xl mx-auto px-4 space-y-4">
+          
+          {/* MENU LINK TAUTAN INTERNAL */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
+            <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/demo')} className="hover:text-blue-700 transition-colors cursor-pointer">Tema</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors cursor-pointer">refund-policy</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors cursor-pointer">FAQ</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors cursor-pointer">syarat-ketentuan</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 pt-4">
+            <p className="font-bold text-slate-700">Undangan Digital &copy; 2026</p>
+            <p className="text-[10px] text-slate-400">by Buanamedia</p>
+          </div>
+          <p className="text-[11px] text-slate-400">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
+        </div>
+      </footer>
+
+      {/* MODAL MODULAR RETAINERS (DIBAWAH ELEMENT VISUAL UTAMA) */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 text-xs">
-            
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-              <span className="font-bold text-slate-800 uppercase tracking-wider">📋 Profil Pengguna</span>
-              <button 
-                onClick={() => setShowProfileModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold bg-slate-200/60 px-2 py-0.5 rounded-md cursor-pointer text-[10px]"
-              >
-                Tutup
-              </button>
+              <span className="font-bold text-slate-800 uppercase tracking-wider">📋 Detail Akun Pengguna</span>
+              <button onClick={() => setShowProfileModal(false)} className="text-slate-400 hover:text-slate-600 font-bold bg-slate-200/60 px-2 py-0.5 rounded-md cursor-pointer text-[10px]">Tutup</button>
             </div>
-
             <div className="p-5 space-y-4">
               <div className="space-y-2.5 border-b border-slate-100 pb-4 text-slate-700">
                 <div className="flex flex-col gap-0.5">
@@ -833,22 +881,10 @@ export default function UserDashboard() {
                   <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.phone || '-'}</span>
                 </div>
               </div>
-
               <div className="space-y-2">
-                <button
-                  type="button"
-                  disabled={isUpdatingPassword}
-                  onClick={handleUserChangePasswordDirect}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl transition-all shadow-xs text-center cursor-pointer"
-                >
-                  🔑 {isUpdatingPassword ? 'Mengamankan Server...' : 'Ganti & Reset Password'}
-                </button>
-                <p className="text-[10px] text-center text-slate-400 px-2">
-                  *Perubahan password diproses langsung tanpa konfirmasi.
-                </p>
+                <button type="button" disabled={isUpdatingPassword} onClick={handleUserChangePasswordDirect} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl transition-all shadow-xs text-center cursor-pointer">🔑 {isUpdatingPassword ? 'Mengamankan Server...' : 'Ganti & Reset Password'}</button>
               </div>
             </div>
-
           </div>
         </div>
       )}
@@ -858,7 +894,6 @@ export default function UserDashboard() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-4 sm:p-6 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-150 text-xs">
             <button type="button" onClick={() => setIsCreateModalOpen(false)} className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 bg-slate-50 font-bold text-sm z-10">✕</button>
-
             <div className="flex items-center justify-between border-b pb-2 text-[10px] font-bold text-slate-400 pr-6 overflow-x-auto whitespace-nowrap scrollbar-none">
               <span className={currentStep === 1 ? 'text-teal-600' : ''}>1. Tipe</span>
               <span className="mx-1">→</span>
@@ -868,7 +903,6 @@ export default function UserDashboard() {
               <span className="mx-1">→</span>
               <span className={currentStep === 4 ? 'text-teal-600 font-bold' : ''}>4. Media</span>
             </div>
-
             <form onSubmit={handleCreateInvitation} className="space-y-4">
               {currentStep === 1 && (
                 <div className="space-y-3">
@@ -908,7 +942,6 @@ export default function UserDashboard() {
                       <input type="text" placeholder="nama-link" className="w-full px-3 py-2 border border-slate-300 rounded-r-lg min-w-0" value={slug} onChange={(e) => setSlug(e.target.value)} />
                     </div>
                   </div>
-
                   <div className="p-3 border rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
                     <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Profil / Halaman Pembuka (Sampul)</label>
                     <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
@@ -920,14 +953,12 @@ export default function UserDashboard() {
                     }} />
                     {coverPhotoUrl && <img src={coverPhotoUrl} className="w-16 h-16 object-cover rounded border border-teal-200 mt-1" />}
                   </div>
-
                   <div className="flex gap-2 pt-1">
                     <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                     <button type="button" disabled={!slug || !invitationType || !eventTitle} onClick={() => { setFormMessage(''); setCurrentStep(2); }} className="flex-1 py-2 bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-bold">Lanjut Pilih Tema</button>
                   </div>
                 </div>
               )}
-
               {currentStep === 2 && (
                 <div className="space-y-3">
                   <h3 className="text-sm font-bold text-slate-900">Bagian 2: Tema & Cover</h3>
@@ -936,37 +967,21 @@ export default function UserDashboard() {
                     <input type="text" className="w-full p-2 border rounded-lg" value={coverProlog} onChange={(e) => setCoverProlog(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Template (Tema Undangan)
-                    </label>
-                    <select
-                      className="w-full p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={selectedTemplate}
-                      onChange={(e) => {
-                        if (!userProfile?.is_premium && e.target.value !== 'free') {
-                          alert('Tema ini khusus untuk pengguna Premium!');
-                          setSelectedTemplate('free');
-                        } else {
-                          setSelectedTemplate(e.target.value);
-                        }
-                      }}
-                    >
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Template (Tema Undangan)</label>
+                    <select className="w-full p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" value={selectedTemplate} onChange={(e) => {
+                      if (!userProfile?.is_premium && e.target.value !== 'free') {
+                        alert('Tema ini khusus untuk pengguna Premium!');
+                        setSelectedTemplate('free');
+                      } else {
+                        setSelectedTemplate(e.target.value);
+                      }
+                    }}>
                       <option value="free">Minimalist Free (Essential Only)</option>
-                      <option value="default" disabled={!userProfile?.is_premium}>
-                        Elegant Amber {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="pink" disabled={!userProfile?.is_premium}>
-                        Romantic Pink {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="blue" disabled={!userProfile?.is_premium}>
-                        Ocean Blue {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="green" disabled={!userProfile?.is_premium}>
-                        Emerald Green {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="vibrant" disabled={!userProfile?.is_premium}>
-                        Vibrant Full Color {!userProfile?.is_premium && '🔒'}
-                      </option>
+                      <option value="default" disabled={!userProfile?.is_premium}>Elegant Amber {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="pink" disabled={!userProfile?.is_premium}>Romantic Pink {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="blue" disabled={!userProfile?.is_premium}>Ocean Blue {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="green" disabled={!userProfile?.is_premium}>Emerald Green {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="vibrant" disabled={!userProfile?.is_premium}>Vibrant Full Color {!userProfile?.is_premium && '🔒'}</option>
                     </select>
                   </div>
                   <div className="flex flex-wrap sm:flex-nowrap gap-2">
@@ -976,32 +991,21 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-
               {currentStep === 3 && (
                 <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                   <h3 className="text-sm font-bold text-slate-900">Bagian 3: Detail Tokoh & Informasi Acara</h3>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nama Acara 1</label>
                     {(invitationType === 'pernikahan' || invitationType === 'lamaran') ? (
-                      <select 
-                        className="block w-full p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-teal-600" 
-                        value={eventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : eventBlockTitle} 
-                        onChange={(e) => setEventBlockTitle(e.target.value)}
-                      >
+                      <select className="block w-full p-2 border border-slate-300 rounded-lg bg-white font-bold" value={eventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : eventBlockTitle} onChange={(e) => setEventBlockTitle(e.target.value)}>
                         <option value="Akad Nikah">Akad Nikah</option>
                         <option value="Pemberkatan">Pemberkatan</option>
                       </select>
                     ) : (
-                      <input 
-                        type="text" 
-                        className="w-full p-2 border rounded-lg font-bold bg-slate-50 uppercase text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-600" 
-                        value={eventBlockTitle === 'Acara Utama' || eventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${invitationType?.toUpperCase()}` : eventBlockTitle} 
-                        onChange={(e) => setEventBlockTitle(e.target.value)} 
-                      />
+                      <input type="text" className="w-full p-2 border rounded-lg font-bold bg-slate-50 uppercase text-slate-700" value={eventBlockTitle === 'Acara Utama' || eventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${invitationType?.toUpperCase()}` : eventBlockTitle} onChange={(e) => setEventBlockTitle(e.target.value)} />
                     )}
                   </div>
                   <textarea rows={2} placeholder="Prolog Informasi Acara" className="w-full p-2 border rounded-lg resize-none" value={eventProlog} onChange={(e) => setEventProlog(e.target.value)} />
-                  
                   {(invitationType === 'pernikahan' || invitationType === 'lamaran') ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <input type="text" placeholder="Mempelai Pria" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg" value={groomName} onChange={(e) => setGroomName(e.target.value)} />
@@ -1013,7 +1017,6 @@ export default function UserDashboard() {
                       <textarea rows={2} placeholder="Rincian Profil Tokoh Lengkap" className="w-full p-2 border rounded-lg resize-none" value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} />
                     </div>
                   )}
-
                   <div className="p-3 border rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
                     <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama)</label>
                     <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
@@ -1025,7 +1028,6 @@ export default function UserDashboard() {
                     }} />
                     {profileBottomPhotoUrl && <img src={profileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border border-teal-200 mt-1" />}
                   </div>
-                  
                   {invitationType === 'pernikahan' ? (
                     <div className="space-y-4">
                       <div className="p-3 bg-rose-50/40 border border-rose-200 rounded-xl space-y-2">
@@ -1040,7 +1042,6 @@ export default function UserDashboard() {
                           <iframe width="100%" height="100%" className="border-0" loading="lazy" src={`https://maps.google.com/maps?q=${mapsUrl ? encodeURIComponent(mapsUrl) : (locationAddress ? encodeURIComponent(locationAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                         </div>
                       </div>
-
                       <div className="p-3 bg-sky-50/40 border border-sky-200 rounded-xl space-y-2">
                         <span className="font-bold text-sky-800 text-[10px] block uppercase">🎉 Acara 2: Resepsi Pernikahan</span>
                         <input type="datetime-local" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white" value={receptionDate} onChange={(e) => setReceptionDate(e.target.value)} />
@@ -1067,7 +1068,6 @@ export default function UserDashboard() {
                       </div>
                     </div>
                   )}
-
                   <div className="flex flex-wrap sm:flex-nowrap gap-2">
                     <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
                     <button type="button" onClick={() => setCurrentStep(2)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
@@ -1075,11 +1075,9 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-
               {currentStep === 4 && (
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                   <h3 className="text-sm font-bold text-slate-900">Bagian 4: Galeri, Kado, Musik & Custom Blok</h3>
-                  
                   <div className="p-3 border rounded-xl bg-slate-50/50 space-y-1.5">
                     <label className="block text-[10px] font-bold text-teal-700 uppercase tracking-wider">📁 1. Tambah Foto Galeri</label>
                     <input type="text" placeholder="Momen-momen yang berhasil kami abadikan..." className="w-full p-2 border rounded-lg bg-white" value={galleryProlog} onChange={(e) => setGalleryProlog(e.target.value)} />
@@ -1089,20 +1087,17 @@ export default function UserDashboard() {
                       {uploadedPhotos.map((url, i) => <img key={i} src={url} className="w-8 h-8 object-cover rounded border border-teal-200 shadow-2xs" />)}
                     </div>
                   </div>
-
                   <div className="p-3 border rounded-xl bg-slate-50/50 space-y-1">
                     <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">🎬 2. Galeri Video Youtube</label>
                     <input type="text" placeholder="Mari saksikan cuplikan video kebahagiaan kami." className="w-full p-2 border rounded-lg bg-white" value={videoProlog} onChange={(e) => setVideoProlog(e.target.value)} />
                     <input type="url" placeholder="Link Video YouTube" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white mt-1" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
                   </div>
-                  
                   <div className="p-3 border rounded-xl bg-slate-50/50 space-y-1.5">
                     <label className="block text-[10px] font-bold text-teal-700 uppercase tracking-wider">🎵 3. Upload Musik Latar Belakang (.mp3)</label>
                     <input type="file" accept="audio/mp3,audio/*" onChange={(e) => handleMusicUpload(e, false)} className="w-full text-xs" />
                     {uploadingMusic && <p className="text-teal-600 animate-pulse text-[10px]">Mengunggah berkas suara...</p>}
                     {bgMusicUrl && <p className="text-emerald-600 text-[10px] font-bold">✓ Musik Latar Terpasang</p>}
                   </div>
-                  
                   <div className="p-3 border rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-teal-700 block">Kado Digital</span>
                     <input type="text" placeholder="Terima kasih atas doa yang telah Anda berikan..." className="w-full p-2 border rounded bg-white" value={giftProlog} onChange={(e) => setGiftProlog(e.target.value)} />
@@ -1115,14 +1110,12 @@ export default function UserDashboard() {
                     ))}
                     <button type="button" onClick={() => setGiftAccounts([...giftAccounts, {name:'', bank:'', number:''}])} className="text-[11px] text-teal-600 font-bold hover:underline">+ Rekening</button>
                   </div>
-
                   <div className="p-3 border rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-slate-700 block">Blok Custom</span>
                     <input type="text" placeholder="Turut Mengundang" className="w-full p-2 border rounded bg-white" value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} />
                     <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border rounded bg-white" value={customProlog} onChange={(e) => setCustomProlog(e.target.value)} />
                     <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border rounded resize-none bg-white" value={customContent} onChange={(e) => setCustomContent(e.target.value)} />
                   </div>
-
                   <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-2 border-t border-slate-100">
                     <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
                     <button type="button" onClick={() => setCurrentStep(3)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
@@ -1141,7 +1134,6 @@ export default function UserDashboard() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-4 sm:p-6 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-150 text-xs">
             <button type="button" onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 bg-slate-50 font-bold text-sm z-10">✕</button>
-
             <div className="flex items-center justify-between border-b pb-2 text-[10px] font-bold text-slate-400 pr-6 overflow-x-auto whitespace-nowrap scrollbar-none">
               <span className={editStep === 1 ? 'text-teal-600' : ''}>1. Tipe</span>
               <span className="mx-1">→</span>
@@ -1151,7 +1143,6 @@ export default function UserDashboard() {
               <span className="mx-1">→</span>
               <span className={editStep === 4 ? 'text-teal-600 font-bold' : ''}>4. Media</span>
             </div>
-
             <form onSubmit={handleUpdateInvitation} className="space-y-4">
               {editStep === 1 && (
                 <div className="space-y-3">
@@ -1184,20 +1175,17 @@ export default function UserDashboard() {
                     <label className="block font-semibold text-slate-700 mb-1">Kata Kunci</label>
                     <input type="text" placeholder="Keywords" className="w-full p-2 border rounded-lg" value={editKeywords} onChange={(e) => setEditKeywords(e.target.value)} />
                   </div>
-
                   <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block font-bold text-slate-500 text-[10px] uppercase">📸 Foto Profil / Halaman Pembuka (Sampul) [KUNCI]</label>
                     <input disabled type="file" accept="image/*" className="w-full text-xs cursor-not-allowed text-slate-400" />
                     {editCoverPhotoUrl && <img src={editCoverPhotoUrl} className="w-16 h-16 object-cover rounded border border-slate-300 mt-1 grayscale" />}
                   </div>
-
                   <div className="flex gap-2 pt-1">
                     <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                     <button type="button" onClick={() => { setFormMessage(''); setEditStep(2); }} className="flex-1 py-2 bg-teal-700 text-white font-bold rounded-lg">Lanjut Tema →</button>
                   </div>
                 </div>
               )}
-
               {editStep === 2 && (
                 <div className="space-y-3">
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 2: Tema & Cover</h3>
@@ -1206,37 +1194,21 @@ export default function UserDashboard() {
                     <input type="text" placeholder="Tulisan Tombol Cover" className="w-full p-2 border rounded-lg" value={editCoverProlog} onChange={(e) => setEditCoverProlog(e.target.value)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Template (Tema Undangan)
-                    </label>
-                    <select
-                      className="w-full p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={editSelectedTemplate}
-                      onChange={(e) => {
-                        if (!userProfile?.is_premium && e.target.value !== 'free') {
-                          alert('Tema ini khusus untuk pengguna Premium!');
-                          setEditSelectedTemplate('free');
-                        } else {
-                          setEditSelectedTemplate(e.target.value);
-                        }
-                      }}
-                    >
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Template (Tema Undangan)</label>
+                    <select className="w-full p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" value={editSelectedTemplate} onChange={(e) => {
+                      if (!userProfile?.is_premium && e.target.value !== 'free') {
+                        alert('Tema ini khusus untuk pengguna Premium!');
+                        setEditSelectedTemplate('free');
+                      } else {
+                        setEditSelectedTemplate(e.target.value);
+                      }
+                    }}>
                       <option value="free">Minimalist Free (Essential Only)</option>
-                      <option value="default" disabled={!userProfile?.is_premium}>
-                        Elegant Amber {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="pink" disabled={!userProfile?.is_premium}>
-                        Romantic Pink {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="blue" disabled={!userProfile?.is_premium}>
-                        Ocean Blue {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="green" disabled={!userProfile?.is_premium}>
-                        Emerald Green {!userProfile?.is_premium && '🔒'}
-                      </option>
-                      <option value="vibrant" disabled={!userProfile?.is_premium}>
-                        Vibrant Full Color {!userProfile?.is_premium && '🔒'}
-                      </option>
+                      <option value="default" disabled={!userProfile?.is_premium}>Elegant Amber {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="pink" disabled={!userProfile?.is_premium}>Romantic Pink {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="blue" disabled={!userProfile?.is_premium}>Ocean Blue {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="green" disabled={!userProfile?.is_premium}>Emerald Green {!userProfile?.is_premium && '🔒'}</option>
+                      <option value="vibrant" disabled={!userProfile?.is_premium}>Vibrant Full Color {!userProfile?.is_premium && '🔒'}</option>
                     </select>
                   </div>
                   <div className="flex flex-wrap sm:flex-nowrap gap-2">
@@ -1246,32 +1218,21 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-
               {editStep === 3 && (
                 <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 3: Detail Tokoh & Informasi Acara</h3>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nama Acara 1</label>
                     {(editInvitationType === 'pernikahan' || editInvitationType === 'lamaran') ? (
-                      <select 
-                        className="block w-full p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-teal-600" 
-                        value={editEventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : editEventBlockTitle} 
-                        onChange={(e) => setEditEventBlockTitle(e.target.value)}
-                      >
+                      <select className="block w-full p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800" value={editEventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : editEventBlockTitle} onChange={(e) => setEditEventBlockTitle(e.target.value)}>
                         <option value="Akad Nikah">Akad Nikah</option>
                         <option value="Pemberkatan">Pemberkatan</option>
                       </select>
                     ) : (
-                      <input 
-                        type="text" 
-                        className="w-full p-2 border rounded-lg font-bold bg-slate-50 uppercase text-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-600" 
-                        value={editEventBlockTitle === 'Acara Utama' || editEventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${editInvitationType?.toUpperCase()}` : editEventBlockTitle} 
-                        onChange={(e) => setEditEventBlockTitle(e.target.value)} 
-                      />
+                      <input type="text" className="w-full p-2 border rounded-lg font-bold bg-slate-50 uppercase text-slate-700" value={editEventBlockTitle === 'Acara Utama' || editEventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${editInvitationType?.toUpperCase()}` : editEventBlockTitle} onChange={(e) => setEditEventBlockTitle(e.target.value)} />
                     )}
                   </div>
                   <textarea rows={2} placeholder="Prolog Acara" className="w-full p-2 border rounded-lg resize-none" value={editEventProlog} onChange={(e) => setEditEventProlog(e.target.value)} />
-                  
                   {(editInvitationType === 'pernikahan' || editInvitationType === 'lamaran') ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <input type="text" placeholder="Pria" className="w-full p-2 border rounded-lg" value={editGroomName} onChange={(e) => setEditGroomName(e.target.value)} />
@@ -1283,13 +1244,11 @@ export default function UserDashboard() {
                       <textarea rows={2} placeholder="Deskripsi Profil Tokoh" className="w-full p-2 border rounded-lg resize-none" value={editProfileDesc} onChange={(e) => setEditProfileDesc(e.target.value)} />
                     </div>
                   )}
-
                   <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block font-bold text-slate-500 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama) [KUNCI]</label>
                     <input disabled type="file" accept="image/*" className="w-full text-xs cursor-not-allowed text-slate-400" />
                     {editProfileBottomPhotoUrl && <img src={editProfileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border border-slate-300 mt-1 grayscale" />}
                   </div>
-
                   {editInvitationType === 'pernikahan' ? (
                     <div className="space-y-4">
                       <div className="p-3 bg-rose-50/20 border border-rose-100 rounded-xl space-y-2">
@@ -1304,7 +1263,6 @@ export default function UserDashboard() {
                           <iframe width="100%" height="100%" className="border-0" src={`https://maps.google.com/maps?q=${editMapsUrl ? encodeURIComponent(editMapsUrl) : (editLocationAddress ? encodeURIComponent(editLocationAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                         </div>
                       </div>
-
                       <div className="p-3 bg-sky-50/20 border border-sky-100 rounded-xl space-y-2">
                         <span className="font-bold text-sky-800 text-[10px] block uppercase">🎉 Acara 2: Resepsi Pernikahan</span>
                         <input disabled type="datetime-local" className="w-full p-2 border rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editReceptionDate} />
@@ -1331,7 +1289,6 @@ export default function UserDashboard() {
                       </div>
                     </div>
                   )}
-
                   <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-1">
                     <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
                     <button type="button" onClick={() => setEditStep(2)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
@@ -1339,11 +1296,9 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-
               {editStep === 4 && (
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 4: Galeri, Kado, Musik & Custom Blok</h3>
-                  
                   <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">📁 1. Tambah Foto Galeri [KUNCI]</label>
                     <input type="text" placeholder="Prolog Galeri Foto" className="w-full p-2 border rounded-lg bg-white" value={editGalleryProlog} onChange={(e) => setEditGalleryProlog(e.target.value)} />
@@ -1356,19 +1311,16 @@ export default function UserDashboard() {
                       ))}
                     </div>
                   </div>
-
                   <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">🎬 2. Galeri Video Youtube [KUNCI]</label>
                     <input type="text" placeholder="Prolog Video" className="w-full p-2 border rounded-lg bg-white" value={editVideoProlog} onChange={(e) => setEditVideoProlog(e.target.value)} />
                     <input disabled type="url" placeholder="Link Video YouTube" className="w-full p-2 border rounded-lg bg-slate-200 text-slate-500 cursor-not-allowed mt-1" value={editVideoUrl} />
                   </div>
-                  
                   <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">🎵 3. Upload Musik Latar Belakang (.mp3) [KUNCI]</label>
                     <input disabled type="file" accept="audio/mp3,audio/*" className="w-full text-xs cursor-not-allowed text-slate-400" />
                     {editBgMusicUrl && <p className="text-slate-500 text-[10px] font-bold">✓ Musik Latar Terpasang</p>}
                   </div>
-
                   <div className="p-3 border rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-teal-700 block">Kado Digital</span>
                     <input type="text" placeholder="Prolog Kado" className="w-full p-2 border rounded bg-white" value={editGiftProlog} onChange={(e) => setEditGiftProlog(e.target.value)} />
@@ -1381,14 +1333,12 @@ export default function UserDashboard() {
                     ))}
                     <button type="button" onClick={() => setEditGiftAccounts([...editGiftAccounts, {name:'', bank:'', number:''}])} className="text-[10px] text-teal-600 font-bold">+ Rekening</button>
                   </div>
-
                   <div className="p-3 border rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-slate-700 block">Blok Custom</span>
                     <input type="text" placeholder="Judul Custom" className="w-full p-2 border rounded bg-white" value={editCustomTitle} onChange={(e) => setEditCustomTitle(e.target.value)} />
                     <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border rounded bg-white" value={editCustomProlog} onChange={(e) => setEditCustomProlog(e.target.value)} />
                     <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border rounded resize-none bg-white" value={editCustomContent} onChange={(e) => setEditCustomContent(e.target.value)} />
                   </div>
-
                   <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-2 border-t">
                     <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
                     <button type="button" onClick={() => setEditStep(3)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>

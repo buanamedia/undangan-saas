@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -19,44 +18,42 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white text-slate-800 font-sans antialiased">
       
       {/* NAVBAR */}
-<header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-    
-    {/* LOGO TEXT DENGAN GAMBAR KUSTOM */}
-    <div className="flex items-center gap-2">
-      {/* ⚡ Path disesuaikan dengan image_b67935.png: /logo/Logo.png */}
-      <img 
-        src="/logo/Logo.png" 
-        alt="Logo Undangan Digital" 
-        className="w-8 h-8 object-contain shrink-0" 
-      />
-      
-      <div className="flex flex-col leading-none">
-        <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
-          Undangan <span className="text-blue-700">Digital</span>
-        </span>
-        <span className="text-[9px] font-semibold text-slate-400 tracking-wider mt-0.5">
-          by Buanamedia
-        </span>
-      </div>
-    </div>
+      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          
+          {/* LOGO TEXT DENGAN GAMBAR KUSTOM */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+            <img 
+              src="/logo/Logo.png" 
+              alt="Logo Undangan Digital" 
+              className="w-8 h-8 object-contain shrink-0" 
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
+                Undangan <span className="text-blue-700">Digital</span>
+              </span>
+              <span className="text-[9px] font-semibold text-slate-400 tracking-wider mt-0.5">
+                by Buanamedia
+              </span>
+            </div>
+          </div>
 
-    <div className="flex items-center gap-3">
-      <button 
-        onClick={() => router.push('/login')} 
-        className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-      >
-        Masuk
-      </button>
-      <button 
-        onClick={() => router.push('/user')} 
-        className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-      >
-        Buat Undangan
-      </button>
-    </div>
-  </div>
-</header>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.push('/login')} 
+              className="px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              Masuk
+            </button>
+            <button 
+              onClick={() => router.push('/user')} 
+              className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+            >
+              Buat Undangan
+            </button>
+          </div>
+        </div>
+      </header>
 
       {/* HERO SECTION */}
       <section className="relative overflow-hidden bg-linear-to-b from-blue-50/40 via-white to-white py-20 lg:py-32">
@@ -131,12 +128,28 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-slate-100 py-8 bg-white text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 space-y-2">
-          <div className="flex flex-col items-center justify-center gap-0.5">
+        <div className="max-w-7xl mx-auto px-4 space-y-4">
+          
+          {/* MENU NAVIGASI FOOTER */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
+            <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/demo')} className="hover:text-blue-700 transition-colors cursor-pointer">Tema</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors cursor-pointer">refund-policy</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors cursor-pointer">FAQ</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors cursor-pointer">syarat-ketentuan</button>
+            <span className="text-slate-300 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 pt-4">
             <p className="font-bold text-slate-700">Undangan Digital &copy; 2026</p>
             <p className="text-[10px] text-slate-400">by Buanamedia</p>
           </div>
-          <p className="pt-1">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
+          <p className="text-[11px] text-slate-400">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
         </div>
       </footer>
 
