@@ -805,7 +805,7 @@ export default function UserDashboard() {
           <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 text-xs">
             
             <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-              <span className="font-bold text-slate-800 uppercase tracking-wider">📋 Detail Akun Pengguna</span>
+              <span className="font-bold text-slate-800 uppercase tracking-wider">📋 Profil Pengguna</span>
               <button 
                 onClick={() => setShowProfileModal(false)}
                 className="text-slate-400 hover:text-slate-600 font-bold bg-slate-200/60 px-2 py-0.5 rounded-md cursor-pointer text-[10px]"
@@ -844,7 +844,7 @@ export default function UserDashboard() {
                   🔑 {isUpdatingPassword ? 'Mengamankan Server...' : 'Ganti & Reset Password'}
                 </button>
                 <p className="text-[10px] text-center text-slate-400 px-2">
-                  *Perubahan password diproses langsung pada database tanpa tautan konfirmasi email.
+                  *Perubahan password diproses langsung tanpa konfirmasi.
                 </p>
               </div>
             </div>
