@@ -88,7 +88,7 @@ try {
   console.log("Mencoba mengambil data transaksi...");
   const { data: allTransactions, error: txError } = await supabase
     .from('transactions')
-    .select('user_id, amount, status');
+    .select('user_id, amount, status, invoice_id, voucher');
 
   if (txError) {
     console.error("Gagal ambil transaksi:", txError);
@@ -515,15 +515,15 @@ const premiumUsersOnly = usersList.filter(u =>
         ) : '-'}
       </td>
 
-      {/* 4. Nomor Invoice */}
+      {/* 4. Nomor Invoice (Gunakan invoice_id) */}
       <td className="p-3 text-slate-300 font-mono text-[10px]">
-        {matchTx?.invoice_number || '-'}
+        {matchTx?.invoice_id || '-'}
       </td>
       
-      {/* 5. Catatan Akses / Kupon */}
+      {/* 5. Catatan Akses / Kupon (Gunakan voucher) */}
       <td className="p-3 text-center">
         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-          {matchTx?.voucher_code || '-'}
+          {matchTx?.voucher || '-'}
         </span>
       </td>
 
