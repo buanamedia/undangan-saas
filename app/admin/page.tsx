@@ -83,23 +83,24 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false });
       if (allRsvps) setRsvpsList(allRsvps);
 
-      // ⚡ PENAMBAHAN QUERY BARU (HANYA MENAMBAHKAN):
-      // ⚡ GANTI BLOK QUERY TRANSACTIONS ANDA MENJADI SEPERTI INI:
-const { data: allTransactions, error: txError } = await supabase
-  .from('transactions')
-  .select('user_id, amount, status')
-  .ilike('status', 'success'); // 🟢 Membaca 'SUCCESS', 'Success', maupun 'success'
+      // ⚡ QUERY SINKRONISASI TRANSAKSI BARU (DENGAN RE-CHECK TOLERANSI CASING):
+      const { data: allTransactions, error: txError } = await supabase
+        .from('transactions')
+        .select('user_id, amount, status')
+        .ilike('status', 'success'); 
 
-if (txError) {
-  console.error("Error fetching transactions:", txError);
-} else if (allTransactions) {
-  setTransactionsList(allTransactions);
-} catch (error) {
+      if (txError) {
+        console.error("Error fetching transactions:", txError);
+      } else if (allTransactions) {
+        setTransactionsList(allTransactions);
+      }
+
+    } catch (error) {
       console.error('Gagal memuat data admin:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }; // 🟢 SEKARANG STRUKTUR PENUTUP SUDAH SEIMBANG SEMPURNA TANPA ERROR SEMICOLON
 
   useEffect(() => {
     fetchAdminData();
@@ -470,7 +471,6 @@ if (txError) {
                       </tr>
                     ) : (
                       premiumUsersOnly.map((user) => {
-                        // ⚡ PENANGANAN DI DALAM MAP SECARA BERSIH DAN BENAR SINTAKSIS JSX NYA:
                         const matchTx = transactionsList.find((t) => t.user_id === user.id);
                         
                         const displayAmount = matchTx?.amount 
