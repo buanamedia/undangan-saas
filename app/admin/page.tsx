@@ -87,8 +87,8 @@ export default function AdminDashboard() {
 try {
   console.log("Mencoba mengambil data transaksi...");
   const { data: allTransactions, error: txError } = await supabase
-    .from('transactions')
-    .select('user_id, amount, status');
+  .from('transactions')
+  .select('user_id, amount, status, invoice_id, voucher'); // <--- TAMBAHKAN DISINI
 
   if (txError) {
     console.error("Gagal ambil transaksi:", txError);
@@ -486,22 +486,18 @@ const premiumUsersOnly = usersList.filter(u =>
   </tr>
 ) : (
  premiumUsersOnly.map((user) => {
-  // Cari data transaksi yang cocok
   const matchTx = transactionsList.find((t) => 
     String(t.user_id).trim() === String(user.id).trim()
   );
 
   return (
     <tr key={user.id} className="hover:bg-slate-950/30">
-      {/* 1. Nama Pengguna */}
       <td className="p-3 font-semibold text-slate-200">
         {user.full_name || user.username || 'User'}
       </td>
       
-      {/* 2. Email Akun */}
       <td className="p-3 text-slate-400 font-mono">{user.email}</td>
 
-      {/* 3. Nomor WA User */}
       <td className="p-3">
         {user.phone ? (
           <a 
@@ -515,23 +511,22 @@ const premiumUsersOnly = usersList.filter(u =>
         ) : '-'}
       </td>
 
-      {/* 4. Nomor Invoice */}
+      {/* 4. Nomor Invoice (Menggunakan invoice_id sesuai log) */}
       <td className="p-3 text-slate-300 font-mono text-[10px]">
-        {matchTx?.invoice_number || '-'}
+        {matchTx?.invoice_id || '-'}
       </td>
       
-      {/* 5. Catatan Akses / Kupon */}
+      {/* 5. Catatan Akses / Kupon (Menggunakan voucher sesuai log) */}
       <td className="p-3 text-center">
         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-          {matchTx?.voucher_code || '-'}
+          {matchTx?.voucher || '-'}
         </span>
       </td>
 
-      {/* 6. Estimasi Bayar (Total Bayar) */}
+      {/* 6. Estimasi Bayar */}
       <td className="p-3 text-center text-amber-400 font-bold">
         {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
       </td>
-        
     </tr>
   );
 })
