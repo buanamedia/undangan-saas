@@ -189,7 +189,11 @@ if (txError) {
   // ⚡ PERBAIKAN: Masukkan user ke list jika is_premium true ATAU jika dia punya riwayat di transactionsList
 const premiumUsersOnly = usersList.filter(u => 
   u.is_premium === true || 
-  transactionsList.some(t => String(t.user_id).trim().toLowerCase() === String(u.id).trim().toLowerCase())
+  transactionsList.some(t => {
+    const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '');
+    const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
+    return userIdClean === txUserIdClean;
+  })
 );
 
   if (loading) {
@@ -476,7 +480,10 @@ const premiumUsersOnly = usersList.filter(u =>
 ) : (
   premiumUsersOnly.map((user) => {
   // Debug log untuk melihat apa yang sedang diproses oleh sistem Anda
-  const txData = transactionsList.find(t => String(t.user_id).trim() === String(user.id).trim());
+  const txData = transactionsList.find(t => 
+  String(t.user_id).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === 
+  String(user.id).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+);
   
   // Jika txData ditemukan, tampilkan. Jika tidak, tetap tampilkan 100rb.
   // Kita tambahkan pengecekan apakah txData benar-benar ada
