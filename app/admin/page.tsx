@@ -84,16 +84,16 @@ export default function AdminDashboard() {
       if (allRsvps) setRsvpsList(allRsvps);
 
       // ⚡ QUERY SINKRONISASI TRANSAKSI BARU (DENGAN RE-CHECK TOLERANSI CASING):
-      const { data: allTransactions, error: txError } = await supabase
-        .from('transactions')
-        .select('user_id, amount, status')
-        .ilike('status', 'success'); 
+      // ⚡ QUERY SINKRONISASI TRANSAKSI (PASTIKAN MENGAMBIL SEMUA DATA TANPA FILTER STATUS DULU)
+const { data: allTransactions, error: txError } = await supabase
+  .from('transactions')
+  .select('user_id, amount, status'); 
 
-      if (txError) {
-        console.error("Error fetching transactions:", txError);
-      } else if (allTransactions) {
-        setTransactionsList(allTransactions);
-      }
+if (txError) {
+  console.error("Error fetching transactions:", txError);
+} else if (allTransactions) {
+  setTransactionsList(allTransactions);
+}
 
     } catch (error) {
       console.error('Gagal memuat data admin:', error);
@@ -476,14 +476,14 @@ const premiumUsersOnly = usersList.filter(u =>
 ) : (
   premiumUsersOnly.map((user) => {
     // ⚡ PERBAIKAN FINAL: Membersihkan perbandingan string ID agar tidak sensitif terhadap spasi atau huruf besar/kecil
-    const matchTx = transactionsList.find(
-      (t) => String(t.user_id).trim().toLowerCase() === String(user.id).trim().toLowerCase()
-    );
-    
-    // Konversi nilai amount dari database menjadi format rupiah yang valid
-    const displayAmount = matchTx && matchTx.amount
-      ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
-      : 'Rp.100.000';
+const matchTx = transactionsList.find(
+  (t) => String(t.user_id).trim().toLowerCase() === String(user.id).trim().toLowerCase()
+);
+
+// Jika ada transaksi, pakai nominalnya. Jika tidak ada, baru pakai 100rb.
+const displayAmount = matchTx 
+  ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
+  : 'Rp.100.000';
 
     return (
       <tr key={user.id} className="hover:bg-slate-950/30">

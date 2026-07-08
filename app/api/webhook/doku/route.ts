@@ -29,13 +29,11 @@ export async function POST(request: Request) {
 
       console.log(`Mengeksekusi upgrade premium di Supabase untuk User ID: ${targetUserId}`);
 
-      // 2. UPDATE STATUS USER MENJADI PREMIUM PADA TABEL PROFILES
-      const { error: updateError } = await supabaseAdmin
-        .from('profiles')
-        .update({ 
-          is_premium: true
-        })
-        .eq('id', targetUserId); 
+      // 2. UPDATE STATUS USER MENJADI PREMIUM
+const { error: updateError } = await supabaseAdmin
+  .from('profiles')
+  .update({ is_premium: true }) // Pastikan ini jalan!
+  .eq('id', targetUserId); 
 
       if (updateError) {
         console.error("Gagal mengupdate database via Webhook:", updateError.message);
