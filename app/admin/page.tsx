@@ -470,13 +470,15 @@ const premiumUsersOnly = usersList.filter(u =>
               <div className="border border-slate-800 rounded-lg overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold">
-                      <th className="p-3">Nama Pengguna</th>
-                      <th className="p-3">Email Akun</th>
-                      <th className="p-3 text-center">Estimasi Bayar</th>
-                      <th className="p-3 text-right">Catatan Akses / Kupon</th>
-                    </tr>
-                  </thead>
+  <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold text-[10px] uppercase">
+    <th className="p-3">Nama</th>
+    <th className="p-3">Email</th>
+    <th className="p-3">WhatsApp</th>
+    <th className="p-3">No. Invoice</th>
+    <th className="p-3 text-center">Kupon</th>
+    <th className="p-3 text-center">Total Bayar</th>
+      </tr>
+</thead>
                   <tbody className="divide-y divide-slate-800/50">
   {premiumUsersOnly.length === 0 ? (
   <tr>
@@ -484,27 +486,51 @@ const premiumUsersOnly = usersList.filter(u =>
   </tr>
 ) : (
  premiumUsersOnly.map((user) => {
-  // Kita coba temukan transaksi dengan mencari di seluruh isi list
-  const matchTx = transactionsList.find((t) => {
-    // Kita bandingkan apa adanya
-    return String(t.user_id) === String(user.id);
-  });
-
-  // Jika tidak ditemukan, kita akan tampilkan ID yang ada di dalam transaksi 
-  // agar kita tahu kenapa dia tidak mau match
-  const debugInfo = !matchTx && transactionsList.length > 0 
-    ? `(Data ada, tapi ID tidak match dengan: ${transactionsList[0].user_id})` 
-    : "(List Transaksi Kosong)";
-
-  const displayAmount = matchTx?.amount 
-    ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
-    : `Rp.100.000 ${debugInfo}`;
+  // Cari data transaksi yang cocok
+  const matchTx = transactionsList.find((t) => 
+    String(t.user_id).trim() === String(user.id).trim()
+  );
 
   return (
     <tr key={user.id} className="hover:bg-slate-950/30">
-      <td className="p-3 font-semibold text-slate-200">{user.email}</td>
-      <td className="p-3 text-slate-400 font-mono">{user.id}</td>
-      <td className="p-3 text-center text-amber-400 font-bold">{displayAmount}</td>
+      {/* 1. Nama Pengguna */}
+      <td className="p-3 font-semibold text-slate-200">
+        {user.full_name || user.username || 'User'}
+      </td>
+      
+      {/* 2. Email Akun */}
+      <td className="p-3 text-slate-400 font-mono">{user.email}</td>
+      
+      {/* 3. Estimasi Bayar (Total Bayar) */}
+      <td className="p-3 text-center text-amber-400 font-bold">
+        {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
+      </td>
+      
+      {/* 4. Catatan Akses / Kupon */}
+      <td className="p-3 text-center">
+        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
+          {matchTx?.voucher_code || '-'}
+        </span>
+      </td>
+
+      {/* 5. Nomor Invoice */}
+      <td className="p-3 text-slate-300 font-mono text-[10px]">
+        {matchTx?.invoice_number || '-'}
+      </td>
+
+      {/* 6. Nomor WA User */}
+      <td className="p-3">
+        {user.phone ? (
+          <a 
+            href={`https://wa.me/${user.phone.replace(/[^0-9]/g, '')}`} 
+            target="_blank" 
+            rel="noreferrer"
+            className="text-emerald-400 hover:underline text-[10px]"
+          >
+            {user.phone}
+          </a>
+        ) : '-'}
+      </td>
     </tr>
   );
 })
