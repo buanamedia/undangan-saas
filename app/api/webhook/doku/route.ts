@@ -22,28 +22,45 @@ export async function POST(request: Request) {
         return new Response('Invalid Invoice Format', { status: 400 });
       }
 
-      // ⚡ PERBAIKAN LOGIKA: Ekstraksi UUID Supabase secara utuh (menghapus awalan 'INV-' dan akhiran timestamp)
-      // Contoh string: INV-561652b6-b55b-435e-86dc-0f3a3552a0ba-1783485371060
-      const cleanStr = invoiceNumber.replace('INV-', ''); // Menghilangkan 'INV-'
-      const lastDashIndex = cleanStr.lastIndexOf('-'); // Mencari batas timestamp terakhir
-      const targetUserId = cleanStr.substring(0, lastDashIndex); // Mengambil UUID penuh
+      // 1. Ekstraksi UUID Supabase secara utuh
+      const cleanStr = invoiceNumber.replace('INV-', ''); 
+      const lastDashIndex = cleanStr.lastIndexOf('-'); 
+      const targetUserId = cleanStr.substring(0, lastDashIndex); 
 
       console.log(`Mengeksekusi upgrade premium di Supabase untuk User ID: ${targetUserId}`);
 
-      // ⚡ PERBAIKAN KOLOM DATABASE: Mengubah 'is_premium' menjadi true sesuai skema tabel Supabase Anda
-      const { data, error } = await supabaseAdmin
+      // 2. UPDATE STATUS USER MENJADI PREMIUM PADA TABEL PROFILES
+      const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({ 
           is_premium: true
         })
         .eq('id', targetUserId); 
 
-      if (error) {
-        console.error("Gagal mengupdate database via Webhook:", error.message);
-        return new Response(`Database Update Error: ${error.message}`, { status: 500 });
+      if (updateError) {
+        console.error("Gagal mengupdate database via Webhook:", updateError.message);
+        return new Response(`Database Update Error: ${updateError.message}`, { status: 500 });
       }
 
-      console.log(`[SUKSES] User ID ${targetUserId} berhasil diperbarui menjadi PREMIUM (is_premium = true).`);
+      // 3. AMBIL NOMINAL ASLI DARI PAYLOAD TRANSAKSI DOKU
+      const amountPaid = body.order?.amount;
+
+      // 4. MASUKKAN LOG RIWAYAT BARU KE TABEL TRANSACTIONS (SESUAI GAMBAR DATABASE ANDA)
+      const { error: logError } = await supabaseAdmin
+        .from('transactions') 
+        .insert({
+          user_id: targetUserId,
+          invoice_number: invoiceNumber,
+          amount: amountPaid, // Nominal otomatis tercatat (misal: 100000) sesuai data DOKU
+          status: 'SUCCESS',
+          created_at: new Date().toISOString()
+        });
+
+      if (logError) {
+        console.error("Gagal mencatat log transaksi ke tabel admin:", logError.message);
+      }
+
+      console.log(`[SUKSES] User ID ${targetUserId} diperbarui ke PREMIUM & nominal Rp ${amountPaid} tercatat.`);
 
       return new Response('OK', { 
         status: 200,
