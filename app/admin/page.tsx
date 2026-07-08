@@ -50,7 +50,7 @@ export default function AdminDashboard() {
         premiumOrders: premiumCount || 0
       });
 
-      // 2. Ambil Data User Lengkap (⚡ PERBAIKAN: Melakukan sub-query join mengambil nominal sukses terbaru dari tabel transactions)
+      // 2. Ambil Data User Lengkap beserta sub-query transaksi
       const { data: allUsers, error: userError } = await supabase
         .from('profiles')
         .select('id, role, is_premium, created_at, email, username, phone, full_name, transactions(amount, status)')
@@ -82,7 +82,8 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Gagal memuat data admin:', error);
     } finally {
-      loading && setLoading(false);
+      // 👑 PERBAIKAN: Mengembalikan fungsi loading bawaan agar state diset ke false secara mutlak setelah fetch data selesai
+      setLoading(false);
     }
   };
 
@@ -455,14 +456,13 @@ export default function AdminDashboard() {
                       </tr>
                     ) : (
                       premiumUsersOnly.map((user) => {
-                        // ⚡ PERBAIKAN: Mengambil data nominal transaksi secara dinamis dari sub-query array table transactions
                         const latestTransaction = user.transactions && user.transactions.length > 0 
-                          ? user.transactions.find((t: any) => t.status === 'SUCCESS' || t.status === 'SUCCESS') || user.transactions[0]
+                          ? user.transactions.find((t: any) => t.status === 'SUCCESS' || t.status === 'success') || user.transactions[0]
                           : null;
                         
                         const displayAmount = latestTransaction?.amount 
                           ? `Rp.${Number(latestTransaction.amount).toLocaleString('id-ID')}`
-                          : 'Rp.100.000'; // Default jika diaktifkan manual via admin panel tanpa transaksi
+                          : 'Rp.100.000';
 
                         return (
                           <tr key={user.id} className="hover:bg-slate-950/30">
