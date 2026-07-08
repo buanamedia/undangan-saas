@@ -84,14 +84,17 @@ export default function AdminDashboard() {
       if (allRsvps) setRsvpsList(allRsvps);
 
       // ⚡ PENAMBAHAN QUERY BARU (HANYA MENAMBAHKAN):
-      // Mengambil log data pembayaran sukses dari tabel transactions untuk admin
-      const { data: allTransactions } = await supabase
-        .from('transactions')
-        .select('user_id, amount, status')
-        .eq('status', 'SUCCESS');
-      if (allTransactions) setTransactionsList(allTransactions);
+      // ⚡ GANTI BLOK QUERY TRANSACTIONS ANDA MENJADI SEPERTI INI:
+const { data: allTransactions, error: txError } = await supabase
+  .from('transactions')
+  .select('user_id, amount, status')
+  .ilike('status', 'success'); // 🟢 Membaca 'SUCCESS', 'Success', maupun 'success'
 
-    } catch (error) {
+if (txError) {
+  console.error("Error fetching transactions:", txError);
+} else if (allTransactions) {
+  setTransactionsList(allTransactions);
+} catch (error) {
       console.error('Gagal memuat data admin:', error);
     } finally {
       setLoading(false);
