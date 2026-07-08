@@ -75,45 +75,46 @@ export default function PremiumUpgradePage() {
     }
   };
 
-  const handleUpgradeAccount = async () => {
-    setIsProcessing(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/login');
-        return;
-      }
-
-      // ⚡ PERBAIKAN: Menyesuaikan parameter request body untuk integrasi endpoint DOKU Checkout
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderId: `INV-${Date.now()}`, // ID Invoice unik untuk DOKU
-          amount: finalAmount,         // Nominal otomatis berkurang jika voucher aktif
-          customerName: userProfile?.full_name || 'Pembeli',
-          customerEmail: userProfile?.email || session.user.email,
-        }),
-      });
-
-      const data = await response.json();
-
-      // ⚡ PERBAIKAN: Membaca property `data.url` hasil dari parsing respons router DOKU Checkout
-      if (data.success && data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.message || 'Gagal mendapatkan tautan pembayaran.');
-      }
-
-    } catch (err: any) {
-      // ⚡ PERBAIKAN: Mengubah identifikasi pesan eror ke sistem DOKU
-      alert(`Gagal memproses pembayaran DOKU: ${err.message}`);
-    } finally {
-      setIsProcessing(false);
+  // Ganti potongan fungsi handleUpgradeAccount Anda di bagian ini:
+const handleUpgradeAccount = async () => {
+  setIsProcessing(true);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push('/login');
+      return;
     }
-  };
+
+    // ⚡ PERBAIKAN: Menyisipkan ID user Supabase ke dalam invoice number agar webhook tahu pasti akun siapa yang di-upgrade
+    const orderInvoiceId = `INV-${session.user.id}-${Date.now()}`;
+
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderId: orderInvoiceId, 
+        amount: finalAmount,         
+        customerName: userProfile?.full_name || 'Pembeli',
+        customerEmail: userProfile?.email || session.user.email,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success && data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.message || 'Gagal mendapatkan tautan pembayaran.');
+    }
+
+  } catch (err: any) {
+    alert(`Gagal memproses pembayaran DOKU: ${err.message}`);
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   if (loading) {
     return (
