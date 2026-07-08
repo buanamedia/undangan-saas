@@ -186,8 +186,10 @@ export default function AdminDashboard() {
     return parentUserId === selectedUserId;
   });
 
-  const premiumUsersOnly = usersList.filter(u => 
-  u.is_premium || transactionsList.some(t => String(t.user_id).trim().toLowerCase() === String(u.id).trim().toLowerCase())
+  // ⚡ PERBAIKAN: Masukkan user ke list jika is_premium true ATAU jika dia punya riwayat di transactionsList
+const premiumUsersOnly = usersList.filter(u => 
+  u.is_premium === true || 
+  transactionsList.some(t => String(t.user_id).trim().toLowerCase() === String(u.id).trim().toLowerCase())
 );
 
   if (loading) {
