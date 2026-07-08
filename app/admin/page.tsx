@@ -478,31 +478,28 @@ const premiumUsersOnly = usersList.filter(u =>
     <td colSpan={4} className="p-8 text-center text-slate-500 italic">Belum ada pesanan premium terdaftar.</td>
   </tr>
 ) : (
-  premiumUsersOnly.map((user) => {
-  // 1. Ambil ID user dan bersihkan dari SEMUA karakter yang bukan huruf/angka
-  const cleanUserId = String(user.id || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  
-  // 2. Cari transaksi yang ID-nya (setelah dibersihkan) cocok dengan user.id yang sudah bersih
-  const matchTx = transactionsList.find(t => {
-    const cleanTxId = String(t.user_id || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    return cleanTxId === cleanUserId;
+ premiumUsersOnly.map((user) => {
+  // Kita coba temukan transaksi dengan mencari di seluruh isi list
+  const matchTx = transactionsList.find((t) => {
+    // Kita bandingkan apa adanya
+    return String(t.user_id) === String(user.id);
   });
-  
-  // 3. Tampilkan nominal
+
+  // Jika tidak ditemukan, kita akan tampilkan ID yang ada di dalam transaksi 
+  // agar kita tahu kenapa dia tidak mau match
+  const debugInfo = !matchTx && transactionsList.length > 0 
+    ? `(Data ada, tapi ID tidak match dengan: ${transactionsList[0].user_id})` 
+    : "(List Transaksi Kosong)";
+
   const displayAmount = matchTx?.amount 
     ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
-    : 'Rp.100.000';
+    : `Rp.100.000 ${debugInfo}`;
 
   return (
     <tr key={user.id} className="hover:bg-slate-950/30">
-      <td className="p-3 font-semibold text-slate-200">{user.full_name || user.username || '-'}</td>
-      <td className="p-3 text-slate-400 font-mono">{user.email}</td>
+      <td className="p-3 font-semibold text-slate-200">{user.email}</td>
+      <td className="p-3 text-slate-400 font-mono">{user.id}</td>
       <td className="p-3 text-center text-amber-400 font-bold">{displayAmount}</td>
-      <td className="p-3 text-right">
-        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-           {matchTx ? "TERDETEKSI" : "DEFAULT"}
-        </span>
-      </td>
     </tr>
   );
 })
