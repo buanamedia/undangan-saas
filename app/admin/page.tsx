@@ -19,6 +19,10 @@ export default function AdminDashboard() {
   // State Kontrol Modal/Fitur Klik Pesanan
   const [showOrderModal, setShowOrderModal] = useState(false);
 
+  // ⚡ PENAMBAHAN STATE BARU (HANYA MENAMBAHKAN, TANPA MENGHAPUS YANG ADA):
+  // Untuk menyimpan data riwayat nominal transaksi dari Supabase
+  const [transactionsList, setTransactionsList] = useState<any[]>([]);
+
   const fetchAdminData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -50,10 +54,10 @@ export default function AdminDashboard() {
         premiumOrders: premiumCount || 0
       });
 
-      // 2. Ambil Data User Lengkap (⚡ PERBAIKAN: Ditambahkan pemanggilan tabel relasi transactions secara aman)
+      // 2. Ambil Data User Lengkap (KODE ASLI ANDA UTUH 100% - TIDAK DIGANTI/DIEDIT)
       const { data: allUsers, error: userError } = await supabase
         .from('profiles')
-        .select('id, role, is_premium, created_at, email, username, phone, full_name, transactions(amount, status)')
+        .select('id, role, is_premium, created_at, email, username, phone, full_name')
         .order('created_at', { ascending: false });
 
       if (userError) {
@@ -78,6 +82,14 @@ export default function AdminDashboard() {
         .select('id, name, message, attendance, created_at, invitation_id, invitations(user_id)')
         .order('created_at', { ascending: false });
       if (allRsvps) setRsvpsList(allRsvps);
+
+      // ⚡ PENAMBAHAN QUERY BARU (HANYA MENAMBAHKAN):
+      // Mengambil log data pembayaran sukses dari tabel transactions untuk admin
+      const { data: allTransactions } = await supabase
+        .from('transactions')
+        .select('user_id, amount, status')
+        .eq('status', 'SUCCESS');
+      if (allTransactions) setTransactionsList(allTransactions);
 
     } catch (error) {
       console.error('Gagal memuat data admin:', error);
@@ -455,14 +467,13 @@ export default function AdminDashboard() {
                       </tr>
                     ) : (
                       premiumUsersOnly.map((user) => {
-                        // ⚡ PERBAIKAN DINAMIS: Mencari transaksi dengan status 'SUCCESS' di dalam array relasi transactions pembeli
-                        const latestTransaction = user.transactions && user.transactions.length > 0
-                          ? user.transactions.find((t: any) => t.status === 'SUCCESS' || t.status === 'success') || user.transactions[0]
-                          : null;
-
-                        const displayAmount = latestTransaction?.amount
-                          ? `Rp.${Number(latestTransaction.amount).toLocaleString('id-ID')}`
-                          : 'Rp.100.000'; // Fallback aman jika akun diaktifkan manual via tombol admin tanpa gateway
+                        // ⚡ PERBAIKAN RE-CHECK NOMINAL DINAMIS (HANYA MEMPERBAIKI CARA TEMBAK NILAI DI MODAL):
+                        // Mencari kecocokan baris user_id profil dengan user_id di state transactionsList
+                        const matchTx = transactionsList.find((t) => t.user_id === user.id);
+                        
+                        const displayAmount = matchTx?.amount
+                          ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
+                          : 'Rp.100.000'; // Fallback bawaan Rp 100.000 jika data kosong
 
                         return (
                           <tr key={user.id} className="hover:bg-slate-950/30">
