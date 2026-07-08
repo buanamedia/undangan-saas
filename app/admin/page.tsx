@@ -466,33 +466,32 @@ export default function AdminDashboard() {
     <td colSpan={4} className="p-8 text-center text-slate-500 italic">Belum ada pesanan premium terdaftar.</td>
   </tr>
 ) : (
-  premiumUsersOnly.map((user) => {
-    // ⚡ PERBAIKAN: Mencari data nominal dari transactionsList berdasarkan user.id
-    const matchTx = transactionsList.find((t) => t.user_id === user.id);
-    
-    // Jika data di database ada, tampilkan nominal aslinya (misal: 25000)
-    // Jika tidak ada transaksi di DB, baru ia menampilkan Rp.100.000
-    const displayAmount = matchTx?.amount 
-      ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
-      : 'Rp.100.000';
+  {premiumUsersOnly.map((user) => {
+  // ⚡ PERBAIKAN: Cari data transaksi user ini di transactionsList
+  const matchTx = transactionsList.find((t) => t.user_id === user.id);
+  
+  // Jika ada di database, tampilkan nominal aslinya (Misal: Rp.25.000). Jika tidak ada, tampilkan Rp.100.000
+  const displayAmount = matchTx?.amount 
+    ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
+    : 'Rp.100.000';
 
-    return (
-      <tr key={user.id} className="hover:bg-slate-950/30">
-        <td className="p-3 font-semibold text-slate-200">
-          {user.full_name || user.username || <span className="text-slate-600">-</span>}
-        </td>
-        <td className="p-3 text-slate-400 font-mono">{user.email}</td>
-        <td className="p-3 text-center text-amber-400 font-bold">
-          {displayAmount}
-        </td>
-        <td className="p-3 text-right">
-          <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-            LIVE CHECKOUT
-          </span>
-        </td>
-      </tr>
-    );
-  })
+  return (
+    <tr key={user.id} className="hover:bg-slate-950/30">
+      <td className="p-3 font-semibold text-slate-200">
+        {user.full_name || user.username || <span className="text-slate-600">-</span>}
+      </td>
+      <td className="p-3 text-slate-400 font-mono">{user.email}</td>
+      <td className="p-3 text-center text-amber-400 font-bold">
+        {displayAmount} {/* ⚡ SEKARANG NOMINAL MENJADI DINAMIS SESUAI YANG DIBAYAR USER */}
+      </td>
+      <td className="p-3 text-right">
+        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
+          LIVE CHECKOUT
+        </span>
+      </td>
+    </tr>
+  );
+})}
 )}
                   </tbody>
                 </table>
