@@ -83,16 +83,21 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false });
       if (allRsvps) setRsvpsList(allRsvps);
 
-      // ⚡ QUERY SINKRONISASI TRANSAKSI BARU (DENGAN RE-CHECK TOLERANSI CASING):
-      // ⚡ QUERY SINKRONISASI TRANSAKSI (PASTIKAN MENGAMBIL SEMUA DATA TANPA FILTER STATUS DULU)
-const { data: allTransactions, error: txError } = await supabase
-  .from('transactions')
-  .select('user_id, amount, status'); 
+      // ⚡ QUERY SINKRONISASI TRANSAKSI (DEBUG VERSION)
+try {
+  console.log("Mencoba mengambil data transaksi...");
+  const { data: allTransactions, error: txError } = await supabase
+    .from('transactions')
+    .select('user_id, amount, status');
 
-if (txError) {
-  console.error("Error fetching transactions:", txError);
-} else if (allTransactions) {
-  setTransactionsList(allTransactions);
+  if (txError) {
+    console.error("Gagal ambil transaksi:", txError);
+  } else {
+    console.log("Data transaksi berhasil didapat:", allTransactions);
+    setTransactionsList(allTransactions || []);
+  }
+} catch (e) {
+  console.error("Error pada query transaksi:", e);
 }
 
     } catch (error) {
