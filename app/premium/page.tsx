@@ -13,7 +13,7 @@ export default function PremiumUpgradePage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // State tambahan untuk manajemen Voucher & Harga Dinamis
-  const basePrice = 50000; // Harga dasar promo Rp.50.000
+  const basePrice = 100000; // Harga dasar promo Rp.100.000
   const [voucherCode, setVoucherCode] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -84,34 +84,32 @@ export default function PremiumUpgradePage() {
         return;
       }
 
-      // 1. Panggil API Route Checkout iPaymu dengan nominal finalAmount yang dinamis
+      // ⚡ PERBAIKAN: Menyesuaikan parameter request body untuk integrasi endpoint DOKU Checkout
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: finalAmount, // Nominal otomatis berkurang jika voucher aktif
-          productNames: appliedVoucher 
-            ? `Undangan Digital Premium (Voucher: ${appliedVoucher})`
-            : 'Undangan Digital Premium (Akses Unlimited)',
-          buyerName: userProfile?.full_name || 'Pembeli',
-          buyerEmail: userProfile?.email || session.user.email,
-          buyerPhone: userProfile?.phone || '',
+          orderId: `INV-${Date.now()}`, // ID Invoice unik untuk DOKU
+          amount: finalAmount,         // Nominal otomatis berkurang jika voucher aktif
+          customerName: userProfile?.full_name || 'Pembeli',
+          customerEmail: userProfile?.email || session.user.email,
         }),
       });
 
       const data = await response.json();
 
-      // 2. Jika tautan berhasil dibuat, lemparkan user ke gerbang pembayaran iPaymu
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
+      // ⚡ PERBAIKAN: Membaca property `data.url` hasil dari parsing respons router DOKU Checkout
+      if (data.success && data.url) {
+        window.location.href = data.url;
       } else {
-        throw new Error(data.error || 'Gagal mendapatkan tautan pembayaran.');
+        throw new Error(data.message || 'Gagal mendapatkan tautan pembayaran.');
       }
 
     } catch (err: any) {
-      alert(`Gagal memproses pembayaran iPaymu: ${err.message}`);
+      // ⚡ PERBAIKAN: Mengubah identifikasi pesan eror ke sistem DOKU
+      alert(`Gagal memproses pembayaran DOKU: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
@@ -130,7 +128,7 @@ export default function PremiumUpgradePage() {
       <div className="max-w-xl w-full transition-all duration-300">
         
         {/* =======================================================
-            STEP 1: KARTU PRICELIST & BENEFIT (Sesuai image_c5f7a2.png)
+            STEP 1: KARTU PRICELIST & BENEFIT
            ======================================================= */}
         {step === 1 && (
           <div className="bg-white border border-slate-200 shadow-xl rounded-2xl overflow-hidden max-w-md mx-auto text-center animate-in fade-in zoom-in-95 duration-200">
@@ -186,7 +184,7 @@ export default function PremiumUpgradePage() {
         )}
 
         {/* =======================================================
-            STEP 2: KONFIRMASI CHECKOUT & UPGRADE (Sesuai image_c5fb03.png)
+            STEP 2: KONFIRMASI CHECKOUT & UPGRADE
            ======================================================= */}
         {step === 2 && (
           <div className="bg-white border border-slate-200 shadow-xl rounded-2xl p-6 sm:p-8 space-y-6 text-xs animate-in fade-in slide-in-from-bottom-4 duration-200">
@@ -222,7 +220,7 @@ export default function PremiumUpgradePage() {
                 </p>
               </div>
 
-              {/* ⚡ SEKSI INPUT VOUCHER BARU (DENGAN TEMA BIRU) */}
+              {/* SEKSI INPUT VOUCHER */}
               <div className="pt-2 border-t border-slate-100">
                 <div className="flex flex-col gap-1.5">
                   <span className="font-bold text-slate-900">Punya Kode Voucher?</span>
@@ -256,7 +254,7 @@ export default function PremiumUpgradePage() {
                 <div className="flex items-center gap-2">
                   {discountPercent > 0 && (
                     <span className="text-xs line-through text-slate-400 font-medium">
-                      Rp.{(50000).toLocaleString('id-ID')}
+                      Rp.{(100000).toLocaleString('id-ID')}
                     </span>
                   )}
                   <span className="font-black text-slate-900 text-base">
