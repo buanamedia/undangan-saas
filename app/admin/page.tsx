@@ -475,17 +475,18 @@ const premiumUsersOnly = usersList.filter(u =>
   </tr>
 ) : (
   premiumUsersOnly.map((user) => {
-    // ⚡ PERBAIKAN FINAL: Membersihkan perbandingan string ID agar tidak sensitif terhadap spasi atau huruf besar/kecil
-const matchTx = transactionsList.find(
-  (t) => String(t.user_id).trim().toLowerCase() === String(user.id).trim().toLowerCase()
-);
+  // Debug log untuk melihat apa yang sedang diproses oleh sistem Anda
+  const txData = transactionsList.find(t => String(t.user_id).trim() === String(user.id).trim());
+  
+  // Jika txData ditemukan, tampilkan. Jika tidak, tetap tampilkan 100rb.
+  // Kita tambahkan pengecekan apakah txData benar-benar ada
+  const displayAmount = txData?.amount 
+    ? `Rp.${Number(txData.amount).toLocaleString('id-ID')}`
+    : 'Rp.100.000';
 
-// Jika ada transaksi, pakai nominalnya. Jika tidak ada, baru pakai 100rb.
-const displayAmount = matchTx 
-  ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
-  : 'Rp.100.000';
+  console.log("User:", user.email, "MatchTx:", txData, "Display:", displayAmount); // Cek konsol browser F12
 
-    return (
+  return (
       <tr key={user.id} className="hover:bg-slate-950/30">
         <td className="p-3 font-semibold text-slate-200">
           {user.full_name || user.username || <span className="text-slate-600">-</span>}
