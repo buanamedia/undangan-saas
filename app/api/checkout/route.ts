@@ -1,96 +1,72 @@
-export const dynamic = 'force-dynamic'; // Mencegah Vercel meng-cache API Route ini
-
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
+// Fungsi helper pembuat Signature resmi DOKU Checkout
+function generateDokuSignature(clientId: string, requestId: string, timestamp: string, targetPath: string, bodyPayload: string, secretKey: string) {
+  const digest = crypto.createHash('sha256').update(bodyPayload).digest('base64');
+  const rawSignature = 
+    `Client-Id:${clientId}\n` +
+    `Request-Id:${requestId}\n` +
+    `Request-Timestamp:${timestamp}\n` +
+    `Request-Target:${targetPath}\n` +
+    `Digest:${digest}`;
+
+  return crypto.createHmac('sha256', secretKey).update(rawSignature).digest('base64');
+}
+
 export async function POST(request: Request) {
   try {
-    const { amount, productNames, buyerName, buyerEmail, buyerPhone } = await request.json();
+    const { orderId, amount, customerName, customerEmail } = await request.json();
 
-    const va = process.env.IPAYMU_VA;
-    const apiKey = process.env.IPAYMU_API_KEY;
-    const url = process.env.IPAYMU_URL || 'https://my.ipaymu.com/api/v2/payment';
-
-    if (!va || !apiKey) {
-      return NextResponse.json(
-        { error: 'Kredensial iPaymu (VA / API Key) belum terpasang di Environment Variables Vercel.' },
-        { status: 500 }
-      );
-    }
-
-    // 1. ⚡ PERBAIKAN VALIDASI NAMA PEMBELI (iPaymu mewajibkan minimal 3 karakter)
-    let cleanedName = buyerName ? buyerName.trim() : '';
-    if (cleanedName.length < 3) {
-      cleanedName = 'Pelanggan Premium'; // Pastikan fallback memiliki panjang minimal 3 karakter yang valid
-    }
-
-    // 2. Validasi & Pembersihan Email
-    const cleanedEmail = buyerEmail ? buyerEmail.trim() : '';
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!cleanedEmail || !emailRegex.test(cleanedEmail)) {
-      return NextResponse.json(
-        { error: `Format email pembeli tidak valid (${buyerEmail || 'Kosong'}). Silakan perbarui profil akun Anda.` },
-        { status: 400 }
-      );
-    }
-
-    // 3. Validasi & Pembersihan Nomor Telepon
-    let cleanedPhone = buyerPhone ? buyerPhone.replace(/[^0-9]/g, '') : '';
-    if (cleanedPhone.startsWith('0')) {
-      cleanedPhone = '62' + cleanedPhone.slice(1);
-    }
-    if (cleanedPhone.length < 9) {
-      cleanedPhone = '6281234567890';
-    }
-
-    // 4. Siapkan data body persis seperti standarisasi iPaymu API v2
-    const body = {
-      product: [productNames || 'Paket Premium Undangan'],
-      qty: ['1'],
-      price: [amount.toString()],
-      returnUrl: 'https://undig.buanamedia.my.id/user',
-      cancelUrl: 'https://undig.buanamedia.my.id/premium',
-      notifyUrl: 'https://undig.buanamedia.my.id/api/callback-ipaymu',
-      name: cleanedName, // Menggunakan nama yang sudah dipastikan minimal 3 karakter
-      email: cleanedEmail,
-      phone: cleanedPhone,
-    };
-
-    const jsonBody = JSON.stringify(body);
+    const clientId = process.env.DOKU_CLIENT_ID!;
+    const secretKey = process.env.DOKU_SECRET_KEY!;
+    const isProd = process.env.DOKU_IS_PRODUCTION === 'true';
     
-    // 5. Format enkripsi Signature SHA256 murni standar iPaymu (Bukan HMAC)
-    const bodyHash = crypto.createHash('sha256').update(jsonBody).digest('hex').toLowerCase();
+    const baseUrl = isProd ? 'https://api.doku.com' : 'https://api-sandbox.doku.com';
+    const targetPath = '/checkout/v1/payment';
     
-    // Format rumus gabungan: va + ":" + bodyHash + ":" + apiKey
-    const stringToSign = `${va}:${bodyHash}:${apiKey}`;
-    
-    // Hasil akhir signature dalam bentuk string lowercase
-    const signature = crypto.createHash('sha256').update(stringToSign).digest('hex').toLowerCase();
+    const timestamp = new Date().toISOString().slice(0, 19) + 'Z';
+    const requestId = `REQ-${orderId}-${Date.now()}`;
 
-    // 6. Kirim request transaksi ke Server iPaymu
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'va': String(va),
-        'signature': String(signature),
+    // Pemetaan data ke struktur JSON DOKU Checkout
+    const bodyPayload = JSON.stringify({
+      order: {
+        invoice_number: orderId,
+        amount: amount,
+        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/user`, // Mengarahkan kembali ke dashboard /user setelah bayar sukses
       },
-      body: jsonBody,
+      customer: {
+        name: customerName,
+        email: customerEmail,
+      },
+      payment: {
+        payment_due_date: 60, // Batas waktu bayar (menit)
+      }
     });
 
-    const result = await response.json();
+    const signature = generateDokuSignature(clientId, requestId, timestamp, targetPath, bodyPayload, secretKey);
 
-    // Jika iPaymu sukses membuatkan tautan sesi transaksi
-    if (result && result.status === 200) {
-      return NextResponse.json({ paymentUrl: result.data.url });
+    const response = await fetch(`${baseUrl}${targetPath}`, {
+      method: 'POST',
+      headers: {
+        'Client-Id': clientId,
+        'Request-Id': requestId,
+        'Request-Timestamp': timestamp,
+        'Signature': `HMACSHA256=${signature}`,
+        'Content-Type': 'application/json',
+      },
+      body: bodyPayload,
+    });
+
+    const data = await response.json();
+
+    // Mengambil payment URL untuk di-redirect di sisi frontend
+    if (data.response?.payment?.url) {
+      return NextResponse.json({ success: true, url: data.response.payment.url });
     } else {
-      return NextResponse.json(
-        { error: result?.message || 'Ditolak atau gagal dari sistem iPaymu' }, 
-        { status: response.status }
-      );
+      return NextResponse.json({ success: false, message: 'Gagal mendapatkan link pembayaran dari DOKU' }, { status: 400 });
     }
-
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Gagal internal server' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
