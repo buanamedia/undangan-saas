@@ -53,10 +53,10 @@ export async function POST(request: Request) {
       const { error: logError } = await supabaseAdmin
         .from('transactions') 
         .insert({
-          user_id: targetUserId,
+          user_id: targetUserId,          // 🟢 PERBAIKAN: Gunakan targetUserId (ID Murni), bukan invoiceNumber!
           invoice_number: numericInvoice, 
           amount: amountPaid,             
-          status: 'SUCCESS', // Pastikan tetap kapital besar agar sinkron dengan .eq('status', 'SUCCESS') di fetch data admin Anda
+          status: 'SUCCESS',
           created_at: new Date().toISOString()
         });
 
