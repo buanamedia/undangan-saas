@@ -7,48 +7,42 @@ export async function POST(request: Request) {
     
     // ⚡ PEMETAAN DATA PAYLOAD JOKUL DOKU V2
     const invoiceNumber = body.order?.invoice_number;
-    // DOKU melampirkan status akhir sukses pada field body.transaction.status atau body.transaction_status
     const transactionStatus = body.transaction?.status || body.transaction_status;
+    const customerEmail = body.customer?.email;
 
-    console.log(`Menerima notifikasi webhook DOKU untuk invoice: ${invoiceNumber} dengan status: ${transactionStatus}`);
+    console.log(`Menerima webhook DOKU untuk invoice: ${invoiceNumber} | Email: ${customerEmail} | Status: ${transactionStatus}`);
 
-    // Pastikan status transaksi mutlak bernilai "SUCCESS"
+    // Pastikan status transaksi mutlak bernilai SUCCESS
     if (transactionStatus === 'SUCCESS' || transactionStatus === 'success') {
       
-      // ⚡ INISIALISASI SUPABASE CLIENT DENGAN SERVICE ROLE KEY UNTUK BYPASS ROW LEVEL SECURITY (RLS)
+      // 1. INISIALISASI SUPABASE CLIENT DENGAN SERVICE ROLE KEY (BYPASS RLS)
       const supabaseAdmin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
 
-      // Skenario A: Jika database Anda menyimpan ID atau email pembeli langsung pada invoiceNumber (misal: REQ-[USER_ID]-[TIME])
-      // Kita pecah string orderId yang dikirim dari frontend premium tadi
-      let targetUserId = "";
-      if (invoiceNumber && invoiceNumber.includes('-')) {
-        // Jika format invoice number mengandung ID unik profile, silakan sesuaikan pemotongannya di sini
-        // Contoh di kode premium kita sebelumnya: `INV-${Date.now()}`
+      if (!customerEmail) {
+        console.error("Gagal memproses webhook: Email pelanggan tidak ditemukan pada payload DOKU.");
+        return new Response('Missing Customer Email', { status: 400 });
       }
 
-      // Skenario B: Melakukan update level akun user langsung ke tabel profiles menggunakan email / kriteria pembeli
-      // Silakan buka komentar (uncomment) dan sesuaikan field nama tabel Anda di bawah ini:
-      /*
+      // 2. EKSEKUSI UPDATE DATABASE (AKTIF TANPA KOMENTAR)
       const { data, error } = await supabaseAdmin
         .from('profiles')
         .update({ 
-          account_level: 'PREMIUM', // Nama field level akun Anda (PREMIUM / VIP / dll)
+          account_level: 'PREMIUM', // Memperbarui kolom status akun Anda menjadi PREMIUM
           updated_at: new Date().toISOString()
         })
-        .eq('email', body.customer?.email); // Mencocokkan berdasarkan email yang dikirim DOKU
+        .eq('email', customerEmail); // Mencocokkan data baris profil berdasarkan email login user
 
       if (error) {
         console.error("Gagal mengupdate profile user di Supabase:", error.message);
         return new Response('Database Update Error', { status: 500 });
       }
-      */
 
-      console.log(`[SUKSES Webhook] Database Supabase berhasil diperbarui ke Premium untuk Invoice: ${invoiceNumber}`);
+      console.log(`[SUKSES] Akun dengan email ${customerEmail} berhasil diperbarui ke Premium.`);
 
-      // DOKU mutlak mewajibkan balasan string teks murni "OK" dengan status HTTP 200 agar sistem mereka berhenti mengirim callback ganda
+      // Balasan teks murni wajib untuk DOKU
       return new Response('OK', { 
         status: 200,
         headers: { 'Content-Type': 'text/plain' }
