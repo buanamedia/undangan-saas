@@ -186,7 +186,9 @@ export default function AdminDashboard() {
     return parentUserId === selectedUserId;
   });
 
-  const premiumUsersOnly = usersList.filter(u => u.is_premium);
+  const premiumUsersOnly = usersList.filter(u => 
+  u.is_premium || transactionsList.some(t => String(t.user_id).trim().toLowerCase() === String(u.id).trim().toLowerCase())
+);
 
   if (loading) {
     return (
