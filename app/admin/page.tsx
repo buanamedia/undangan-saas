@@ -478,33 +478,19 @@ const premiumUsersOnly = usersList.filter(u =>
     <td colSpan={4} className="p-8 text-center text-slate-500 italic">Belum ada pesanan premium terdaftar.</td>
   </tr>
 ) : (
-  premiumUsersOnly.map((user) => {
-  // 1. Ambil ID user dan bersihkan dari SEMUA karakter yang bukan huruf/angka
-  const cleanUserId = String(user.id || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  
-  // 2. Cari transaksi yang ID-nya (setelah dibersihkan) cocok dengan user.id yang sudah bersih
-  const matchTx = transactionsList.find(t => {
-    const cleanTxId = String(t.user_id || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    return cleanTxId === cleanUserId;
-  });
-  
-  // 3. Tampilkan nominal
-  const displayAmount = matchTx?.amount 
-    ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
-    : 'Rp.100.000';
+ // 1. TAMBAHKAN INI SEBELUM .map
+console.log("ISI TRANSACTIONS LIST:", transactionsList);
 
-  return (
-    <tr key={user.id} className="hover:bg-slate-950/30">
-      <td className="p-3 font-semibold text-slate-200">{user.full_name || user.username || '-'}</td>
-      <td className="p-3 text-slate-400 font-mono">{user.email}</td>
-      <td className="p-3 text-center text-amber-400 font-bold">{displayAmount}</td>
-      <td className="p-3 text-right">
-        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-           {matchTx ? "TERDETEKSI" : "DEFAULT"}
-        </span>
-      </td>
-    </tr>
-  );
+const premiumUsersOnly = usersList.filter(u => {
+  const isPremium = u.is_premium === true;
+  const hasTx = transactionsList.some(t => {
+    // Kita log apa yang dibandingkan
+    const tId = String(t.user_id).trim();
+    const uId = String(u.id).trim();
+    return tId === uId;
+  });
+  return isPremium || hasTx;
+});
 })
 )}
 </tbody>
