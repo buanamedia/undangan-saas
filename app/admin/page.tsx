@@ -50,10 +50,10 @@ export default function AdminDashboard() {
         premiumOrders: premiumCount || 0
       });
 
-      // 2. Ambil Data User Lengkap beserta sub-query transaksi
+      // 2. Ambil Data User Lengkap (Termasuk Username & Nomor WhatsApp)
       const { data: allUsers, error: userError } = await supabase
         .from('profiles')
-        .select('id, role, is_premium, created_at, email, username, phone, full_name, transactions(amount, status)')
+        .select('id, role, is_premium, created_at, email, username, phone, full_name')
         .order('created_at', { ascending: false });
 
       if (userError) {
@@ -122,7 +122,7 @@ export default function AdminDashboard() {
     if (!userId) return;
     
     const newPassword = prompt(`Masukkan Password Baru untuk Akun (${email || 'User'}):`, 'buanamedia123');
-    if (newPassword === null) return; 
+    if (newPassword === null) return; // Batal klik cancel
     
     if (newPassword.trim().length < 6) {
       return alert('🚨 Gagal: Password baru minimal harus berisi 6 karakter!');
@@ -164,7 +164,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // 👑 KODE YANG TADI TERHAPUS (SUDAH DIKEMBALIKAN UTUH):
   const filteredInvitations = invitationsList.filter(inv => inv.user_id === selectedUserId);
   const filteredRsvps = rsvpsList.filter(rsvp => {
     const parentUserId = (rsvp.invitations as any)?.user_id || rsvp.user_id;
@@ -305,9 +304,11 @@ export default function AdminDashboard() {
                           {user.is_premium ? '🔒 Free' : '👑 Premium'}
                         </button>
                         
+                        {/* AKSI BARU: RESET PASSWORD SECARA INSTAN */}
                         <button 
                           onClick={() => handleResetPasswordInstan(user.id, user.email)}
                           className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                          title="Ganti password langsung dari admin"
                         >
                           🔄 Reset Pass
                         </button>
@@ -453,32 +454,22 @@ export default function AdminDashboard() {
                         <td colSpan={4} className="p-8 text-center text-slate-500 italic">Belum ada pesanan premium terdaftar.</td>
                       </tr>
                     ) : (
-                      premiumUsersOnly.map((user) => {
-                        const latestTransaction = user.transactions && user.transactions.length > 0 
-                          ? user.transactions.find((t: any) => t.status === 'SUCCESS' || t.status === 'success') || user.transactions[0]
-                          : null;
-                        
-                        const displayAmount = latestTransaction?.amount 
-                          ? `Rp.${Number(latestTransaction.amount).toLocaleString('id-ID')}`
-                          : 'Rp.100.000';
-
-                        return (
-                          <tr key={user.id} className="hover:bg-slate-950/30">
-                            <td className="p-3 font-semibold text-slate-200">
-                              {user.full_name || user.username || <span className="text-slate-600">-</span>}
-                            </td>
-                            <td className="p-3 text-slate-400 font-mono">{user.email}</td>
-                            <td className="p-3 text-center text-amber-400 font-bold">
-                              {displayAmount}
-                            </td>
-                            <td className="p-3 text-right">
-                              <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-                                LIVE CHECKOUT
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })
+                      premiumUsersOnly.map((user) => (
+                        <tr key={user.id} className="hover:bg-slate-950/30">
+                          <td className="p-3 font-semibold text-slate-200">
+                            {user.full_name || user.username || <span className="text-slate-600">-</span>}
+                          </td>
+                          <td className="p-3 text-slate-400 font-mono">{user.email}</td>
+                          <td className="p-3 text-center text-amber-400 font-bold">
+                            Rp.50.000
+                          </td>
+                          <td className="p-3 text-right">
+                            <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
+                              LIVE CHECKOUT
+                            </span>
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
