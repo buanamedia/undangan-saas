@@ -17,32 +17,33 @@ export async function POST(request: Request) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
 
-      // ⚡ PERBAIKAN: Mengambil User ID dari pemotongan string invoiceNumber
-      if (!invoiceNumber || !invoiceNumber.includes('-')) {
-        console.error("Format invoice tidak valid untuk ekstraksi ID.");
+      if (!invoiceNumber || !invoiceNumber.startsWith('INV-')) {
+        console.error("Format invoice tidak valid.");
         return new Response('Invalid Invoice Format', { status: 400 });
       }
 
-      const parts = invoiceNumber.split('-');
-      const targetUserId = parts[1]; // Mengambil [USER_ID] dari struktur string
+      // ⚡ PERBAIKAN LOGIKA: Ekstraksi UUID Supabase secara utuh (menghapus awalan 'INV-' dan akhiran timestamp)
+      // Contoh string: INV-561652b6-b55b-435e-86dc-0f3a3552a0ba-1783485371060
+      const cleanStr = invoiceNumber.replace('INV-', ''); // Menghilangkan 'INV-'
+      const lastDashIndex = cleanStr.lastIndexOf('-'); // Mencari batas timestamp terakhir
+      const targetUserId = cleanStr.substring(0, lastDashIndex); // Mengambil UUID penuh
 
       console.log(`Mengeksekusi upgrade premium di Supabase untuk User ID: ${targetUserId}`);
 
-      // ⚡ EKSEKUSI DATABASE: Mengubah level akun langsung tepat sasaran pada ID pengguna
+      // ⚡ PERBAIKAN KOLOM DATABASE: Mengubah 'is_premium' menjadi true sesuai skema tabel Supabase Anda
       const { data, error } = await supabaseAdmin
         .from('profiles')
         .update({ 
-          account_level: 'PREMIUM', 
-          updated_at: new Date().toISOString()
+          is_premium: true
         })
-        .eq('id', targetUserId); // Pencocokan primary-key 'id' tabel profiles
+        .eq('id', targetUserId); 
 
       if (error) {
         console.error("Gagal mengupdate database via Webhook:", error.message);
-        return new Response('Database Update Error', { status: 500 });
+        return new Response(`Database Update Error: ${error.message}`, { status: 500 });
       }
 
-      console.log(`[SUKSES] User ID ${targetUserId} berhasil bermutasi menjadi paket PREMIUM.`);
+      console.log(`[SUKSES] User ID ${targetUserId} berhasil diperbarui menjadi PREMIUM (is_premium = true).`);
 
       return new Response('OK', { 
         status: 200,
