@@ -500,25 +500,8 @@ const premiumUsersOnly = usersList.filter(u =>
       
       {/* 2. Email Akun */}
       <td className="p-3 text-slate-400 font-mono">{user.email}</td>
-      
-      {/* 3. Estimasi Bayar (Total Bayar) */}
-      <td className="p-3 text-center text-amber-400 font-bold">
-        {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
-      </td>
-      
-      {/* 4. Catatan Akses / Kupon */}
-      <td className="p-3 text-center">
-        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-          {matchTx?.voucher_code || '-'}
-        </span>
-      </td>
 
-      {/* 5. Nomor Invoice */}
-      <td className="p-3 text-slate-300 font-mono text-[10px]">
-        {matchTx?.invoice_number || '-'}
-      </td>
-
-      {/* 6. Nomor WA User */}
+      {/* 3. Nomor WA User */}
       <td className="p-3">
         {user.phone ? (
           <a 
@@ -531,6 +514,24 @@ const premiumUsersOnly = usersList.filter(u =>
           </a>
         ) : '-'}
       </td>
+
+      {/* 4. Nomor Invoice */}
+      <td className="p-3 text-slate-300 font-mono text-[10px]">
+        {matchTx?.invoice_number || '-'}
+      </td>
+      
+      {/* 5. Catatan Akses / Kupon */}
+      <td className="p-3 text-center">
+        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
+          {matchTx?.voucher_code || '-'}
+        </span>
+      </td>
+
+      {/* 6. Estimasi Bayar (Total Bayar) */}
+      <td className="p-3 text-center text-amber-400 font-bold">
+        {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
+      </td>
+        
     </tr>
   );
 })
