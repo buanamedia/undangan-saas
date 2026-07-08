@@ -42,16 +42,20 @@ export async function POST(request: Request) {
         return new Response(`Database Update Error: ${updateError.message}`, { status: 500 });
       }
 
-      // 3. AMBIL NOMINAL ASLI DARI PAYLOAD TRANSAKSI DOKU
-      const amountPaid = body.order?.amount;
+      // 3. AMBIL NOMINAL DAN CONVERT KE ANGKA AMAN
+      const amountPaid = Number(body.order?.amount);
 
-      // 4. MASUKKAN LOG RIWAYAT BARU KE TABEL TRANSACTIONS (SESUAI GAMBAR DATABASE ANDA)
+      // Ambil angka timestamp di paling belakang invoice untuk disimpan ke kolom invoice_number yang bertipe bigint
+      const invoiceParts = invoiceNumber.split('-');
+      const numericInvoice = Number(invoiceParts[invoiceParts.length - 1]); // Mengambil angka timestamp murni (misal: 1783485371060)
+
+      // 4. MASUKKAN LOG RIWAYAT BARU KE TABEL TRANSACTIONS 
       const { error: logError } = await supabaseAdmin
         .from('transactions') 
         .insert({
           user_id: targetUserId,
-          invoice_number: invoiceNumber,
-          amount: amountPaid, // Nominal otomatis tercatat (misal: 100000) sesuai data DOKU
+          invoice_number: numericInvoice, // Menggunakan angka murni agar tidak memicu eror syntax bigint
+          amount: amountPaid,             // Nominal angka asli (misal: 25000)
           status: 'SUCCESS',
           created_at: new Date().toISOString()
         });
