@@ -478,38 +478,36 @@ const premiumUsersOnly = usersList.filter(u =>
     <td colSpan={4} className="p-8 text-center text-slate-500 italic">Belum ada pesanan premium terdaftar.</td>
   </tr>
 ) : (
-  premiumUsersOnly.map((user) => {
-  // Debug log untuk melihat apa yang sedang diproses oleh sistem Anda
-  const txData = transactionsList.find(t => 
-  String(t.user_id).replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === 
-  String(user.id).replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
-);
+  // GANTI BLOK MAP INI DI BAWAH:
+premiumUsersOnly.map((user) => {
+  // 1. Ambil transaksi yang user_id-nya paling mirip dengan user.id
+  const matchTx = transactionsList.find(t => {
+    const tId = String(t.user_id).trim();
+    const uId = String(user.id).trim();
+    
+    // Log ini akan muncul di Console Browser (F12 -> Tab Console)
+    console.log(`Membandingkan: Transaksi[${tId}] vs User[${uId}] -> Cocok: ${tId === uId}`);
+    
+    return tId === uId;
+  });
   
-  // Jika txData ditemukan, tampilkan. Jika tidak, tetap tampilkan 100rb.
-  // Kita tambahkan pengecekan apakah txData benar-benar ada
-  const displayAmount = txData?.amount 
-    ? `Rp.${Number(txData.amount).toLocaleString('id-ID')}`
-    : 'Rp.100.000';
-
-  console.log("User:", user.email, "MatchTx:", txData, "Display:", displayAmount); // Cek konsol browser F12
+  const displayAmount = matchTx 
+    ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}`
+    : 'Rp.100.000 (Data Transaksi Tidak Ditemukan)';
 
   return (
-      <tr key={user.id} className="hover:bg-slate-950/30">
-        <td className="p-3 font-semibold text-slate-200">
-          {user.full_name || user.username || <span className="text-slate-600">-</span>}
-        </td>
-        <td className="p-3 text-slate-400 font-mono">{user.email}</td>
-        <td className="p-3 text-center text-amber-400 font-bold">
-          {displayAmount}
-        </td>
-        <td className="p-3 text-right">
-          <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-            LIVE CHECKOUT
-          </span>
-        </td>
-      </tr>
-    );
-  })
+    <tr key={user.id} className="hover:bg-slate-950/30">
+      <td className="p-3 font-semibold text-slate-200">{user.full_name || user.username || '-'}</td>
+      <td className="p-3 text-slate-400 font-mono">{user.email}</td>
+      <td className="p-3 text-center text-amber-400 font-bold">{displayAmount}</td>
+      <td className="p-3 text-right">
+        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold">
+          {matchTx ? "TERDETEKSI" : "TIDAK COCOK"}
+        </span>
+      </td>
+    </tr>
+  );
+})
 )}
 </tbody>
                 </table>
