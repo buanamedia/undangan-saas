@@ -82,7 +82,6 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Gagal memuat data admin:', error);
     } finally {
-      // 👑 PERBAIKAN: Mengembalikan fungsi loading bawaan agar state diset ke false secara mutlak setelah fetch data selesai
       setLoading(false);
     }
   };
@@ -123,7 +122,7 @@ export default function AdminDashboard() {
     if (!userId) return;
     
     const newPassword = prompt(`Masukkan Password Baru untuk Akun (${email || 'User'}):`, 'buanamedia123');
-    if (newPassword === null) return; // Batal klik cancel
+    if (newPassword === null) return; 
     
     if (newPassword.trim().length < 6) {
       return alert('🚨 Gagal: Password baru minimal harus berisi 6 karakter!');
@@ -165,6 +164,7 @@ export default function AdminDashboard() {
     }
   };
 
+  // 👑 KODE YANG TADI TERHAPUS (SUDAH DIKEMBALIKAN UTUH):
   const filteredInvitations = invitationsList.filter(inv => inv.user_id === selectedUserId);
   const filteredRsvps = rsvpsList.filter(rsvp => {
     const parentUserId = (rsvp.invitations as any)?.user_id || rsvp.user_id;
@@ -305,11 +305,9 @@ export default function AdminDashboard() {
                           {user.is_premium ? '🔒 Free' : '👑 Premium'}
                         </button>
                         
-                        {/* AKSI BARU: RESET PASSWORD SECARA INSTAN */}
                         <button 
                           onClick={() => handleResetPasswordInstan(user.id, user.email)}
                           className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
-                          title="Ganti password langsung dari admin"
                         >
                           🔄 Reset Pass
                         </button>
