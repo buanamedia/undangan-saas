@@ -54,9 +54,9 @@ export async function POST(request: Request) {
         .from('transactions') 
         .insert({
           user_id: targetUserId,
-          invoice_number: numericInvoice, // Menggunakan angka murni agar tidak memicu eror syntax bigint
-          amount: amountPaid,             // Nominal angka asli (misal: 25000)
-          status: 'SUCCESS',
+          invoice_number: numericInvoice, 
+          amount: amountPaid,             
+          status: 'SUCCESS', // Pastikan tetap kapital besar agar sinkron dengan .eq('status', 'SUCCESS') di fetch data admin Anda
           created_at: new Date().toISOString()
         });
 
