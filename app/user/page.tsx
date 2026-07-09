@@ -599,7 +599,7 @@ export default function UserDashboard() {
               onClick={() => router.push('/premium')} 
               className="px-[18px] py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
             >
-              Upgrade Paket
+              Upgrade
             </button>
             <button 
               onClick={handleLogout}
@@ -639,7 +639,7 @@ export default function UserDashboard() {
               onClick={() => { resetForm(); setIsCreateModalOpen(true); }}
               className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap"
             >
-              + Buat Undangan
+              + Undangan
             </button>
             <button 
               onClick={() => router.push('/demo')}
