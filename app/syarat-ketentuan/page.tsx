@@ -1,9 +1,29 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function TermsPage() {
   const router = useRouter();
+  const supabase = createClient();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsLoggedIn(!!session);
+      } catch (error) {
+        console.error('Error checking auth session:', error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkSession();
+  }, [supabase]);
 
   return (
     <div className="min-h-screen bg-white text-slate-800 font-sans antialiased flex flex-col justify-between">
@@ -29,14 +49,33 @@ export default function TermsPage() {
             </div>
           </div>
 
-          {/* ⚡ PERBAIKAN: Tombol atas kanan diselaraskan menjadi satu tombol Dashboard yang selaras */}
+          {/* ⚡ PERBAIKAN DINAMIS: Tombol atas kanan menyesuaikan status login dengan skema warna konsisten */}
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => router.push('/user')} 
-              className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-            >
-              Dashboard
-            </button>
+            {checkingAuth ? (
+              <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />
+            ) : isLoggedIn ? (
+              <button 
+                onClick={() => router.push('/user')} 
+                className="px-[18px] py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
+              >
+                Dashboard
+              </button>
+            ) : (
+              <>
+                <button 
+                  onClick={() => router.push('/login')} 
+                  className="px-[18px] py-2.5 bg-[#2d3d51] hover:bg-[#23303f] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs tracking-wide"
+                >
+                  Masuk
+                </button>
+                <button 
+                  onClick={() => router.push('/register')} 
+                  className="px-[18px] py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
+                >
+                  Daftar
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -53,7 +92,7 @@ export default function TermsPage() {
           <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
             <section className="space-y-2">
               <h2 className="text-base font-bold text-slate-900">1. Penerimaan Syarat</h2>
-              <p>Dengan mengakses dan menggunakan layanan Undangan Digital by Buanamedia, Anda dinyatakan setuju untuk terikat dengan syarat dan ketentuan yang berlaku di bawah ini.</p>
+              <p>Dengan accessing dan menggunakan layanan Undangan Digital by Buanamedia, Anda dinyatakan setuju untuk terikat dengan syarat dan ketentuan yang berlaku di bawah ini.</p>
             </section>
 
             <section className="space-y-2">

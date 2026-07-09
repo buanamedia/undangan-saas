@@ -593,16 +593,17 @@ export default function UserDashboard() {
             </div>
           </div>
 
+          {/* ⚡ PERBAIKAN: Tombol atas kanan disesuaikan ukuran, warna, dan posisinya agar 100% sama dengan halaman tentang-kami */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => router.push('/premium')} 
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              className="px-[18px] py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
             >
               Upgrade Paket
             </button>
             <button 
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+              className="px-[18px] py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
             >
               Keluar
             </button>
@@ -847,7 +848,7 @@ export default function UserDashboard() {
           </div>
 
           <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 pt-4">
-            <p className="font-bold text-slate-700">Undangan Digital &copy; 2026</p>
+            <p className="font-bold text-slate-700">Undangan Digital © 2026</p>
             <p className="text-[10px] text-slate-400">by Buanamedia</p>
           </div>
           <p className="text-[11px] text-slate-400">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
@@ -1116,8 +1117,8 @@ export default function UserDashboard() {
                     <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border rounded bg-white" value={customProlog} onChange={(e) => setCustomProlog(e.target.value)} />
                     <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border rounded resize-none bg-white" value={customContent} onChange={(e) => setCustomContent(e.target.value)} />
                   </div>
-                  <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
+                  <div className="flex gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                     <button type="button" onClick={() => setCurrentStep(3)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
                     <button type="submit" disabled={formLoading || uploadingImage || uploadingMusic} className="flex-1 py-2 bg-sky-600 disabled:bg-slate-400 text-white rounded-lg font-bold flex items-center justify-center gap-1 cursor-pointer">🚀 Terbitkan</button>
                   </div>
@@ -1149,7 +1150,7 @@ export default function UserDashboard() {
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 1</h3>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Tipe Undangan (Terkunci)</label>
-                    <select disabled className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed font-medium text-slate-500" value={editInvitationType} onChange={(e) => setEditInvitationType(e.target.value)}>
+                    <select disabled className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed font-medium text-slate-500" value={editInvitationType}>
                       <option value="">- Pilih Tipe -</option>
                       <option value="akikah">Akikah</option>
                       <option value="halalbihalal">Halalbihalal</option>
@@ -1289,8 +1290,8 @@ export default function UserDashboard() {
                       </div>
                     </div>
                   )}
-                  <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-1">
-                    <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
+                  <div className="flex gap-2 pt-1">
+                    <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                     <button type="button" onClick={() => setEditStep(2)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
                     <button type="button" onClick={() => { setFormMessage(''); setEditStep(4); }} className="flex-1 py-2 bg-teal-700 text-white rounded-lg font-bold">Lanjut Media →</button>
                   </div>
@@ -1339,8 +1340,8 @@ export default function UserDashboard() {
                     <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border rounded bg-white" value={editCustomProlog} onChange={(e) => setEditCustomProlog(e.target.value)} />
                     <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border rounded resize-none bg-white" value={editCustomContent} onChange={(e) => setEditCustomContent(e.target.value)} />
                   </div>
-                  <div className="flex flex-wrap sm:flex-nowrap gap-2 pt-2 border-t">
-                    <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto py-2 px-3 bg-slate-100 text-slate-600 font-bold rounded-lg">Batal</button>
+                  <div className="flex gap-2 pt-2 border-t">
+                    <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                     <button type="button" onClick={() => setEditStep(3)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
                     <button type="submit" disabled={editLoading || editUploadingImage} className="flex-1 py-2 bg-sky-600 disabled:bg-slate-400 text-white rounded-lg font-bold flex items-center justify-center gap-1 cursor-pointer">Simpan</button>
                   </div>

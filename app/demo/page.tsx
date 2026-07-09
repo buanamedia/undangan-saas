@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // ⚡ Menggunakan Router Next.js
 import { themesRegistry } from '@/lib/themes';
 import { getDemoDataByType, demoWishesMock } from '@/lib/themes/demo-data';
+import { createClient } from '@/lib/supabase/client';
 
 function InvitationCountdown({ targetDateString, isReception = false, theme }: { targetDateString: string; isReception?: boolean; theme: any }) {
   return (
@@ -22,6 +23,9 @@ function InvitationCountdown({ targetDateString, isReception = false, theme }: {
 
 export default function DemoThemesPage() {
   const router = useRouter(); // ⚡ Inisialisasi Router
+  const supabase = createClient();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
   const [activeThemeId, setActiveThemeId] = useState<string>('default');
   const [activeType, setActiveType] = useState<string>('pernikahan'); 
   
@@ -45,6 +49,21 @@ export default function DemoThemesPage() {
     { id: 'green', title: 'Emerald Green', label: 'Khusus Pernikahan & Acara' },
     { id: 'vibrant', title: 'Vibrant Full Color', label: 'Khusus Pernikahan & Acara' },
   ];
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsLoggedIn(!!session);
+      } catch (error) {
+        console.error('Error checking auth session:', error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkSession();
+  }, [supabase]);
 
   const cleanMapEmbedUrl = (rawUrl: string) => {
     return `https://maps.google.com/maps?q=${encodeURIComponent(rawUrl)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
@@ -98,14 +117,14 @@ export default function DemoThemesPage() {
   return (
     /* ⚡ PERBAIKAN UTAMA: Mengunci tinggi layar `h-screen` dan mematikan overflow luar agar tidak bisa di-scroll secara global */
     <div className={`h-screen w-screen text-stone-800 flex flex-col justify-between relative overflow-hidden font-sans antialiased`}>
-      
+       
       <audio ref={audioRef} src={demoMusicUrl} loop preload="auto" />
 
       {/* ⚡ NAVBAR GLOBAL PERMANEN: Menggunakan `fixed top-0 left-0 w-full` terisolasi penuh agar mutlak diam */}
       {!isOpen && (
         <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-            
+             
             {/* LOGO BRANDING */}
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
               <img 
@@ -123,14 +142,33 @@ export default function DemoThemesPage() {
               </div>
             </div>
 
-            {/* Tombol Dashboard Atas Kanan */}
+            {/* ⚡ PERBAIKAN: Tombol Atas Kanan dibuat SAMA PERSIS ukuran, warna, dan posisinya dengan halaman Tentang Kami */}
             <div className="flex items-center gap-3">
-              <button 
-                onClick={() => router.push('/user')} 
-                className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-              >
-                Dashboard
-              </button>
+              {checkingAuth ? (
+                <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />
+              ) : isLoggedIn ? (
+                <button 
+                  onClick={() => router.push('/user')} 
+                  className="px-[18px] py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => router.push('/login')} 
+                    className="px-[18px] py-2.5 bg-[#2d3d51] hover:bg-[#23303f] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs tracking-wide"
+                  >
+                    Masuk
+                  </button>
+                  <button 
+                    onClick={() => router.push('/register')} 
+                    className="px-[18px] py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
+                  >
+                    Daftar
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -148,13 +186,11 @@ export default function DemoThemesPage() {
 
       {/* ⚡ KONTEN UTAMA: Diberikan margin atas `pt-16` agar tidak tertutup header, dan `overflow-y-auto` agar aktivitas scroll terisolasi hanya di dalam elemen ini */}
       <main className={`grow w-full flex flex-col items-center overflow-y-auto ${isOpen ? (currentTheme.bgPage) : 'bg-slate-50 pt-16'}`}>
-        
+         
         {/* TAMPILAN 1: KATALOG KARTU UTAMA SEPERTI REFERENSI (KETIKA BELUM DIBUKA) */}
         {!isOpen ? (
           <div className="max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
-            
-           
-
+             
             <div className="text-center space-y-1">
               <p className="text-sm font-medium text-slate-600">
                 Tersedia berbagai desain menarik yang dapat Anda gunakan.
@@ -250,12 +286,12 @@ export default function DemoThemesPage() {
                 </div>
               </div>
             </footer>
-            
+             
           </div>
         ) : (
           /* TAMPILAN 2: INTEGRASI ISI MATERI TEMA KUSTOM LENGKAP SAAT TOMBOL DEMO DIKLIK */
           <div className="w-full max-w-md flex flex-col gap-4 px-4 sm:px-0 py-6">
-            
+             
             <button 
               onClick={handleBackToCatalog}
               className="w-full py-3 bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs tracking-wide uppercase rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -264,7 +300,7 @@ export default function DemoThemesPage() {
             </button>
 
             <div className={`w-full bg-white p-6 border ${currentTheme.cardBorder} rounded-2xl shadow-sm space-y-8 pb-20 animate-in fade-in duration-300`}>
-              
+               
               {/* SECTION 1: PEMBUKA */}
               <div id="pembuka" className="text-center space-y-2 scroll-mt-4">
                 <span className={`text-[10px] uppercase font-bold tracking-widest ${currentTheme.badgeText} ${currentTheme.badgeBg} px-2.5 py-0.5 rounded-md border ${currentTheme.badgeBorder}`}>
@@ -284,7 +320,7 @@ export default function DemoThemesPage() {
               <div id="profil" className="p-4 bg-stone-50 border rounded-xl space-y-3 text-center scroll-mt-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">Profil Utama</h3>
                 <p className="text-xs text-stone-600 italic">"{ext.profile_prolog}"</p>
-                
+                 
                 {activeType === 'pernikahan' || activeType === 'lamaran' ? (
                   <div className="font-serif text-sm font-bold text-stone-900 space-y-1">
                     <p>💍 {inv.groom_name}</p>
@@ -382,7 +418,7 @@ export default function DemoThemesPage() {
                     <p className="text-[10px] text-stone-400">{ext.gift_prolog}</p>
                     {ext.gift_way && <p className="text-[10px] text-stone-500 bg-stone-50 p-2 border rounded-lg mt-2 text-left">{ext.gift_way}</p>}
                   </div>
-                  
+                   
                   <div className="space-y-4 pt-1 max-w-xs mx-auto">
                     {inv.gift_accounts.map((acc: any, idx: number) => (
                       <div key={idx} className="p-6 bg-white border-2 border-stone-300 rounded-2xl shadow-xs flex flex-col items-center text-center space-y-4">
