@@ -23,6 +23,23 @@ export default function AdminDashboard() {
   // Untuk menyimpan data riwayat nominal transaksi dari Supabase
   const [transactionsList, setTransactionsList] = useState<any[]>([]);
 
+  // ⚡ STATE MODE DARK / LIGHT BARU
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+
+  // Efek Sinkronisasi Pilihan Mode Tema Dokumen
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+      root.setAttribute('data-theme', 'dark'); // Menambah selector cadangan
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+      root.style.colorScheme = 'light';
+    }
+  }, [isDarkMode]);
+
   const fetchAdminData = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -84,28 +101,28 @@ export default function AdminDashboard() {
       if (allRsvps) setRsvpsList(allRsvps);
 
       // ⚡ QUERY SINKRONISASI TRANSAKSI (DEBUG VERSION)
-try {
-  console.log("Mencoba mengambil data transaksi...");
-  const { data: allTransactions, error: txError } = await supabase
-    .from('transactions')
-    .select('user_id, amount, status');
+      try {
+        console.log("Mencoba mengambil data transaksi...");
+        const { data: allTransactions, error: txError } = await supabase
+          .from('transactions')
+          .select('user_id, amount, status');
 
-  if (txError) {
-    console.error("Gagal ambil transaksi:", txError);
-  } else {
-    console.log("Data transaksi berhasil didapat:", allTransactions);
-    setTransactionsList(allTransactions || []);
-  }
-} catch (e) {
-  console.error("Error pada query transaksi:", e);
-}
+        if (txError) {
+          console.error("Gagal ambil transaksi:", txError);
+        } else {
+          console.log("Data transaksi berhasil didapat:", allTransactions);
+          setTransactionsList(allTransactions || []);
+        }
+      } catch (e) {
+        console.error("Error pada query transaksi:", e);
+      }
 
     } catch (error) {
       console.error('Gagal memuat data admin:', error);
     } finally {
       setLoading(false);
     }
-  }; // 🟢 SEKARANG STRUKTUR PENUTUP SUDAH SEIMBANG SEMPURNA TANPA ERROR SEMICOLON
+  };
 
   useEffect(() => {
     fetchAdminData();
@@ -192,88 +209,113 @@ try {
   });
 
   // ⚡ PERBAIKAN: Masukkan user ke list jika is_premium true ATAU jika dia punya riwayat di transactionsList
-const premiumUsersOnly = usersList.filter(u => 
-  u.is_premium === true || 
-  transactionsList.some(t => {
-    const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '');
-    const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
-    return userIdClean === txUserIdClean;
-  })
-);
+  const premiumUsersOnly = usersList.filter(u => 
+    u.is_premium === true || 
+    transactionsList.some(t => {
+      const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '');
+      const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
+      return userIdClean === txUserIdClean;
+    })
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-        <p className="text-xs font-semibold tracking-widest text-sky-400 animate-pulse">MEMUAT PANEL ADMIN...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 text-slate-800 dark:text-white">
+        <p className="text-xs font-semibold tracking-widest text-sky-500 dark:text-sky-400 animate-pulse">MEMUAT PANEL ADMIN...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16">
-      {/* NAVIGASI ADMIN PANEL */}
-      <nav className="bg-slate-900 border-b border-slate-800 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🛡️</span>
-            <span className="font-bold text-sm tracking-wider uppercase text-sky-400">Dashboard Admin</span>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col justify-between transition-colors duration-200">
+      
+      {/* HEADER NAVBAR (HANYA LOGO & BRANDING DENGAN TOMBOL THEME TOGGLE) */}
+      <header className="border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          
+          {/* LOGO BRANDING */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+            <img 
+              src="/logo/Logo.png" 
+              alt="Logo Undangan Digital" 
+              className="w-8 h-8 object-contain shrink-0" 
+            />
+            <div className="flex flex-col leading-none">
+              <span className="font-black text-slate-900 dark:text-white tracking-tight text-sm sm:text-base">
+                Undangan <span className="text-blue-700 dark:text-blue-500">Digital</span>
+              </span>
+              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mt-0.5">
+                by Buanamedia
+              </span>
+            </div>
           </div>
-          <button 
-            onClick={() => { supabase.auth.signOut(); router.push('/login'); }}
-            className="text-xs font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-          >
-            Keluar Panel
-          </button>
+          
+          {/* SISI KANAN: TOMBOL MODE TOGGLE & KELUAR PANEL */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+              title="Ganti Mode Tema"
+            >
+              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+            </button>
+            <button 
+              onClick={() => { supabase.auth.signOut(); router.push('/login'); }}
+              className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-[14px] py-2 rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
+            >
+              Keluar Panel
+            </button>
+          </div>
         </div>
-      </nav>
+      </header>
 
       {/* ISI UTAMA DASHBOARD */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main className="grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-slate-50/50 dark:bg-slate-950/20 transition-colors">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Ringkasan Bisnis</h1>
-          <p className="text-xs text-slate-400">Pantau performa server dan manajemen data aplikasi Anda secara terpusat</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Ringkasan Bisnis</h1>
+          <p className="text-xs text-slate-400 dark:text-slate-500">Pantau performa server dan manajemen data aplikasi Anda secara terpusat</p>
         </div>
 
         {/* ROW STATISTIK TERMASUK MENU PESANAN */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Total Pengguna Terdaftar</p>
-            <p className="text-3xl font-extrabold text-white mt-1">{stats.users} <span className="text-xs font-normal text-slate-400">Orang</span></p>
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Pengguna Terdaftar</p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{stats.users} <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Orang</span></p>
           </div>
 
           <div 
             onClick={() => setShowOrderModal(true)}
-            className="bg-slate-900 p-5 rounded-xl border border-blue-500/30 hover:border-blue-500/60 transition-all cursor-pointer group shadow-lg"
+            className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-blue-200 dark:border-blue-900 hover:border-blue-500 dark:hover:border-blue-500 transition-all cursor-pointer group shadow-xs"
           >
             <div className="flex justify-between items-start">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-400 group-hover:text-blue-300">🛒 Total Pesanan Premium</p>
-              <span className="text-[10px] bg-blue-500/10 text-blue-400 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wide">Lihat Detail</span>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 group-hover:text-blue-700 dark:group-hover:text-blue-300">🛒 Total Pesanan Premium</p>
+              <span className="text-[10px] bg-blue-500/10 text-blue-600 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wide">Detail</span>
             </div>
-            <p className="text-3xl font-extrabold text-white mt-1">{stats.premiumOrders} <span className="text-xs font-normal text-slate-400">Transaksi</span></p>
+            <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{stats.premiumOrders} <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Transaksi</span></p>
           </div>
 
-          <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Total Undangan Dibuat</p>
-            <p className="text-3xl font-extrabold text-sky-400 mt-1">{stats.invitations} <span className="text-xs font-normal text-slate-400">Tautan</span></p>
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Undangan Dibuat</p>
+            <p className="text-3xl font-extrabold text-sky-600 dark:text-sky-400 mt-1">{stats.invitations} <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Tautan</span></p>
           </div>
 
-          <div className="bg-slate-900 p-5 rounded-xl border border-slate-800">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Total Interaksi Buku Tamu</p>
-            <p className="text-3xl font-extrabold text-green-400 mt-1">{stats.rsvp} <span className="text-xs font-normal text-slate-400">Pesan</span></p>
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 transition-colors">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Interaksi Buku Tamu</p>
+            <p className="text-3xl font-extrabold text-green-600 dark:text-green-400 mt-1">{stats.rsvp} <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Pesan</span></p>
           </div>
         </div>
 
         {/* SECTION 1: TABEL MANAJEMEN USER */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 space-y-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 transition-colors">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">Daftar Pengguna Aplikasi</h2>
-            <p className="text-[11px] text-slate-500">💡 Klik pada baris pengguna untuk menyaring data detail undangan & rsvp di bawah</p>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">Daftar Pengguna Aplikasi</h2>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">💡 Klik pada baris pengguna untuk menyaring data detail undangan & rsvp di bawah</p>
           </div>
 
-          <div className="overflow-x-auto border border-slate-800 rounded-lg">
+          <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold">
+                <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold">
                   <th className="p-3">Email Pengguna</th>
                   <th className="p-3">Username</th>
                   <th className="p-3">Nomor WhatsApp</th>
@@ -282,41 +324,41 @@ const premiumUsersOnly = usersList.filter(u =>
                   <th className="p-3 text-right">Aksi Manajemen</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
                 {usersList.map((user) => (
                   <tr 
                     key={user.id} 
                     onClick={() => setSelectedUserId(user.id)}
-                    className={`transition-colors cursor-pointer ${selectedUserId === user.id ? 'bg-sky-500/10 hover:bg-sky-500/15 border-l-2 border-sky-400' : 'hover:bg-slate-950/40'}`}
+                    className={`transition-colors cursor-pointer ${selectedUserId === user.id ? 'bg-sky-500/10 dark:bg-sky-500/15 border-l-2 border-sky-500 dark:border-sky-400' : 'hover:bg-slate-50/50 dark:hover:bg-slate-500/5'}`}
                   >
-                    <td className="p-3 font-medium text-slate-200">
-                      {user.email || <span className="text-slate-500 italic font-mono">{user.id}</span>}
+                    <td className="p-3 font-medium text-slate-900 dark:text-slate-200">
+                      {user.email || <span className="text-slate-400 italic font-mono">{user.id}</span>}
                     </td>
-                    <td className="p-3 text-slate-300 font-mono">
-                      {user.username || <span className="text-slate-600 italic">Belum diset</span>}
+                    <td className="p-3 font-mono">
+                      {user.username || <span className="text-slate-400 italic">Belum diset</span>}
                     </td>
-                    <td className="p-3 text-slate-300">
+                    <td className="p-3">
                       {user.phone ? (
                         <a 
                           href={`https://wa.me/${user.phone.replace(/[^0-9]/g, '')}`} 
                           target="_blank" 
                           rel="noreferrer"
-                          className="text-emerald-400 hover:underline font-medium"
+                          className="text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
                           onClick={(e) => e.stopPropagation()}
                         >
                           🟢 {user.phone}
                         </a>
                       ) : (
-                        <span className="text-slate-600 italic">Tidak ada</span>
+                        <span className="text-slate-400 italic">Tidak ada</span>
                       )}
                     </td>
                     <td className="p-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${user.role === 'admin' ? 'bg-red-500/10 text-red-400' : 'bg-slate-800 text-slate-400'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold ${user.role === 'admin' ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>
                         {user.role || 'user'}
                       </span>
                     </td>
                     <td className="p-3 text-center">
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${user.is_premium ? 'bg-amber-400/10 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400'}`}>
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${user.is_premium ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                         {user.is_premium ? '⭐️ Premium' : 'Free User'}
                       </span>
                     </td>
@@ -326,17 +368,16 @@ const premiumUsersOnly = usersList.filter(u =>
                           onClick={() => handleTogglePremium(user)}
                           className={`px-2 py-1 font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                             user.is_premium 
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-slate-900' 
+                              ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 hover:bg-amber-500 hover:text-white dark:hover:text-slate-900' 
                               : 'bg-blue-600 hover:bg-blue-700 text-white'
                           }`}
                         >
                           {user.is_premium ? '🔒 Free' : '👑 Premium'}
                         </button>
                         
-                        {/* AKSI BARU: RESET PASSWORD SECARA INSTAN */}
                         <button 
                           onClick={() => handleResetPasswordInstan(user.id, user.email)}
-                          className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                          className="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
                           title="Ganti password langsung dari admin"
                         >
                           🔄 Reset Pass
@@ -344,7 +385,7 @@ const premiumUsersOnly = usersList.filter(u =>
 
                         <button 
                           onClick={() => handleDecreaseAccount(user.id)}
-                          className="px-2 py-1 bg-rose-950/40 text-rose-400 border border-rose-500/20 hover:bg-rose-600 hover:text-white font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
+                          className="px-2 py-1 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-600 hover:text-white font-bold text-[10px] rounded-lg transition-all cursor-pointer whitespace-nowrap"
                         >
                           🗑️ Hapus
                         </button>
@@ -358,43 +399,43 @@ const premiumUsersOnly = usersList.filter(u =>
         </div>
 
         {/* SEPARATOR JUDUL FILTER AKTIF */}
-        <div className="border-t border-slate-800 pt-4">
-          <p className="text-xs font-bold text-sky-400 uppercase tracking-widest">
-            Sub-Panel Data Komunitas Pengguna: <span className="text-white underline font-mono">{usersList.find(u => u.id === selectedUserId)?.email || 'Belum Dipilih'}</span>
+        <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+          <p className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest">
+            Sub-Panel Data Komunitas Pengguna: <span className="text-slate-900 dark:text-white underline font-mono">{usersList.find(u => u.id === selectedUserId)?.email || 'Belum Dipilih'}</span>
           </p>
         </div>
 
         {/* SECTION 2 & 3: GRID DAFTAR UNDANGAN & BUKU TAMU */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 transition-colors">
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-sky-400">Daftar Undangan Terbit ({filteredInvitations.length})</h2>
-              <p className="text-[11px] text-slate-500">Klik tombol aksi untuk melihat langsung halaman publik undangan</p>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">Daftar Undangan Terbit ({filteredInvitations.length})</h2>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">Klik tombol aksi untuk melihat langsung halaman publik undangan</p>
             </div>
-            <div className="overflow-x-auto border border-slate-800 rounded-lg max-h-80 overflow-y-auto">
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg max-h-80 overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold sticky top-0 z-10">
+                  <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold sticky top-0 z-10">
                     <th className="p-3">Judul Acara</th>
                     <th className="p-3">Tipe</th>
                     <th className="p-3 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
                   {filteredInvitations.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-slate-500 italic">Tidak ada undangan untuk pengguna ini.</td>
+                      <td colSpan={3} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">Tidak ada undangan untuk pengguna ini.</td>
                     </tr>
                   ) : (
                     filteredInvitations.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-950/40 transition-colors">
-                        <td className="p-3 font-medium text-slate-200 truncate max-w-[160px]" title={inv.title}>{inv.title}</td>
-                        <td className="p-3 capitalize text-slate-400">{inv.type || 'Acara'}</td>
+                      <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/40 transition-colors">
+                        <td className="p-3 font-medium text-slate-900 dark:text-slate-200 truncate max-w-[160px]" title={inv.title}>{inv.title}</td>
+                        <td className="p-3 capitalize text-slate-500 dark:text-slate-400">{inv.type || 'Acara'}</td>
                         <td className="p-3 text-right">
                           <button
                             type="button"
                             onClick={() => window.open(`/undangan/${inv.slug}`, '_blank')}
-                            className="px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500 text-sky-400 hover:text-slate-950 rounded border border-sky-500/20 text-[10px] font-bold transition-all cursor-pointer"
+                            className="px-2.5 py-1 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-600 text-sky-600 dark:text-sky-400 hover:text-white rounded border border-sky-200 dark:border-sky-500/20 text-[10px] font-bold transition-all cursor-pointer"
                           >
                             🔗 Lihat
                           </button>
@@ -407,31 +448,31 @@ const premiumUsersOnly = usersList.filter(u =>
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 transition-colors">
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-green-400">Interaksi Buku Tamu (RSVP) ({filteredRsvps.length})</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-green-600 dark:text-green-400">Interaksi Buku Tamu (RSVP) ({filteredRsvps.length})</h2>
             </div>
-            <div className="overflow-x-auto border border-slate-800 rounded-lg max-h-80 overflow-y-auto">
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg max-h-80 overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold sticky top-0 z-10">
+                  <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold sticky top-0 z-10">
                     <th className="p-3">Nama</th>
                     <th className="p-3">Pesan</th>
                     <th className="p-3 text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
                   {filteredRsvps.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-slate-500 italic">Tidak ada rsvp untuk pengguna ini.</td>
+                      <td colSpan={3} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">Tidak ada rsvp untuk pengguna ini.</td>
                     </tr>
                   ) : (
                     filteredRsvps.map((rsvp) => (
-                      <tr key={rsvp.id} className="hover:bg-slate-950/40">
-                        <td className="p-3 font-semibold text-slate-200">{rsvp.name}</td>
-                        <td className="p-3 text-slate-300">{rsvp.message}</td>
+                      <tr key={rsvp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/40">
+                        <td className="p-3 font-semibold text-slate-900 dark:text-slate-200">{rsvp.name}</td>
+                        <td className="p-3 text-slate-600 dark:text-slate-300">{rsvp.message}</td>
                         <td className="p-3 text-center">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${rsvp.attendance === 'hadir' ? 'bg-green-500/10 text-green-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${rsvp.attendance === 'hadir' ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'}`}>
                             {rsvp.attendance === 'hadir' ? 'Hadir' : 'Absen'}
                           </span>
                         </td>
@@ -445,104 +486,118 @@ const premiumUsersOnly = usersList.filter(u =>
         </div>
       </main>
 
+      {/* FOOTER NAVIGASI (IDENTIK DENGAN HALAMAN LAINNYA) */}
+      <footer className="border-t border-slate-100 dark:border-slate-800 py-8 bg-white dark:bg-slate-900 text-center text-xs text-slate-400 w-full transition-colors mt-auto">
+        <div className="max-w-7xl mx-auto px-4 space-y-4">
+          
+          {/* MENU NAVIGASI FOOTER */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
+            <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/demo')} className="hover:text-blue-700 transition-colors cursor-pointer">Tema</button>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors cursor-pointer">refund-policy</button>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors cursor-pointer">FAQ</button>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors cursor-pointer">syarat-ketentuan</button>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+            <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 dark:border-slate-800 pt-4">
+            <p className="font-bold text-slate-700 dark:text-slate-300">Undangan Digital &copy; 2026</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500">by Buanamedia</p>
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
+        </div>
+      </footer>
+
       {/* MODAL INTERAKTIF DAFTAR PESANAN PREMIUM */}
       {showOrderModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
               <div className="flex items-center gap-2">
                 <span className="text-lg">🛒</span>
-                <h3 className="font-bold text-sm uppercase tracking-wider text-blue-400">Rincian Transaksi & Penggunaan Voucher</h3>
+                <h3 className="font-bold text-sm uppercase tracking-wider text-blue-600 dark:text-blue-400">Rincian Transaksi & Penggunaan Voucher</h3>
               </div>
               <button 
                 onClick={() => setShowOrderModal(false)}
-                className="text-slate-400 hover:text-white text-xs bg-slate-800 px-2.5 py-1 rounded-lg transition-colors"
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg transition-colors"
               >
                 Tutup
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto flex-1 text-xs space-y-4">
-              <p className="text-slate-400 leading-relaxed">
+            <div className="p-5 overflow-y-auto flex-1 text-xs space-y-4 text-slate-700 dark:text-slate-300">
+              <p className="text-slate-400 dark:text-slate-500 leading-relaxed">
                 Berikut data pengguna terkonfirmasi aktif mengupgrade akun melalui modul gerbang iPaymu atau sistem admin internal:
               </p>
 
-              <div className="border border-slate-800 rounded-lg overflow-hidden">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
-  <tr className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold text-[10px] uppercase">
-    <th className="p-3">Nama</th>
-    <th className="p-3">Email</th>
-    <th className="p-3">WhatsApp</th>
-    <th className="p-3">No. Invoice</th>
-    <th className="p-3 text-center">Kupon</th>
-    <th className="p-3 text-center">Total Bayar</th>
-      </tr>
-</thead>
-                  <tbody className="divide-y divide-slate-800/50">
-  {premiumUsersOnly.length === 0 ? (
-  <tr>
-    <td colSpan={4} className="p-8 text-center text-slate-500 italic">Belum ada pesanan premium terdaftar.</td>
-  </tr>
-) : (
- premiumUsersOnly.map((user) => {
-  // Cari data transaksi yang cocok
-  const matchTx = transactionsList.find((t) => 
-    String(t.user_id).trim() === String(user.id).trim()
-  );
+                    <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase">
+                      <th className="p-3">Nama</th>
+                      <th className="p-3">Email</th>
+                      <th className="p-3">WhatsApp</th>
+                      <th className="p-3">No. Invoice</th>
+                      <th className="p-3 text-center">Kupon</th>
+                      <th className="p-3 text-center">Total Bayar</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                    {premiumUsersOnly.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-400 italic">Belum ada pesanan premium terdaftar.</td>
+                      </tr>
+                    ) : (
+                      premiumUsersOnly.map((user) => {
+                        const matchTx = transactionsList.find((t) => 
+                          String(t.user_id).trim() === String(user.id).trim()
+                        );
 
-  return (
-    <tr key={user.id} className="hover:bg-slate-950/30">
-      {/* 1. Nama Pengguna */}
-      <td className="p-3 font-semibold text-slate-200">
-        {user.full_name || user.username || 'User'}
-      </td>
-      
-      {/* 2. Email Akun */}
-      <td className="p-3 text-slate-400 font-mono">{user.email}</td>
-
-      {/* 3. Nomor WA User */}
-      <td className="p-3">
-        {user.phone ? (
-          <a 
-            href={`https://wa.me/${user.phone.replace(/[^0-9]/g, '')}`} 
-            target="_blank" 
-            rel="noreferrer"
-            className="text-emerald-400 hover:underline text-[10px]"
-          >
-            {user.phone}
-          </a>
-        ) : '-'}
-      </td>
-
-      {/* 4. Nomor Invoice */}
-      <td className="p-3 text-slate-300 font-mono text-[10px]">
-        {matchTx?.invoice_number || '-'}
-      </td>
-      
-      {/* 5. Catatan Akses / Kupon */}
-      <td className="p-3 text-center">
-        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold">
-          {matchTx?.voucher_code || '-'}
-        </span>
-      </td>
-
-      {/* 6. Estimasi Bayar (Total Bayar) */}
-      <td className="p-3 text-center text-amber-400 font-bold">
-        {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
-      </td>
-        
-    </tr>
-  );
-})
-)}
-</tbody>
+                        return (
+                          <tr key={user.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/30">
+                            <td className="p-3 font-semibold text-slate-900 dark:text-slate-200">
+                              {user.full_name || user.username || 'User'}
+                            </td>
+                            <td className="p-3 text-slate-500 dark:text-slate-400 font-mono">{user.email}</td>
+                            <td className="p-3">
+                              {user.phone ? (
+                                <a 
+                                  href={`https://wa.me/${user.phone.replace(/[^0-9]/g, '')}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-emerald-600 dark:text-emerald-400 hover:underline text-[10px]"
+                                >
+                                  {user.phone}
+                                </a>
+                              ) : '-'}
+                            </td>
+                            <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[10px]">
+                              {matchTx?.invoice_number || '-'}
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 font-mono text-[10px] font-bold">
+                                {matchTx?.voucher_code || '-'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-center text-amber-600 dark:text-amber-400 font-bold">
+                              {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
                 </table>
               </div>
             </div>
             
-            <div className="p-4 bg-slate-950/30 border-t border-slate-800 text-right">
-              <span className="text-[11px] text-slate-500 italic mr-4">Total: {premiumUsersOnly.length} Pengguna Premium Terverifikasi</span>
+            <div className="p-4 bg-slate-50 dark:bg-slate-950/30 border-t border-slate-200 dark:border-slate-800 text-right">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 italic mr-4">Total: {premiumUsersOnly.length} Pengguna Premium Terverifikasi</span>
             </div>
           </div>
         </div>

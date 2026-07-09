@@ -1,18 +1,37 @@
 @import "tailwindcss";
 
+/* ⚡ AKTIFKAN MODIFIER dark: BERBASIS SELEKTOR CLASS UNTUK TAILWIND v4 */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-background: #ffffff;
-  --color-foreground: #0f172a;
   --color-primary: #0284c7; /* Biru Langit Cerah (Sky Blue) */
   --color-ocean: #0369a1;   /* Biru Laut Dalam (Ocean Blue) */
+  
+  /* Definisikan warna dasar menggunakan CSS Variable agar dinamis */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-body-bg: var(--body-bg);
 }
 
+/* --- TEMA LIGHT (DEFAULT) --- */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --body-bg: #f0f9ff; /* Latar belakang biru air sangat muda (sky-50) */
+  color-scheme: light;
 }
 
+/* --- TEMA DARK (AKAN AKTIF JIKA HTML MEMILIKI KELAS .dark) --- */
+.dark {
+  --background: #0f172a; 
+  --foreground: #f8fafc; 
+  --body-bg: #020617;   /* Latar belakang halaman saat dark mode (bg-slate-950) */
+  color-scheme: dark;
+}
+
+/* --- GLOBAL STYLES --- */
 body {
-  background-color: #f0f9ff; /* Latar belakang biru air sangat muda (sky-50) */
-  color: #0f172a;
+  background-color: var(--body-bg);
+  color: var(--color-foreground);
+  transition: background-color 0.2s ease, color 0.2s ease; /* Animasi transisi halus saat ganti mode */
 }
