@@ -11,6 +11,7 @@ export default function AdminTransactionsPage() {
   
   const [usersList, setUsersList] = useState<any[]>([]);
   const [transactionsList, setTransactionsList] = useState<any[]>([]);
+  const [vouchersList, setVouchersList] = useState<any[]>([]); // ⚡ BARU: Menyimpan referensi kode voucher dari DB
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function AdminTransactionsPage() {
         return;
       }
 
-      // 1. Ambil Data User Lengkap (KODE AWAL ANDA LENGKAP)
+      // 1. Ambil Data User Lengkap
       const { data: allUsers, error: userError } = await supabase
         .from('profiles')
         .select('id, role, is_premium, created_at, email, username, phone, full_name')
@@ -55,24 +56,30 @@ export default function AdminTransactionsPage() {
         setUsersList(allUsers || []);
       }
 
-      // 2. Query Sinkronisasi Transaksi (KODE AWAL ANDA + Pengaman Kolom Baru)
+      // 2. BARU: Ambil Master Data dari tabel vouchers untuk pencocokan fallback voucher
+      try {
+        const { data: allVouchers } = await supabase
+          .from('vouchers')
+          .select('code, discount_value');
+        setVouchersList(allVouchers || []);
+      } catch (vErr) {
+        console.error("Gagal memuat master data vouchers:", vErr);
+      }
+
+      // 3. Query Sinkronisasi Transaksi
       try {
         console.log("Mencoba mengambil data transaksi...");
-        
-        // Kita coba panggil skema lengkap termasuk voucher_code dan invoice_number
         const { data: allTransactions, error: txError } = await supabase
           .from('transactions')
-          .select('user_id, amount, status, invoice_number, voucher_code');
+          .select('user_id, amount, status, invoice, voucher');
 
         if (txError) {
-          console.error("Gagal ambil dengan kolom baru, jalankan fallback ke kode awal Anda:", txError);
-          
-          // AMAN: Jika kolom baru belum ada di DB, otomatis kembali ke query awal Anda agar data TIDAK HILANG
-          const { data: fallbackTransactions } = await supabase
+          console.error("Gagal ambil data transaksi utama:", txError);
+          const { data: fallbackRes } = await supabase
             .from('transactions')
-            .select('user_id, amount, status');
+            .select('*');
           
-          setTransactionsList(fallbackTransactions || []);
+          setTransactionsList(fallbackRes || []);
         } else {
           console.log("Data transaksi berhasil didapat:", allTransactions);
           setTransactionsList(allTransactions || []);
@@ -92,12 +99,12 @@ export default function AdminTransactionsPage() {
     loadTransactionsData();
   }, []);
 
-  // Logika Filter & Pembersihan String ID (100% PERSIS KODE AWAL ANDA)
+  // Filter berpatokan pada tabel transactions agar sinkron saat dihapus
   const premiumUsersOnly = usersList.filter(u => 
-    u.is_premium === true || 
     transactionsList.some(t => {
-      const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '');
-      const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
+      if (!u.id || !t.user_id) return false;
+      const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '').trim();
+      const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '').trim();
       return userIdClean === txUserIdClean;
     })
   );
@@ -116,25 +123,16 @@ export default function AdminTransactionsPage() {
       {/* HEADER NAVBAR */}
       <header className="border-b-2 border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* LOGO & BRANDING */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <img 
-              src="/logo/Logo.png" 
-              alt="Logo" 
-              className="w-8 h-8 object-contain shrink-0" 
-            />
+            <img src="/logo/Logo.png" alt="Logo" className="w-8 h-8 object-contain shrink-0" />
             <div className="flex flex-col leading-none">
               <span className="font-black text-slate-900 dark:text-white tracking-tight text-sm sm:text-base">
                 Undangan <span className="text-blue-700 dark:text-blue-500">Digital</span>
               </span>
-              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mt-0.5">
-                by Buanamedia
-              </span>
+              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mt-0.5">by Buanamedia</span>
             </div>
           </div>
           
-          {/* ACTIONS */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
@@ -152,7 +150,7 @@ export default function AdminTransactionsPage() {
         </div>
       </header>
 
-      {/* KONTEN UTAMA HALAMAN */}
+      {/* KONTEN UTAMA */}
       <main className="grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Riwayat Transaksi Bisnis</h1>
@@ -160,7 +158,6 @@ export default function AdminTransactionsPage() {
         </div>
 
         <div className="bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col overflow-hidden">
-          
           <div className="p-5 border-b-2 border-slate-300 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
             <div className="flex items-center gap-2">
               <span className="text-lg">🛒</span>
@@ -169,10 +166,6 @@ export default function AdminTransactionsPage() {
           </div>
 
           <div className="p-5 text-xs space-y-4 text-slate-700 dark:text-slate-300">
-            <p className="text-slate-400 dark:text-slate-500 leading-relaxed">
-              Berikut data pengguna terkonfirmasi aktif mengupgrade akun melalui modul gerbang iPaymu atau sistem admin internal:
-            </p>
-
             <div className="border-2 border-slate-300 dark:border-slate-800 rounded-lg overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -181,7 +174,6 @@ export default function AdminTransactionsPage() {
                     <th className="p-3">Email</th>
                     <th className="p-3">WhatsApp</th>
                     <th className="p-3">No. Invoice</th>
-                    {/* TEPAT DI SAMPING NO INVOICE */}
                     <th className="p-3">Kode Voucher</th>
                     <th className="p-3 text-center">Total Bayar</th>
                   </tr>
@@ -194,15 +186,28 @@ export default function AdminTransactionsPage() {
                   ) : (
                     premiumUsersOnly.map((user) => {
                       const matchTx = transactionsList.find((t) => {
+                        if (!user.id || !t.user_id) return false;
                         const userIdClean = String(user.id).replace(/[^a-zA-Z0-9]/g, '');
                         const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
                         return userIdClean === txUserIdClean;
                       });
 
-                      // AMAN: Hitung nominal asli dinamis agar tidak memaksa lompat ke Rp.100.000
-                      const nominalBayar = matchTx?.amount 
-                        ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` 
-                        : (user.is_premium && !matchTx ? 'Rp.50.000' : 'Rp.100.000');
+                      // ⚡ LOGIKA FALLBACK FILTER VOUCHER LINTAS TABEL:
+                      // Jika kolom voucher di tabel transaksi null, hitung potongan harga asli (Base Rp.100.000)
+                      // Cocokkan persentase diskon yang sesuai dengan data voucher dari database Anda.
+                      let displayedVoucher = matchTx?.voucher || matchTx?.voucher_code || null;
+                      
+                      if (!displayedVoucher && matchTx?.amount) {
+                        const basePrice = 100000;
+                        const currentAmount = Number(matchTx.amount);
+                        if (currentAmount < basePrice) {
+                          const calculatedDiscountPercent = Math.round(((basePrice - currentAmount) / basePrice) * 100);
+                          const foundVoucher = vouchersList.find(v => Number(v.discount_value) === calculatedDiscountPercent);
+                          if (foundVoucher) {
+                            displayedVoucher = foundVoucher.code;
+                          }
+                        }
+                      }
 
                       return (
                         <tr key={user.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/30 transition-colors">
@@ -213,7 +218,7 @@ export default function AdminTransactionsPage() {
                           <td className="p-3">
                             {user.phone ? (
                               <a 
-                                href={`https://wa.me/${user.phone.replace(/[^0-9]/g, '')}`} 
+                                href={`https://wa.me/${user.phone?.replace(/[^0-9]/g, '') || ''}`} 
                                 target="_blank" 
                                 rel="noreferrer"
                                 className="text-emerald-600 dark:text-emerald-400 hover:underline text-[10px]"
@@ -223,14 +228,14 @@ export default function AdminTransactionsPage() {
                             ) : '-'}
                           </td>
                           <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[10px]">
-                            {matchTx?.invoice_number || '-'}
+                            {matchTx?.invoice || matchTx?.invoice_number || '-'}
                           </td>
-                          {/* BADGE KODE VOUCHER */}
-                          <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[10px]">
-                            {matchTx?.voucher_code || '-'}
+                          {/* ⚡ PERBAIKAN: Menampilkan kode voucher hasil filter validasi lintas tabel */}
+                          <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                            {displayedVoucher || '-'}
                           </td>
                           <td className="p-3 text-center text-amber-600 dark:text-amber-400 font-bold">
-                            {nominalBayar}
+                            {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
                           </td>
                         </tr>
                       );
@@ -246,7 +251,6 @@ export default function AdminTransactionsPage() {
               Total: {premiumUsersOnly.length} Pengguna Premium Terverifikasi
             </span>
           </div>
-
         </div>
       </main>
 
@@ -266,7 +270,6 @@ export default function AdminTransactionsPage() {
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
             <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
           </div>
-
           <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 dark:border-slate-800 pt-4">
             <p className="font-bold text-slate-700 dark:text-slate-300">Undangan Digital &copy; 2026</p>
             <p className="text-[10px] text-slate-400 dark:text-slate-500">by Buanamedia</p>
@@ -274,7 +277,6 @@ export default function AdminTransactionsPage() {
           <p className="text-[11px] text-slate-400 dark:text-slate-500">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
         </div>
       </footer>
-
     </div>
   );
 }

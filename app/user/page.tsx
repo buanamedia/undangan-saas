@@ -235,7 +235,17 @@ export default function UserDashboard() {
   };
 
   const uploadSingleFile = async (file: File): Promise<string | null> => {
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.jpg`;
+    // Membuat awalan nama file bersih dari nama user (contoh: agus)
+    const userPrefix = (userProfile?.username || userProfile?.full_name || 'user')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+    
+    // Mengambil ekstensi asli file (png, jpg, dll)
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    
+    // Gabungkan menjadi: agus-sampul-1742457813.jpg
+    const fileName = `${userPrefix}-sampul-${Date.now()}.${fileExt}`;
+
     const { error } = await supabase.storage.from('gallery').upload(fileName, file, {
       cacheControl: '3600',
       upsert: false
@@ -251,11 +261,30 @@ export default function UserDashboard() {
     if (!e.target.files || e.target.files.length === 0) return;
     if (isEditForm) setEditUploadingImage(true); else setUploadingImage(true);
     
+    const userPrefix = (userProfile?.username || userProfile?.full_name || 'user')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+
     const files = Array.from(e.target.files);
     const urls: string[] = [];
+    
+    let counter = 1;
     for (const file of files) {
-      const url = await uploadSingleFile(file);
-      if (url) urls.push(url);
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      
+      // Gabungkan menjadi: agus-galeri-1-1742457813.jpg
+      const customFileName = `${userPrefix}-galeri-${counter}-${Date.now()}.${fileExt}`;
+      
+      const { error } = await supabase.storage.from('gallery').upload(customFileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+      
+      if (!error) {
+        const { data } = supabase.storage.from('gallery').getPublicUrl(customFileName);
+        if (data?.publicUrl) urls.push(data.publicUrl);
+      }
+      counter++;
     }
     
     if (isEditForm) {
@@ -271,8 +300,16 @@ export default function UserDashboard() {
     if (!e.target.files || e.target.files.length === 0) return;
     if (isEditForm) setEditLoading(true); else setUploadingMusic(true);
     
+    const userPrefix = (userProfile?.username || userProfile?.full_name || 'user')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-');
+
     const file = e.target.files[0];
-    const fileName = `${Date.now()}.mp3`;
+    const fileExt = file.name.split('.').pop() || 'mp3';
+    
+    // Gabungkan menjadi: agus-musik-1742457813.mp3
+    const fileName = `${userPrefix}-musik-${Date.now()}.${fileExt}`;
+
     const { error } = await supabase.storage.from('music').upload(fileName, file, {
       cacheControl: '3600',
       upsert: false

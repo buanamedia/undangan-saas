@@ -124,13 +124,22 @@ export default function AdminDashboard() {
   const handleTogglePremium = async (user: any) => {
     try {
       if (!user.id) { alert("🚨 Gagal: ID Pengguna kosong!"); return; }
+      
+      // LOGIKA BARU: Jika dari Premium ke Free, hapus file
+      if (user.is_premium) {
+        const konfirmasi = confirm('⚠️ PERINGATAN: Menurunkan status ke FREE akan menghapus semua file foto & musik user ini secara permanen. Lanjutkan?');
+        if (!konfirmasi) return;
+        await cleanupUserMedia(user.id);
+      }
+
       const response = await fetch('/api/admin/toggle-premium', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, currentStatus: user.is_premium }),
       });
+      
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Terjadi kesalahan pada server');
+      if (!response.ok) throw new Error(result.error || 'Terjadi kesalahan');
 
       alert(`✨ ${result.message}`);
       setUsersList((prevUsers) =>
@@ -140,6 +149,15 @@ export default function AdminDashboard() {
     } catch (err: any) {
       alert(`Gagal mengubah status: ${err.message}`);
     }
+  };
+
+  //ini untuk membersihkan musik dan poto user free//
+  const cleanupUserMedia = async (userId: string) => {
+    await fetch('/api/admin/cleanup-user-files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    });
   };
 
   const handleResetPasswordInstan = async (userId: string, email: string) => {

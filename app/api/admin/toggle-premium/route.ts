@@ -28,10 +28,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'ID Pengguna tidak valid' }, { status: 400 });
     }
 
-    // Eksekusi update langsung ke tabel profiles berdasarkan ID
+    // Menghitung status baru yang akan diset
+    const nextStatus = !currentStatus;
+
+    // ⚡ LOGIKA OTOMATISASI: Jika status dikembalikan ke FALSE (Free User), hapus data transaksinya
+    if (nextStatus === false) {
+      console.log(`Mengembalikan ke Free User. Menghapus riwayat transaksi untuk user: ${userId}`);
+      
+      const { error: deleteTxError } = await supabaseAdmin
+        .from('transactions')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteTxError) {
+        console.error("Gagal menghapus data transaksi pendukung:", deleteTxError);
+        // Catatan: Anda bisa melempar error di sini jika penghapusan transaksi wajib sukses
+      }
+    }
+
+    // Eksekusi update langsung ke tabel profiles berdasarkan ID (Sesuai kode asli Anda)
     const { data, error } = await supabaseAdmin
       .from('profiles')
-      .update({ is_premium: !currentStatus })
+      .update({ is_premium: nextStatus })
       .eq('id', userId)
       .select();
 
