@@ -703,7 +703,7 @@ export default function UserDashboard() {
             </div>
             
             {invitations.length === 0 ? (
-              <div className="bg-white rounded-2xl border p-12 text-center text-slate-400 text-xs shadow-2xs">
+              <div className="bg-white rounded-2xl border-2 border-slate-300 p-12 text-center text-slate-400 text-xs shadow-2xs">
                 Belum ada undangan yang dibuat. Silakan klik tombol "+ Buat Undangan" di atas untuk memulai.
               </div>
             ) : (
@@ -712,11 +712,11 @@ export default function UserDashboard() {
                   <div 
                     key={inv.id} 
                     onClick={() => triggerActiveSharePanel(inv)}
-                    className={`bg-white p-4 sm:p-5 rounded-2xl border flex flex-col justify-between space-y-4 text-xs hover:shadow-md transition-all cursor-pointer ${selectedInvForShare?.id === inv.id ? 'border-teal-600 ring-2 ring-teal-600/10' : 'border-slate-200/70 shadow-2xs'}`}
+                    className={`bg-white p-4 sm:p-5 rounded-2xl flex flex-col justify-between space-y-4 text-xs hover:shadow-md transition-all cursor-pointer ${selectedInvForShare?.id === inv.id ? 'border-2 border-teal-600 ring-2 ring-teal-600/10' : 'border-2 border-slate-300 shadow-2xs'}`}
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase border ${getBadgeColor(inv.type)}`}>
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold uppercase border-2 ${getBadgeColor(inv.type)}`}>
                           {inv.type || 'Lainnya'}
                         </span>
                         {selectedInvForShare?.id === inv.id && (
@@ -728,7 +728,7 @@ export default function UserDashboard() {
                         <span>📍</span> <span className="line-clamp-1">{inv.location_address || 'Belum diatur'}</span>
                       </p>
                     </div>
-                    <div className="border-t border-slate-100 pt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="border-t-2 border-slate-100 pt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <a href={`/undangan/${inv.slug}`} target="_blank" className="flex-1 text-center py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-[10px] rounded-xl transition-colors">👁️ Lihat</a>
                       <button onClick={() => handleViewWishes(inv.id)} className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[10px] rounded-xl transition-colors">💬 Doa</button>
                       <button onClick={() => openEditModal(inv)} className="flex-1 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-[10px] rounded-xl transition-colors">✏️ Edit</button>
@@ -741,7 +741,7 @@ export default function UserDashboard() {
           </div>
 
           {/* KOLOM 3 (SISI KANAN): PANEL KELOLA DATA TAMU */}
-          <div className="bg-white border border-slate-200/70 shadow-2xs rounded-2xl p-5 space-y-4">
+          <div className="bg-white border-2 border-slate-300 shadow-2xs rounded-2xl p-5 space-y-4">
             {!selectedInvForShare ? (
               <div className="text-center text-slate-400 py-12 text-xs">
                 👉 Pilih salah satu kartu undangan di sebelah kiri untuk mengaktifkan generator kirim link tautan tamu kustom.
@@ -753,7 +753,7 @@ export default function UserDashboard() {
                   <p className="text-[10px] text-slate-400 mt-0.5">Undangan aktif: <span className="font-semibold text-slate-600">{selectedInvForShare.title}</span></p>
                 </div>
 
-                <form onSubmit={handleAddGuestLocal} className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <form onSubmit={handleAddGuestLocal} className="space-y-3 bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
                   <div className="space-y-3">
                     <p className="text-[10px] text-slate-500 mt-1 font-medium">Kirimkan undangan dengan nama penerima agar lebih personal di sini.</p>
                     <div>
@@ -764,7 +764,7 @@ export default function UserDashboard() {
                         placeholder="Contoh: Agus Saputra"
                         value={guestName}
                         onChange={(e) => setGuestName(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-800 focus:outline-none focus:border-teal-600"
+                        className="w-full bg-white border-2 border-slate-200 rounded-lg p-2 text-slate-800 focus:outline-none focus:border-teal-600"
                       />
                     </div>
                   </div>
@@ -775,7 +775,7 @@ export default function UserDashboard() {
                       placeholder="Contoh: Di Tempat / Jakarta"
                       value={guestAddress}
                       onChange={(e) => setGuestAddress(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-800 focus:outline-none focus:border-teal-600"
+                      className="w-full bg-white border-2 border-slate-200 rounded-lg p-2 text-slate-800 focus:outline-none focus:border-teal-600"
                     />
                   </div>
                   <button
@@ -786,7 +786,7 @@ export default function UserDashboard() {
                   </button>
                 </form>
 
-                <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200 text-[10px] text-slate-600 leading-relaxed">
+                <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-slate-200 text-[10px] text-slate-600 leading-relaxed">
                   <span className="font-bold text-slate-700">Catatan:</span> 
                   <br></br>Selain anda menggunakan fitur ini, anda juga bisa langsung share URL domain anda yaitu dengan menshare url:
                   <br></br>
@@ -797,15 +797,15 @@ export default function UserDashboard() {
 
                 <div className="space-y-2">
                   <p className="font-bold text-slate-700 text-[10px] uppercase tracking-wider">Daftar Tautan Tamu ({guestsList.length})</p>
-                  <div className="border border-slate-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto bg-white">
+                  <div className="border-2 border-slate-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto bg-white">
                     <table className="w-full text-left border-collapse text-[11px]">
                       <thead>
-                        <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                        <tr className="bg-slate-50 text-slate-500 font-bold border-b-2 border-slate-200">
                           <th className="p-2.5">Nama & Alamat</th>
                           <th className="p-2.5 text-right">Aksi</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y-2 divide-slate-100">
                         {guestsList.length === 0 ? (
                           <tr>
                             <td colSpan={2} className="p-6 text-center text-slate-400 italic">Belum ada daftar tamu. Masukkan data pada form di atas.</td>
@@ -895,28 +895,28 @@ export default function UserDashboard() {
       {/* MODAL MODULAR RETAINERS (DIBAWAH ELEMENT VISUAL UTAMA) */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 text-xs">
-            <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div className="bg-white border-2 border-slate-300 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-150 text-xs">
+            <div className="p-4 border-b-2 border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <span className="font-bold text-slate-800 uppercase tracking-wider">📋 Detail Akun Pengguna</span>
               <button onClick={() => setShowProfileModal(false)} className="text-slate-400 hover:text-slate-600 font-bold bg-slate-200/60 px-2 py-0.5 rounded-md cursor-pointer text-[10px]">Tutup</button>
             </div>
             <div className="p-5 space-y-4">
-              <div className="space-y-2.5 border-b border-slate-100 pb-4 text-slate-700">
+              <div className="space-y-2.5 border-b-2 border-slate-100 pb-4 text-slate-700">
                 <div className="flex flex-col gap-0.5">
                   <span className="font-bold text-slate-900">Nama Akun Lengkap:</span>
-                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.full_name || '-'}</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border-2">{userProfile?.full_name || '-'}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-bold text-slate-900">Username Terdaftar:</span>
-                  <span className="text-slate-600 font-mono bg-slate-50 p-2 rounded-lg border">{userProfile?.username || '-'}</span>
+                  <span className="text-slate-600 font-mono bg-slate-50 p-2 rounded-lg border-2">{userProfile?.username || '-'}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-bold text-slate-900">Alamat Email:</span>
-                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.email || '-'}</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border-2">{userProfile?.email || '-'}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="font-bold text-slate-900">Nomor Kontak WhatsApp:</span>
-                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border">{userProfile?.phone || '-'}</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border-2">{userProfile?.phone || '-'}</span>
                 </div>
               </div>
               <div className="space-y-2">
@@ -930,9 +930,9 @@ export default function UserDashboard() {
       {/* POPUP MODAL MODULAR: TAMBAH UNDANGAN BARU */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-4 sm:p-6 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-150 text-xs">
+          <div className="bg-white rounded-2xl shadow-2xl border-2 border-slate-300 max-w-md w-full p-4 sm:p-6 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-150 text-xs">
             <button type="button" onClick={() => setIsCreateModalOpen(false)} className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 bg-slate-50 font-bold text-sm z-10">✕</button>
-            <div className="flex items-center justify-between border-b pb-2 text-[10px] font-bold text-slate-400 pr-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+            <div className="flex items-center justify-between border-b-2 pb-2 text-[10px] font-bold text-slate-400 pr-6 overflow-x-auto whitespace-nowrap scrollbar-none">
               <span className={currentStep === 1 ? 'text-teal-600' : ''}>1. Tipe</span>
               <span className="mx-1">→</span>
               <span className={currentStep === 2 ? 'text-teal-600' : ''}>2. Tema</span>
@@ -947,7 +947,7 @@ export default function UserDashboard() {
                   <h3 className="text-sm font-bold text-slate-900">+ Undangan Baru</h3>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Tipe Undangan</label>
-                    <select className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-white" value={invitationType} onChange={(e) => setInvitationType(e.target.value)}>
+                    <select className="block w-full px-3 py-2 border-2 border-slate-300 rounded-lg bg-white" value={invitationType} onChange={(e) => setInvitationType(e.target.value)}>
                       <option value="">- Pilih Tipe -</option>
                       <option value="akikah">Akikah</option>
                       <option value="halalbihalal">Halalbihalal</option>
@@ -963,24 +963,24 @@ export default function UserDashboard() {
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Judul Undangan</label>
-                    <input type="text" placeholder="Tuliskan judul undangan di sini" className="w-full px-3 py-2 border border-slate-300 rounded-lg" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
+                    <input type="text" placeholder="Tuliskan judul undangan di sini" className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg" value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Deskripsi</label>
-                    <textarea rows={2} placeholder="Tuliskan deskripsi di sini" className="w-full p-2 border rounded-lg resize-none" value={websiteDesc} onChange={(e) => setWebsiteDesc(e.target.value)} />
+                    <textarea rows={2} placeholder="Tuliskan deskripsi di sini" className="w-full p-2 border-2 rounded-lg resize-none" value={websiteDesc} onChange={(e) => setWebsiteDesc(e.target.value)} />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Kata Kunci</label>
-                    <input type="text" placeholder="Undangan Nikah, Undangan Akikah" className="w-full px-3 py-2 border border-slate-300 rounded-lg" value={keywords} onChange={(e) => setKeywords(e.target.value)} />
+                    <input type="text" placeholder="Undangan Nikah, Undangan Akikah" className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg" value={keywords} onChange={(e) => setKeywords(e.target.value)} />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nama Link Undangan</label>
                     <div className="flex rounded-lg shadow-sm overflow-hidden">
-                      <span className="px-2 sm:px-3 border border-r-0 border-slate-300 bg-slate-50 text-slate-400 flex items-center text-[10px] sm:text-xs shrink-0">/undangan/</span>
-                      <input type="text" placeholder="nama-link" className="w-full px-3 py-2 border border-slate-300 rounded-r-lg min-w-0" value={slug} onChange={(e) => setSlug(e.target.value)} />
+                      <span className="px-2 sm:px-3 border-2 border-r-0 border-slate-300 bg-slate-50 text-slate-400 flex items-center text-[10px] sm:text-xs shrink-0">/undangan/</span>
+                      <input type="text" placeholder="nama-link" className="w-full px-3 py-2 border-2 border-slate-300 rounded-r-lg min-w-0" value={slug} onChange={(e) => setSlug(e.target.value)} />
                     </div>
                   </div>
-                  <div className="p-3 border rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
                     <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Profil / Halaman Pembuka (Sampul)</label>
                     <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
                       if(e.target.files && e.target.files[0]) {
@@ -989,7 +989,7 @@ export default function UserDashboard() {
                         if(url) { setCoverPhotoUrl(url); setFormMessage('✓ Foto sampul terpasang'); }
                       }
                     }} />
-                    {coverPhotoUrl && <img src={coverPhotoUrl} className="w-16 h-16 object-cover rounded border border-teal-200 mt-1" />}
+                    {coverPhotoUrl && <img src={coverPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200 mt-1" />}
                   </div>
                   <div className="flex gap-2 pt-1">
                     <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
@@ -1002,11 +1002,11 @@ export default function UserDashboard() {
                   <h3 className="text-sm font-bold text-slate-900">Bagian 2: Tema & Cover</h3>
                   <div>
                     <label className="block font-semibold mb-1">Tulisan Tombol Sampul Cover</label>
-                    <input type="text" className="w-full p-2 border rounded-lg" value={coverProlog} onChange={(e) => setCoverProlog(e.target.value)} />
+                    <input type="text" className="w-full p-2 border-2 rounded-lg" value={coverProlog} onChange={(e) => setCoverProlog(e.target.value)} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Template (Tema Undangan)</label>
-                    <select className="w-full p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" value={selectedTemplate} onChange={(e) => {
+                    <select className="w-full p-2.5 border-2 border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" value={selectedTemplate} onChange={(e) => {
                       if (!userProfile?.is_premium && e.target.value !== 'free') {
                         alert('Tema ini khusus untuk pengguna Premium!');
                         setSelectedTemplate('free');
@@ -1035,27 +1035,27 @@ export default function UserDashboard() {
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nama Acara 1</label>
                     {(invitationType === 'pernikahan' || invitationType === 'lamaran') ? (
-                      <select className="block w-full p-2 border border-slate-300 rounded-lg bg-white font-bold" value={eventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : eventBlockTitle} onChange={(e) => setEventBlockTitle(e.target.value)}>
+                      <select className="block w-full p-2 border-2 border-slate-300 rounded-lg bg-white font-bold" value={eventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : eventBlockTitle} onChange={(e) => setEventBlockTitle(e.target.value)}>
                         <option value="Akad Nikah">Akad Nikah</option>
                         <option value="Pemberkatan">Pemberkatan</option>
                       </select>
                     ) : (
-                      <input type="text" className="w-full p-2 border rounded-lg font-bold bg-slate-50 uppercase text-slate-700" value={eventBlockTitle === 'Acara Utama' || eventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${invitationType?.toUpperCase()}` : eventBlockTitle} onChange={(e) => setEventBlockTitle(e.target.value)} />
+                      <input type="text" className="w-full p-2 border-2 rounded-lg font-bold bg-slate-50 uppercase text-slate-700" value={eventBlockTitle === 'Acara Utama' || eventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${invitationType?.toUpperCase()}` : eventBlockTitle} onChange={(e) => setEventBlockTitle(e.target.value)} />
                     )}
                   </div>
-                  <textarea rows={2} placeholder="Prolog Informasi Acara" className="w-full p-2 border rounded-lg resize-none" value={eventProlog} onChange={(e) => setEventProlog(e.target.value)} />
+                  <textarea rows={2} placeholder="Prolog Informasi Acara" className="w-full p-2 border-2 rounded-lg resize-none" value={eventProlog} onChange={(e) => setEventProlog(e.target.value)} />
                   {(invitationType === 'pernikahan' || invitationType === 'lamaran') ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <input type="text" placeholder="Mempelai Pria" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg" value={groomName} onChange={(e) => setGroomName(e.target.value)} />
-                      <input type="text" placeholder="Mempelai Wanita" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg" value={brideName} onChange={(e) => setBrideName(e.target.value)} />
+                      <input type="text" placeholder="Mempelai Pria" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg" value={groomName} onChange={(e) => setGroomName(e.target.value)} />
+                      <input type="text" placeholder="Mempelai Wanita" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg" value={brideName} onChange={(e) => setBrideName(e.target.value)} />
                     </div>
                   ) : (
                     <div>
-                      <input type="text" placeholder="Prolog Teks Profil Tokoh" className="w-full p-2 border rounded-lg mb-2" value={profileProlog} onChange={(e) => setProfileProlog(e.target.value)} />
-                      <textarea rows={2} placeholder="Rincian Profil Tokoh Lengkap" className="w-full p-2 border rounded-lg resize-none" value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} />
+                      <input type="text" placeholder="Prolog Teks Profil Tokoh" className="w-full p-2 border-2 rounded-lg mb-2" value={profileProlog} onChange={(e) => setProfileProlog(e.target.value)} />
+                      <textarea rows={2} placeholder="Rincian Profil Tokoh Lengkap" className="w-full p-2 border-2 rounded-lg resize-none" value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} />
                     </div>
                   )}
-                  <div className="p-3 border rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
                     <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama)</label>
                     <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
                       if(e.target.files && e.target.files[0]) {
@@ -1064,44 +1064,44 @@ export default function UserDashboard() {
                         if(url) { setProfileBottomPhotoUrl(url); setFormMessage('✓ Foto bawah profil terpasang'); }
                       }
                     }} />
-                    {profileBottomPhotoUrl && <img src={profileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border border-teal-200 mt-1" />}
+                    {profileBottomPhotoUrl && <img src={profileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200 mt-1" />}
                   </div>
                   {invitationType === 'pernikahan' ? (
                     <div className="space-y-4">
-                      <div className="p-3 bg-rose-50/40 border border-rose-200 rounded-xl space-y-2">
+                      <div className="p-3 bg-rose-50/40 border-2 border-rose-200 rounded-xl space-y-2">
                         <span className="font-bold text-rose-800 text-[10px] block uppercase">💍 Acara 1: Akad / Pemberkatan</span>
-                        <input type="datetime-local" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
+                        <input type="datetime-local" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
                         <div className="flex gap-1">
-                          <textarea rows={2} placeholder="Alamat Lengkap Tempat Akad" className="w-full p-2 border border-slate-300 rounded-lg resize-none bg-white" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
+                          <textarea rows={2} placeholder="Alamat Lengkap Tempat Akad" className="w-full p-2 border-2 border-slate-300 rounded-lg resize-none bg-white" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
                           <button type="button" onClick={() => handleSearchLocation(false, false)} className="px-3 bg-slate-800 text-white font-bold rounded-lg cursor-pointer">Cari</button>
                         </div>
-                        <input type="url" placeholder="Link Google Maps Akad" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-[10px]" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
-                        <div className="w-full h-28 rounded-lg overflow-hidden relative border bg-white mt-1">
+                        <input type="url" placeholder="Link Google Maps Akad" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
+                        <div className="w-full h-28 rounded-lg overflow-hidden relative border-2 bg-white mt-1">
                           <iframe width="100%" height="100%" className="border-0" loading="lazy" src={`https://maps.google.com/maps?q=${mapsUrl ? encodeURIComponent(mapsUrl) : (locationAddress ? encodeURIComponent(locationAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                         </div>
                       </div>
-                      <div className="p-3 bg-sky-50/40 border border-sky-200 rounded-xl space-y-2">
+                      <div className="p-3 bg-sky-50/40 border-2 border-sky-200 rounded-xl space-y-2">
                         <span className="font-bold text-sky-800 text-[10px] block uppercase">🎉 Acara 2: Resepsi Pernikahan</span>
-                        <input type="datetime-local" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white" value={receptionDate} onChange={(e) => setReceptionDate(e.target.value)} />
+                        <input type="datetime-local" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={receptionDate} onChange={(e) => setReceptionDate(e.target.value)} />
                         <div className="flex gap-1">
-                          <textarea rows={2} placeholder="Alamat Lengkap Tempat Resepsi" className="w-full p-2 border border-slate-300 rounded-lg resize-none bg-white" value={receptionAddress} onChange={(e) => setReceptionAddress(e.target.value)} />
+                          <textarea rows={2} placeholder="Alamat Lengkap Tempat Resepsi" className="w-full p-2 border-2 border-slate-300 rounded-lg resize-none bg-white" value={receptionAddress} onChange={(e) => setReceptionAddress(e.target.value)} />
                           <button type="button" onClick={() => handleSearchLocation(false, true)} className="px-3 bg-slate-800 text-white font-bold rounded-lg cursor-pointer">Cari</button>
                         </div>
-                        <input type="url" placeholder="Link Google Maps Resepsi" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white text-[10px]" value={receptionMapsUrl} onChange={(e) => setReceptionMapsUrl(e.target.value)} />
-                        <div className="w-full h-28 rounded-lg overflow-hidden relative border bg-white mt-1">
+                        <input type="url" placeholder="Link Google Maps Resepsi" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={receptionMapsUrl} onChange={(e) => setReceptionMapsUrl(e.target.value)} />
+                        <div className="w-full h-28 rounded-lg overflow-hidden relative border-2 bg-white mt-1">
                           <iframe width="100%" height="100%" className="border-0" loading="lazy" src={`https://maps.google.com/maps?q=${receptionMapsUrl ? encodeURIComponent(receptionMapsUrl) : (receptionAddress ? encodeURIComponent(receptionAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <input type="datetime-local" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
+                      <input type="datetime-local" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
                       <div className="flex gap-1">
-                        <textarea rows={2} placeholder="Alamat Gedung Lengkap" className="w-full p-2 border border-slate-300 rounded-lg resize-none" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
+                        <textarea rows={2} placeholder="Alamat Gedung Lengkap" className="w-full p-2 border-2 border-slate-300 rounded-lg resize-none" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
                         <button type="button" onClick={() => handleSearchLocation(false, false)} className="px-3 bg-slate-800 text-white font-bold rounded-lg cursor-pointer">Cari</button>
                       </div>
-                      <input type="url" placeholder="Atau tempel Link Google Maps manual (Pin Titik):" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
-                      <div className="w-full h-36 rounded-xl border border-slate-200 overflow-hidden relative bg-slate-50">
+                      <input type="url" placeholder="Atau tempel Link Google Maps manual (Pin Titik):" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} />
+                      <div className="w-full h-36 rounded-xl border-2 border-slate-200 overflow-hidden relative bg-slate-50">
                         <iframe width="100%" height="100%" className="border-0" loading="lazy" src={`https://maps.google.com/maps?q=${mapsUrl ? encodeURIComponent(mapsUrl) : (locationAddress ? encodeURIComponent(locationAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                       </div>
                     </div>
@@ -1116,43 +1116,43 @@ export default function UserDashboard() {
               {currentStep === 4 && (
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                   <h3 className="text-sm font-bold text-slate-900">Bagian 4: Galeri, Kado, Musik & Custom Blok</h3>
-                  <div className="p-3 border rounded-xl bg-slate-50/50 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-slate-50/50 space-y-1.5">
                     <label className="block text-[10px] font-bold text-teal-700 uppercase tracking-wider">📁 1. Tambah Foto Galeri</label>
-                    <input type="text" placeholder="Momen-momen yang berhasil kami abadikan..." className="w-full p-2 border rounded-lg bg-white" value={galleryProlog} onChange={(e) => setGalleryProlog(e.target.value)} />
+                    <input type="text" placeholder="Momen-momen yang berhasil kami abadikan..." className="w-full p-2 border-2 rounded-lg bg-white" value={galleryProlog} onChange={(e) => setGalleryProlog(e.target.value)} />
                     <input type="file" accept="image/*" multiple onChange={(e) => handlePhotoUpload(e, false)} className="w-full text-xs" />
                     {uploadingImage && <p className="text-teal-600 animate-pulse text-[10px]">Mengunggah berkas gambar...</p>}
                     <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 mt-1">
-                      {uploadedPhotos.map((url, i) => <img key={i} src={url} className="w-8 h-8 object-cover rounded border border-teal-200 shadow-2xs" />)}
+                      {uploadedPhotos.map((url, i) => <img key={i} src={url} className="w-8 h-8 object-cover rounded border-2 border-teal-200 shadow-2xs" />)}
                     </div>
                   </div>
-                  <div className="p-3 border rounded-xl bg-slate-50/50 space-y-1">
+                  <div className="p-3 border-2 rounded-xl bg-slate-50/50 space-y-1">
                     <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">🎬 2. Galeri Video Youtube</label>
-                    <input type="text" placeholder="Mari saksikan cuplikan video kebahagiaan kami." className="w-full p-2 border rounded-lg bg-white" value={videoProlog} onChange={(e) => setVideoProlog(e.target.value)} />
-                    <input type="url" placeholder="Link Video YouTube" className="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white mt-1" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+                    <input type="text" placeholder="Mari saksikan cuplikan video kebahagiaan kami." className="w-full p-2 border-2 rounded-lg bg-white" value={videoProlog} onChange={(e) => setVideoProlog(e.target.value)} />
+                    <input type="url" placeholder="Link Video YouTube" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white mt-1" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
                   </div>
-                  <div className="p-3 border rounded-xl bg-slate-50/50 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-slate-50/50 space-y-1.5">
                     <label className="block text-[10px] font-bold text-teal-700 uppercase tracking-wider">🎵 3. Upload Musik Latar Belakang (.mp3)</label>
                     <input type="file" accept="audio/mp3,audio/*" onChange={(e) => handleMusicUpload(e, false)} className="w-full text-xs" />
                     {uploadingMusic && <p className="text-teal-600 animate-pulse text-[10px]">Mengunggah berkas suara...</p>}
                     {bgMusicUrl && <p className="text-emerald-600 text-[10px] font-bold">✓ Musik Latar Terpasang</p>}
                   </div>
-                  <div className="p-3 border rounded-xl border-slate-200 space-y-2">
+                  <div className="p-3 border-2 rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-teal-700 block">Kado Digital</span>
-                    <input type="text" placeholder="Terima kasih atas doa yang telah Anda berikan..." className="w-full p-2 border rounded bg-white" value={giftProlog} onChange={(e) => setGiftProlog(e.target.value)} />
+                    <input type="text" placeholder="Terima kasih atas doa yang telah Anda berikan..." className="w-full p-2 border-2 rounded bg-white" value={giftProlog} onChange={(e) => setGiftProlog(e.target.value)} />
                     {giftAccounts.map((acc, index) => (
                       <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 border-b sm:border-b-0 pb-2 sm:pb-0">
-                        <input type="text" placeholder="Bank / E-Wallet" value={acc.bank} onChange={(e) => { const n = [...giftAccounts]; n[index].bank = e.target.value; setGiftAccounts(n); }} className="p-1.5 border rounded text-xs bg-white" />
-                        <input type="text" placeholder="Nama" value={acc.name} onChange={(e) => { const n = [...giftAccounts]; n[index].name = e.target.value; setGiftAccounts(n); }} className="p-1.5 border rounded text-xs bg-white" />
-                        <input type="text" placeholder="Nomor" value={acc.number} onChange={(e) => { const n = [...giftAccounts]; n[index].number = e.target.value; setGiftAccounts(n); }} className="p-1.5 border rounded text-xs bg-white" />
+                        <input type="text" placeholder="Bank / E-Wallet" value={acc.bank} onChange={(e) => { const n = [...giftAccounts]; n[index].bank = e.target.value; setGiftAccounts(n); }} className="p-1.5 border-2 rounded text-xs bg-white" />
+                        <input type="text" placeholder="Nama" value={acc.name} onChange={(e) => { const n = [...giftAccounts]; n[index].name = e.target.value; setGiftAccounts(n); }} className="p-1.5 border-2 rounded text-xs bg-white" />
+                        <input type="text" placeholder="Nomor" value={acc.number} onChange={(e) => { const n = [...giftAccounts]; n[index].number = e.target.value; setGiftAccounts(n); }} className="p-1.5 border-2 rounded text-xs bg-white" />
                       </div>
                     ))}
                     <button type="button" onClick={() => setGiftAccounts([...giftAccounts, {name:'', bank:'', number:''}])} className="text-[11px] text-teal-600 font-bold hover:underline">+ Rekening</button>
                   </div>
-                  <div className="p-3 border rounded-xl border-slate-200 space-y-2">
+                  <div className="p-3 border-2 rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-slate-700 block">Blok Custom</span>
-                    <input type="text" placeholder="Turut Mengundang" className="w-full p-2 border rounded bg-white" value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} />
-                    <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border rounded bg-white" value={customProlog} onChange={(e) => setCustomProlog(e.target.value)} />
-                    <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border rounded resize-none bg-white" value={customContent} onChange={(e) => setCustomContent(e.target.value)} />
+                    <input type="text" placeholder="Turut Mengundang" className="w-full p-2 border-2 rounded bg-white" value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} />
+                    <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border-2 rounded bg-white" value={customProlog} onChange={(e) => setCustomProlog(e.target.value)} />
+                    <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border-2 rounded resize-none bg-white" value={customContent} onChange={(e) => setCustomContent(e.target.value)} />
                   </div>
                   <div className="flex gap-2 pt-2 border-t border-slate-100">
                     <button type="button" onClick={() => setIsCreateModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
@@ -1170,9 +1170,9 @@ export default function UserDashboard() {
       {/* POPUP MODAL MODULAR: EDIT UNDANGAN LAMA */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-4 sm:p-6 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-150 text-xs">
+          <div className="bg-white rounded-2xl shadow-2xl border-2 border-slate-300 max-w-md w-full p-4 sm:p-6 space-y-4 my-auto relative animate-in fade-in zoom-in-95 duration-150 text-xs">
             <button type="button" onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 bg-slate-50 font-bold text-sm z-10">✕</button>
-            <div className="flex items-center justify-between border-b pb-2 text-[10px] font-bold text-slate-400 pr-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+            <div className="flex items-center justify-between border-b-2 pb-2 text-[10px] font-bold text-slate-400 pr-6 overflow-x-auto whitespace-nowrap scrollbar-none">
               <span className={editStep === 1 ? 'text-teal-600' : ''}>1. Tipe</span>
               <span className="mx-1">→</span>
               <span className={editStep === 2 ? 'text-teal-600' : ''}>2. Tema</span>
@@ -1187,7 +1187,7 @@ export default function UserDashboard() {
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 1</h3>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Tipe Undangan (Terkunci)</label>
-                    <select disabled className="block w-full px-3 py-2 border border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed font-medium text-slate-500" value={editInvitationType}>
+                    <select disabled className="block w-full px-3 py-2 border-2 border-slate-300 rounded-lg bg-slate-100 cursor-not-allowed font-medium text-slate-500" value={editInvitationType}>
                       <option value="">- Pilih Tipe -</option>
                       <option value="akikah">Akikah</option>
                       <option value="halalbihalal">Halalbihalal</option>
@@ -1203,20 +1203,20 @@ export default function UserDashboard() {
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Judul Undangan</label>
-                    <input type="text" placeholder="Tuliskan judul undangan di sini" className="w-full p-2 border rounded-lg bg-white" value={editEventTitle} onChange={(e) => setEditEventTitle(e.target.value)} />
+                    <input type="text" placeholder="Tuliskan judul undangan di sini" className="w-full p-2 border-2 rounded-lg bg-white" value={editEventTitle} onChange={(e) => setEditEventTitle(e.target.value)} />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Deskripsi</label>
-                    <textarea rows={2} placeholder="Tuliskan deskripsi di sini" className="w-full p-2 border rounded-lg resize-none" value={editWebsiteDesc} onChange={(e) => setEditWebsiteDesc(e.target.value)} />
+                    <textarea rows={2} placeholder="Tuliskan deskripsi di sini" className="w-full p-2 border-2 rounded-lg resize-none" value={editWebsiteDesc} onChange={(e) => setEditWebsiteDesc(e.target.value)} />
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Kata Kunci</label>
-                    <input type="text" placeholder="Keywords" className="w-full p-2 border rounded-lg" value={editKeywords} onChange={(e) => setEditKeywords(e.target.value)} />
+                    <input type="text" placeholder="Keywords" className="w-full p-2 border-2 rounded-lg" value={editKeywords} onChange={(e) => setEditKeywords(e.target.value)} />
                   </div>
-                  <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block font-bold text-slate-500 text-[10px] uppercase">📸 Foto Profil / Halaman Pembuka (Sampul) [KUNCI]</label>
                     <input disabled type="file" accept="image/*" className="w-full text-xs cursor-not-allowed text-slate-400" />
-                    {editCoverPhotoUrl && <img src={editCoverPhotoUrl} className="w-16 h-16 object-cover rounded border border-slate-300 mt-1 grayscale" />}
+                    {editCoverPhotoUrl && <img src={editCoverPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-slate-300 mt-1 grayscale" />}
                   </div>
                   <div className="flex gap-2 pt-1">
                     <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
@@ -1229,11 +1229,11 @@ export default function UserDashboard() {
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 2: Tema & Cover</h3>
                   <div>
                     <label className="block font-semibold mb-1">Tulisan Tombol Sampul Cover</label>
-                    <input type="text" placeholder="Tulisan Tombol Cover" className="w-full p-2 border rounded-lg" value={editCoverProlog} onChange={(e) => setEditCoverProlog(e.target.value)} />
+                    <input type="text" placeholder="Tulisan Tombol Cover" className="w-full p-2 border-2 rounded-lg" value={editCoverProlog} onChange={(e) => setEditCoverProlog(e.target.value)} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Template (Tema Undangan)</label>
-                    <select className="w-full p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" value={editSelectedTemplate} onChange={(e) => {
+                    <select className="w-full p-2.5 border-2 border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" value={editSelectedTemplate} onChange={(e) => {
                       if (!userProfile?.is_premium && e.target.value !== 'free') {
                         alert('Tema ini khusus untuk pengguna Premium!');
                         setEditSelectedTemplate('free');
@@ -1262,67 +1262,67 @@ export default function UserDashboard() {
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Nama Acara 1</label>
                     {(editInvitationType === 'pernikahan' || editInvitationType === 'lamaran') ? (
-                      <select className="block w-full p-2 border border-slate-300 rounded-lg bg-white font-bold text-slate-800" value={editEventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : editEventBlockTitle} onChange={(e) => setEditEventBlockTitle(e.target.value)}>
+                      <select className="block w-full p-2 border-2 border-slate-300 rounded-lg bg-white font-bold text-slate-800" value={editEventBlockTitle === 'Acara Utama' ? 'Akad Nikah' : editEventBlockTitle} onChange={(e) => setEditEventBlockTitle(e.target.value)}>
                         <option value="Akad Nikah">Akad Nikah</option>
                         <option value="Pemberkatan">Pemberkatan</option>
                       </select>
                     ) : (
-                      <input type="text" className="w-full p-2 border rounded-lg font-bold bg-slate-50 uppercase text-slate-700" value={editEventBlockTitle === 'Acara Utama' || editEventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${editInvitationType?.toUpperCase()}` : editEventBlockTitle} onChange={(e) => setEditEventBlockTitle(e.target.value)} />
+                      <input type="text" className="w-full p-2 border-2 rounded-lg font-bold bg-slate-50 uppercase text-slate-700" value={editEventBlockTitle === 'Acara Utama' || editEventBlockTitle === 'Akad Nikah' ? `PERAYAAN ${editInvitationType?.toUpperCase()}` : editEventBlockTitle} onChange={(e) => setEditEventBlockTitle(e.target.value)} />
                     )}
                   </div>
-                  <textarea rows={2} placeholder="Prolog Acara" className="w-full p-2 border rounded-lg resize-none" value={editEventProlog} onChange={(e) => setEditEventProlog(e.target.value)} />
+                  <textarea rows={2} placeholder="Prolog Acara" className="w-full p-2 border-2 rounded-lg resize-none" value={editEventProlog} onChange={(e) => setEditEventProlog(e.target.value)} />
                   {(editInvitationType === 'pernikahan' || editInvitationType === 'lamaran') ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <input type="text" placeholder="Pria" className="w-full p-2 border rounded-lg" value={editGroomName} onChange={(e) => setEditGroomName(e.target.value)} />
-                      <input type="text" placeholder="Wanita" className="w-full p-2 border rounded-lg" value={editBrideName} onChange={(e) => setEditBrideName(e.target.value)} />
+                      <input type="text" placeholder="Pria" className="w-full p-2 border-2 rounded-lg" value={editGroomName} onChange={(e) => setEditGroomName(e.target.value)} />
+                      <input type="text" placeholder="Wanita" className="w-full p-2 border-2 rounded-lg" value={editBrideName} onChange={(e) => setEditBrideName(e.target.value)} />
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <input type="text" placeholder="Prolog Profil" className="w-full p-2 border rounded-lg" value={editProfileProlog} onChange={(e) => setEditProfileProlog(e.target.value)} />
-                      <textarea rows={2} placeholder="Deskripsi Profil Tokoh" className="w-full p-2 border rounded-lg resize-none" value={editProfileDesc} onChange={(e) => setEditProfileDesc(e.target.value)} />
+                      <input type="text" placeholder="Prolog Profil" className="w-full p-2 border-2 rounded-lg" value={editProfileProlog} onChange={(e) => setEditProfileProlog(e.target.value)} />
+                      <textarea rows={2} placeholder="Deskripsi Profil Tokoh" className="w-full p-2 border-2 rounded-lg resize-none" value={editProfileDesc} onChange={(e) => setEditProfileDesc(e.target.value)} />
                     </div>
                   )}
-                  <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block font-bold text-slate-500 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama) [KUNCI]</label>
                     <input disabled type="file" accept="image/*" className="w-full text-xs cursor-not-allowed text-slate-400" />
-                    {editProfileBottomPhotoUrl && <img src={editProfileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border border-slate-300 mt-1 grayscale" />}
+                    {editProfileBottomPhotoUrl && <img src={editProfileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-slate-300 mt-1 grayscale" />}
                   </div>
                   {editInvitationType === 'pernikahan' ? (
                     <div className="space-y-4">
-                      <div className="p-3 bg-rose-50/20 border border-rose-100 rounded-xl space-y-2">
+                      <div className="p-3 bg-rose-50/20 border-2 border-rose-100 rounded-xl space-y-2">
                         <span className="font-bold text-rose-800 text-[10px] block uppercase">💍 Acara 1: Akad / Pemberkatan</span>
-                        <input disabled type="datetime-local" className="w-full p-2 border rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editEventDate} />
+                        <input disabled type="datetime-local" className="w-full p-2 border-2 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editEventDate} />
                         <div className="flex gap-1">
-                          <textarea rows={2} className="w-full p-2 border rounded-lg resize-none bg-white" value={editLocationAddress} onChange={(e) => setEditLocationAddress(e.target.value)} />
+                          <textarea rows={2} className="w-full p-2 border-2 rounded-lg resize-none bg-white" value={editLocationAddress} onChange={(e) => setEditLocationAddress(e.target.value)} />
                           <button type="button" onClick={() => handleSearchLocation(true, false)} className="px-2 bg-slate-800 text-white font-bold rounded-lg">Cari</button>
                         </div>
-                        <input type="url" placeholder="Link Google Maps Akad" className="w-full p-2 border rounded-lg bg-white text-[10px]" value={editMapsUrl} onChange={(e) => setEditMapsUrl(e.target.value)} />
-                        <div className="w-full h-28 rounded-lg overflow-hidden relative border bg-white mt-1">
+                        <input type="url" placeholder="Link Google Maps Akad" className="w-full p-2 border-2 rounded-lg bg-white text-[10px]" value={editMapsUrl} onChange={(e) => setEditMapsUrl(e.target.value)} />
+                        <div className="w-full h-28 rounded-lg overflow-hidden relative border-2 bg-white mt-1">
                           <iframe width="100%" height="100%" className="border-0" src={`https://maps.google.com/maps?q=${editMapsUrl ? encodeURIComponent(editMapsUrl) : (editLocationAddress ? encodeURIComponent(editLocationAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                         </div>
                       </div>
-                      <div className="p-3 bg-sky-50/20 border border-sky-100 rounded-xl space-y-2">
+                      <div className="p-3 bg-sky-50/20 border-2 border-sky-100 rounded-xl space-y-2">
                         <span className="font-bold text-sky-800 text-[10px] block uppercase">🎉 Acara 2: Resepsi Pernikahan</span>
-                        <input disabled type="datetime-local" className="w-full p-2 border rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editReceptionDate} />
+                        <input disabled type="datetime-local" className="w-full p-2 border-2 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editReceptionDate} />
                         <div className="flex gap-1">
-                          <textarea rows={2} className="w-full p-2 border rounded-lg resize-none bg-white" value={editReceptionAddress} onChange={(e) => setEditReceptionAddress(e.target.value)} />
+                          <textarea rows={2} className="w-full p-2 border-2 rounded-lg resize-none bg-white" value={editReceptionAddress} onChange={(e) => setEditReceptionAddress(e.target.value)} />
                           <button type="button" onClick={() => handleSearchLocation(true, true)} className="px-2 bg-slate-800 text-white font-bold rounded-lg">Cari</button>
                         </div>
-                        <input type="url" placeholder="Link Google Maps Resepsi" className="w-full p-2 border rounded-lg bg-white text-[10px]" value={editReceptionMapsUrl} onChange={(e) => setEditReceptionMapsUrl(e.target.value)} />
-                        <div className="w-full h-28 rounded-lg overflow-hidden relative border bg-white mt-1">
+                        <input type="url" placeholder="Link Google Maps Resepsi" className="w-full p-2 border-2 rounded-lg bg-white text-[10px]" value={editReceptionMapsUrl} onChange={(e) => setEditReceptionMapsUrl(e.target.value)} />
+                        <div className="w-full h-28 rounded-lg overflow-hidden relative border-2 bg-white mt-1">
                           <iframe width="100%" height="100%" className="border-0" src={`https://maps.google.com/maps?q=${editReceptionMapsUrl ? encodeURIComponent(editReceptionMapsUrl) : (editReceptionAddress ? encodeURIComponent(editReceptionAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <input disabled type="datetime-local" className="w-full p-2 border rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editEventDate} />
+                      <input disabled type="datetime-local" className="w-full p-2 border-2 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed" value={editEventDate} />
                       <div className="flex gap-1">
-                        <textarea rows={2} className="w-full p-2 border rounded-lg resize-none" value={editLocationAddress} onChange={(e) => setEditLocationAddress(e.target.value)} />
+                        <textarea rows={2} className="w-full p-2 border-2 rounded-lg resize-none" value={editLocationAddress} onChange={(e) => setEditLocationAddress(e.target.value)} />
                         <button type="button" onClick={() => handleSearchLocation(true, false)} className="px-2 bg-slate-800 text-white font-bold rounded-lg">Cari</button>
                       </div>
-                      <input type="url" placeholder="Link Google Maps manual (Pin Titik):" className="w-full p-2 border rounded-lg bg-white" value={editMapsUrl} onChange={(e) => setEditMapsUrl(e.target.value)} />
-                      <div className="w-full h-36 rounded-xl border border-slate-200 overflow-hidden relative bg-slate-50 mt-1">
+                      <input type="url" placeholder="Link Google Maps manual (Pin Titik):" className="w-full p-2 border-2 rounded-lg bg-white" value={editMapsUrl} onChange={(e) => setEditMapsUrl(e.target.value)} />
+                      <div className="w-full h-36 rounded-xl border-2 border-slate-200 overflow-hidden relative bg-slate-50 mt-1">
                         <iframe width="100%" height="100%" className="border-0" src={`https://maps.google.com/maps?q=${editMapsUrl ? encodeURIComponent(editMapsUrl) : (editLocationAddress ? encodeURIComponent(editLocationAddress) : 'Jakarta')}&t=&z=14&ie=UTF8&iwloc=&output=embed`}></iframe>
                       </div>
                     </div>
@@ -1337,45 +1337,45 @@ export default function UserDashboard() {
               {editStep === 4 && (
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                   <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 4: Galeri, Kado, Musik & Custom Blok</h3>
-                  <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">📁 1. Tambah Foto Galeri [KUNCI]</label>
-                    <input type="text" placeholder="Prolog Galeri Foto" className="w-full p-2 border rounded-lg bg-white" value={editGalleryProlog} onChange={(e) => setEditGalleryProlog(e.target.value)} />
+                    <input type="text" placeholder="Prolog Galeri Foto" className="w-full p-2 border-2 rounded-lg bg-white" value={editGalleryProlog} onChange={(e) => setEditGalleryProlog(e.target.value)} />
                     <input disabled type="file" accept="image/*" multiple className="w-full text-xs cursor-not-allowed text-slate-400" />
                     <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 mt-1">
                       {editUploadedPhotos && editUploadedPhotos.map((url, i) => (
                         <div key={i} className="relative group">
-                          <img src={url} className="w-8 h-8 object-cover rounded border border-slate-300 shadow-2xs grayscale" />
+                          <img src={url} className="w-8 h-8 object-cover rounded border-2 border-slate-300 shadow-2xs grayscale" />
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1">
+                  <div className="p-3 border-2 rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">🎬 2. Galeri Video Youtube [KUNCI]</label>
-                    <input type="text" placeholder="Prolog Video" className="w-full p-2 border rounded-lg bg-white" value={editVideoProlog} onChange={(e) => setEditVideoProlog(e.target.value)} />
-                    <input disabled type="url" placeholder="Link Video YouTube" className="w-full p-2 border rounded-lg bg-slate-200 text-slate-500 cursor-not-allowed mt-1" value={editVideoUrl} />
+                    <input type="text" placeholder="Prolog Video" className="w-full p-2 border-2 rounded-lg bg-white" value={editVideoProlog} onChange={(e) => setEditVideoProlog(e.target.value)} />
+                    <input disabled type="url" placeholder="Link Video YouTube" className="w-full p-2 border-2 rounded-lg bg-slate-200 text-slate-500 cursor-not-allowed mt-1" value={editVideoUrl} />
                   </div>
-                  <div className="p-3 border rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
+                  <div className="p-3 border-2 rounded-xl bg-slate-100 border-slate-300 opacity-75 space-y-1.5">
                     <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">🎵 3. Upload Musik Latar Belakang (.mp3) [KUNCI]</label>
                     <input disabled type="file" accept="audio/mp3,audio/*" className="w-full text-xs cursor-not-allowed text-slate-400" />
                     {editBgMusicUrl && <p className="text-slate-500 text-[10px] font-bold">✓ Musik Latar Terpasang</p>}
                   </div>
-                  <div className="p-3 border rounded-xl border-slate-200 space-y-2">
+                  <div className="p-3 border-2 rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-teal-700 block">Kado Digital</span>
-                    <input type="text" placeholder="Prolog Kado" className="w-full p-2 border rounded bg-white" value={editGiftProlog} onChange={(e) => setEditGiftProlog(e.target.value)} />
+                    <input type="text" placeholder="Prolog Kado" className="w-full p-2 border-2 rounded bg-white" value={editGiftProlog} onChange={(e) => setEditGiftProlog(e.target.value)} />
                     {editGiftAccounts.map((acc, index) => (
                       <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 border-b sm:border-b-0 pb-2 sm:pb-0">
-                        <input type="text" placeholder="Bank / E-Wallet" value={acc.bank} onChange={(e) => { const n = [...editGiftAccounts]; n[index].bank = e.target.value; setEditGiftAccounts(n); }} className="p-1.5 border rounded text-xs bg-white" />
-                        <input type="text" placeholder="Nama" value={acc.name} onChange={(e) => { const n = [...editGiftAccounts]; n[index].name = e.target.value; setEditGiftAccounts(n); }} className="p-1.5 border rounded text-xs bg-white" />
-                        <input type="text" placeholder="Nomor" value={acc.number} onChange={(e) => { const n = [...editGiftAccounts]; n[index].number = e.target.value; setEditGiftAccounts(n); }} className="p-1.5 border rounded text-xs bg-white" />
+                        <input type="text" placeholder="Bank / E-Wallet" value={acc.bank} onChange={(e) => { const n = [...editGiftAccounts]; n[index].bank = e.target.value; setEditGiftAccounts(n); }} className="p-1.5 border-2 rounded text-xs bg-white" />
+                        <input type="text" placeholder="Nama" value={acc.name} onChange={(e) => { const n = [...editGiftAccounts]; n[index].name = e.target.value; setEditGiftAccounts(n); }} className="p-1.5 border-2 rounded text-xs bg-white" />
+                        <input type="text" placeholder="Nomor" value={acc.number} onChange={(e) => { const n = [...editGiftAccounts]; n[index].number = e.target.value; setEditGiftAccounts(n); }} className="p-1.5 border-2 rounded text-xs bg-white" />
                       </div>
                     ))}
                     <button type="button" onClick={() => setEditGiftAccounts([...editGiftAccounts, {name:'', bank:'', number:''}])} className="text-[10px] text-teal-600 font-bold">+ Rekening</button>
                   </div>
-                  <div className="p-3 border rounded-xl border-slate-200 space-y-2">
+                  <div className="p-3 border-2 rounded-xl border-slate-200 space-y-2">
                     <span className="font-bold text-slate-700 block">Blok Custom</span>
-                    <input type="text" placeholder="Judul Custom" className="w-full p-2 border rounded bg-white" value={editCustomTitle} onChange={(e) => setEditCustomTitle(e.target.value)} />
-                    <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border rounded bg-white" value={editCustomProlog} onChange={(e) => setEditCustomProlog(e.target.value)} />
-                    <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border rounded resize-none bg-white" value={editCustomContent} onChange={(e) => setEditCustomContent(e.target.value)} />
+                    <input type="text" placeholder="Judul Custom" className="w-full p-2 border-2 rounded bg-white" value={editCustomTitle} onChange={(e) => setEditCustomTitle(e.target.value)} />
+                    <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border-2 rounded bg-white" value={editCustomProlog} onChange={(e) => setEditCustomProlog(e.target.value)} />
+                    <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border-2 rounded resize-none bg-white" value={editCustomContent} onChange={(e) => setEditCustomContent(e.target.value)} />
                   </div>
                   <div className="flex gap-2 pt-2 border-t">
                     <button type="button" onClick={() => setIsEditModalOpen(false)} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
@@ -1393,8 +1393,8 @@ export default function UserDashboard() {
       {/* MODAL: VIEW LIST DOA & HARAPAN TAMU */}
       {isWishesModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-4 sm:p-6 space-y-4 my-auto relative text-xs">
-            <div className="flex items-center justify-between border-b pb-2">
+          <div className="bg-white rounded-2xl shadow-2xl border-2 border-slate-200 max-w-lg w-full p-4 sm:p-6 space-y-4 my-auto relative text-xs">
+            <div className="flex items-center justify-between border-b-2 pb-2">
               <h3 className="text-sm font-bold text-slate-900">💬 Daftar Doa & Harapan Tamu</h3>
               <button type="button" onClick={() => setIsWishesModalOpen(false)} className="w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 bg-slate-50 font-bold">✕</button>
             </div>
@@ -1403,7 +1403,7 @@ export default function UserDashboard() {
                 <p className="text-center text-slate-400 py-6">Belum ada ucapan doa yang dikirimkan oleh tamu.</p>
               ) : (
                 selectedWishes.map((wish, index) => (
-                  <div key={index} className="p-3 border rounded-xl bg-slate-50 space-y-1">
+                  <div key={index} className="p-3 border-2 rounded-xl bg-slate-50 space-y-1">
                     <div className="flex justify-between items-start gap-2">
                       <span className="font-bold text-slate-900 break-all">{wish.name} <span className="text-slate-400 font-normal text-[10px]">({wish.relation || 'Tamu'})</span></span>
                       <span className={`px-2 py-0.5 rounded text-[9px] font-bold shrink-0 ${wish.attendance === 'hadir' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
