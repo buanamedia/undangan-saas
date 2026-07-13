@@ -149,6 +149,75 @@ export default function AdminVouchersPage() {
     }
   };
 
+  // ⚡ FUNGSI BARU: EXPORT EXCEL (CSV)
+  const exportVouchersToExcel = () => {
+    let csvContent = "data:text/csv;charset=utf-8,Kode Voucher,Tipe Diskon,Nilai Potongan,Kuota Terpakai,Kuota Maksimal,Status Aktif\n";
+    vouchersList.forEach((v) => {
+      const potongan = v.discount_type === 'percentage' ? `${v.discount_value}%` : `Rp ${v.discount_value}`;
+      const row = `"${v.code}","${v.discount_type}","${potongan}","${v.uses_count}","${v.max_uses}","${v.is_active ? 'Aktif' : 'Nonaktif'}"`;
+      csvContent += row + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Daftar_Voucher_Tersedia.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // ⚡ FUNGSI BARU: EXPORT PDF
+  const exportVouchersToPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    let tableRows = '';
+    vouchersList.forEach(v => {
+      const potongan = v.discount_type === 'percentage' ? `${v.discount_value}%` : `Rp ${Number(v.discount_value).toLocaleString('id-ID')}`;
+      tableRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd; font-family: monospace; font-weight: bold; color: #1d4ed8;">${v.code}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${v.discount_type}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${potongan}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${v.uses_count} / ${v.max_uses}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${v.is_active ? 'Aktif' : 'Mati'}</td>
+        </tr>
+      `;
+    });
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Daftar Voucher Tersedia</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { font-size: 18px; margin-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+            th { background-color: #f4f4f4; padding: 8px; border: 1px solid #ddd; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>DAFTAR VOUCHER TERSEDIA DI SYSTEM</h1>
+          <p>Total Promosi Aktif: ${vouchersList.length} Item Voucher</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Kode Voucher</th>
+                <th>Tipe Diskon</th>
+                <th>Besar Potongan</th>
+                <th>Kuota Penggunaan</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <script>window.onload = function() { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 text-slate-800 dark:text-white">
@@ -160,7 +229,7 @@ export default function AdminVouchersPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col justify-between transition-colors duration-200">
       
-      {/* HEADER NAVBAR (Borders Dipertegas Pada Mode Light) */}
+      {/* HEADER NAVBAR */}
       <header className="border-b-2 border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
@@ -199,7 +268,7 @@ export default function AdminVouchersPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           
-          {/* KOLOM FORM INPUT VOUCHER (Borders Dipertegas Pada Mode Light) */}
+          {/* KOLOM FORM INPUT VOUCHER */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">Buat Voucher Baru</h2>
             
@@ -299,9 +368,31 @@ export default function AdminVouchersPage() {
             </form>
           </div>
 
-          {/* KOLOM DAFTAR LIST VOUCHER (Borders & Dividers Dipertegas Pada Mode Light) */}
+          {/* KOLOM DAFTAR LIST VOUCHER */}
           <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">Daftar Voucher Tersedia ({vouchersList.length})</h2>
+            
+            {/* ⚡ HEADER TABEL DENGAN SELEKSI TOMBOL EKSPOR */}
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">
+                Daftar Voucher Tersedia ({vouchersList.length})
+              </h2>
+              {vouchersList.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={exportVouchersToExcel}
+                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                  >
+                    📊 Excel
+                  </button>
+                  <button
+                    onClick={exportVouchersToPDF}
+                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                  >
+                    📄 PDF
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-800 rounded-lg">
               <table className="w-full text-left border-collapse text-xs">
@@ -379,7 +470,7 @@ export default function AdminVouchersPage() {
         </div>
       </main>
 
-      {/* FOOTER NAVIGASI (Borders Dipertegas Pada Mode Light) */}
+      {/* FOOTER NAVIGASI */}
       <footer className="border-t-2 border-slate-300 dark:border-slate-800 py-8 bg-white dark:bg-slate-900 text-center text-xs text-slate-400 w-full transition-colors mt-auto">
         <div className="max-w-7xl mx-auto px-4 space-y-4">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">

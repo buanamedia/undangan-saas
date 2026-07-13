@@ -15,6 +15,9 @@ export default function AdminDashboard() {
   const [invitationsList, setInvitationsList] = useState<any[]>([]);
   const [rsvpsList, setRsvpsList] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  
+  // ⚡ STATE BARU UNTUK SELEKSI JUDUL ACARA & EKSPOR
+  const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
 
   // ⚡ STATE TRANSAKSI & TEMA TETAP DIPERTAHANKAN
   const [transactionsList, setTransactionsList] = useState<any[]>([]);
@@ -121,6 +124,11 @@ export default function AdminDashboard() {
     fetchAdminData();
   }, []);
 
+  // Reset filter acara saat user utama diganti
+  useEffect(() => {
+    setSelectedInvitationId(null);
+  }, [selectedUserId]);
+
   const handleTogglePremium = async (user: any) => {
     try {
       if (!user.id) { alert("🚨 Gagal: ID Pengguna kosong!"); return; }
@@ -195,10 +203,219 @@ export default function AdminDashboard() {
     }
   };
 
+  // ⚡ EKSPOR TABEL PENGGUNA APLIKASI (EXCEL & PDF)
+  const exportUsersToExcel = () => {
+    let csvContent = "data:text/csv;charset=utf-8,Email,Username,Nomor WhatsApp,Role,Status Lisensi\n";
+    usersList.forEach((u) => {
+      const row = `"${u.email || u.id}","${u.username || ''}","${u.phone || ''}","${u.role || 'user'}","${u.is_premium ? 'Premium' : 'Free'}"`;
+      csvContent += row + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Daftar_Pengguna_Aplikasi.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportUsersToPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    let tableRows = '';
+    usersList.forEach(u => {
+      tableRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${u.email || u.id}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${u.username || '-'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${u.phone || '-'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-transform: uppercase;">${u.role || 'user'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${u.is_premium ? 'Premium' : 'Free'}</td>
+        </tr>
+      `;
+    });
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Daftar Pengguna Aplikasi</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { font-size: 18px; margin-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+            th { background-color: #f4f4f4; padding: 8px; border: 1px solid #ddd; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>DAFTAR PENGGUNA APLIKASI</h1>
+          <p>Total Terdaftar: ${usersList.length} Pengguna</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Email / ID</th>
+                <th>Username</th>
+                <th>WhatsApp</th>
+                <th>Role</th>
+                <th>Lisensi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <script>window.onload = function() { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // ⚡ EKSPOR TABEL UNDANGAN TERBIT (EXCEL & PDF)
+  const exportInvitationsToExcel = () => {
+    const activeUserEmail = usersList.find(u => u.id === selectedUserId)?.email || 'User';
+    let csvContent = `data:text/csv;charset=utf-8,Judul Acara,Tipe Acara,Slug Link\n`;
+    filteredInvitations.forEach((inv) => {
+      const row = `"${inv.title}","${inv.type || 'Acara'}","${inv.slug}"`;
+      csvContent += row + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Daftar_Undangan_${activeUserEmail.replace(/[^a-zA-Z0-9]/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportInvitationsToPDF = () => {
+    const activeUserEmail = usersList.find(u => u.id === selectedUserId)?.email || 'User';
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    let tableRows = '';
+    filteredInvitations.forEach(inv => {
+      tableRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">${inv.title}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${inv.type || 'Acara'}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; font-mono">/undangan/${inv.slug}</td>
+        </tr>
+      `;
+    });
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Daftar Undangan - ${activeUserEmail}</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { font-size: 18px; margin-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+            th { background-color: #f4f4f4; padding: 8px; border: 1px solid #ddd; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>DAFTAR UNDANGAN DIGITAL USER</h1>
+          <p><strong>Pemilik Akun:</strong> ${activeUserEmail}</p>
+          <p><strong>Total Tautan:</strong> ${filteredInvitations.length} Undangan</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Judul Acara</th>
+                <th>Tipe Acara</th>
+                <th>Slug URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <script>window.onload = function() { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  // ⚡ EKSPOR DATA BUKU TAMU / RSVP (EXCEL & PDF)
+  const exportToExcel = () => {
+    const activeInv = invitationsList.find(i => i.id === selectedInvitationId);
+    const titleAcara = activeInv ? activeInv.title.replace(/[^a-zA-Z0-9]/g, '_') : 'Buku_Tamu';
+    
+    let csvContent = "data:text/csv;charset=utf-8,Nama,Pesan,Status Kehadiran,Tanggal Dibuat\n";
+    finalFilteredRsvps.forEach((r) => {
+      const row = `"${r.name}","${r.message.replace(/"/g, '""')}","${r.attendance}","${new Date(r.created_at).toLocaleDateString('id-ID')}"`;
+      csvContent += row + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Buku_Tamu_${titleAcara}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const activeInv = invitationsList.find(i => i.id === selectedInvitationId);
+    const titleAcara = activeInv ? activeInv.title : 'Acara';
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    let tableRows = '';
+    finalFilteredRsvps.forEach(r => {
+      tableRows += `
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd;">${r.name}</td>
+          <td style="padding: 8px; border: 1px solid #ddd;">${r.message}</td>
+          <td style="padding: 8px; border: 1px solid #ddd; text-transform: capitalize;">${r.attendance}</td>
+        </tr>
+      `;
+    });
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Buku Tamu - ${titleAcara}</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #333; }
+            h1 { font-size: 18px; margin-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+            th { background-color: #f4f4f4; padding: 8px; border: 1px solid #ddd; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>DATA BUKU TAMU / RSVP</h1>
+          <p><strong>Nama Acara:</strong> ${titleAcara}</p>
+          <p><strong>Total Pesan:</strong> ${finalFilteredRsvps.length}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Tamu</th>
+                <th>Isi Doa / Pesan</th>
+                <th>Konfirmasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <script>window.onload = function() { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const filteredInvitations = invitationsList.filter(inv => inv.user_id === selectedUserId);
-  const filteredRsvps = rsvpsList.filter(rsvp => {
+  
+  // ⚡ FILTER DUA TINGKAT: Saring berdasarkan User Utama dulu, lalu saring berdasarkan Judul Acara jika dipilih
+  const finalFilteredRsvps = rsvpsList.filter(rsvp => {
     const parentUserId = (rsvp.invitations as any)?.user_id || rsvp.user_id;
-    return parentUserId === selectedUserId;
+    const matchesUser = parentUserId === selectedUserId;
+    
+    if (selectedInvitationId) {
+      return matchesUser && rsvp.invitation_id === selectedInvitationId;
+    }
+    return matchesUser;
   });
 
   // Pemfilteran daftar user premium untuk pencocokan data modal/transaksi eksternal jika dibutuhkan
@@ -309,9 +526,29 @@ export default function AdminDashboard() {
 
         {/* SECTION 1: TABEL MANAJEMEN USER */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
-          <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">Daftar Pengguna Aplikasi</h2>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500">💡 Klik pada baris pengguna untuk menyaring data detail undangan & rsvp di bawah</p>
+          <div className="flex justify-between items-center flex-wrap gap-2">
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">Daftar Pengguna Aplikasi</h2>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">💡 Klik pada baris pengguna untuk menyaring data detail undangan & rsvp di bawah</p>
+            </div>
+            
+            {/* ⚡ TOMBOL EKSPOR UNTUK DAFTAR PENGGUNA APLIKASI */}
+            {usersList.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={exportUsersToExcel}
+                  className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                >
+                  📊 Excel
+                </button>
+                <button
+                  onClick={exportUsersToPDF}
+                  className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                >
+                  📄 PDF
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-800 rounded-lg">
@@ -406,10 +643,34 @@ export default function AdminDashboard() {
 
         {/* SECTION 2 & 3: GRID DAFTAR UNDANGAN & BUKU TAMU */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* DAFTAR UNDANGAN TERBIT */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">Daftar Undangan Terbit ({filteredInvitations.length})</h2>
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">Daftar Undangan Terbit ({filteredInvitations.length})</h2>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500">🎯 Klik judul acara untuk menyaring Buku Tamu di kanan</p>
+              </div>
+
+              {/* ⚡ TOMBOL EKSPOR UNTUK DAFTAR UNDANGAN TERBIT */}
+              {filteredInvitations.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={exportInvitationsToExcel}
+                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                  >
+                    📊 Excel
+                  </button>
+                  <button
+                    onClick={exportInvitationsToPDF}
+                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                  >
+                    📄 PDF
+                  </button>
+                </div>
+              )}
             </div>
+
             <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-800 rounded-lg max-h-80 overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -426,10 +687,14 @@ export default function AdminDashboard() {
                     </tr>
                   ) : (
                     filteredInvitations.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/40 transition-colors">
+                      <tr 
+                        key={inv.id} 
+                        onClick={() => setSelectedInvitationId(inv.id)}
+                        className={`transition-colors cursor-pointer ${selectedInvitationId === inv.id ? 'bg-blue-500/10 dark:bg-blue-500/25 font-bold border-l-2 border-blue-600' : 'hover:bg-slate-50/50 dark:hover:bg-slate-950/40'}`}
+                      >
                         <td className="p-3 font-medium text-slate-900 dark:text-slate-200 truncate max-w-[160px]">{inv.title}</td>
                         <td className="p-3 capitalize text-slate-500 dark:text-slate-400">{inv.type || 'Acara'}</td>
-                        <td className="p-3 text-right">
+                        <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
                             onClick={() => window.open(`/undangan/${inv.slug}`, '_blank')}
@@ -446,10 +711,39 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* INTERAKSI BUKU TAMU (RSVP) */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-green-600 dark:text-green-400">Interaksi Buku Tamu (RSVP) ({filteredRsvps.length})</h2>
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider text-green-600 dark:text-green-400">
+                  Interaksi Buku Tamu (RSVP) ({finalFilteredRsvps.length})
+                </h2>
+                {selectedInvitationId && (
+                  <p className="text-[10px] text-blue-500 font-medium">
+                    📍 Memfilter Acara: {invitationsList.find(i => i.id === selectedInvitationId)?.title}
+                  </p>
+                )}
+              </div>
+              
+              {/* ⚡ TOMBOL EXCEL & PDF HANYA KELUAR SAAT JUDUL ACARA DIPILIH */}
+              {selectedInvitationId && finalFilteredRsvps.length > 0 && (
+                <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-200">
+                  <button
+                    onClick={exportToExcel}
+                    className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                  >
+                    📊 Excel
+                  </button>
+                  <button
+                    onClick={exportToPDF}
+                    className="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] rounded-lg shadow-xs transition-all cursor-pointer"
+                  >
+                    📄 PDF
+                  </button>
+                </div>
+              )}
             </div>
+
             <div className="overflow-x-auto border-2 border-slate-300 dark:border-slate-800 rounded-lg max-h-80 overflow-y-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -460,12 +754,16 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y-2 divide-slate-300 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
-                  {filteredRsvps.length === 0 ? (
+                  {finalFilteredRsvps.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">Tidak ada rsvp untuk pengguna ini.</td>
+                      <td colSpan={3} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">
+                        {selectedInvitationId 
+                          ? 'Tidak ada rsvp untuk acara yang dipilih ini.' 
+                          : 'Silakan pilih judul acara di sebelah kiri untuk melihat detail.'}
+                      </td>
                     </tr>
                   ) : (
-                    filteredRsvps.map((rsvp) => (
+                    finalFilteredRsvps.map((rsvp) => (
                       <tr key={rsvp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/40">
                         <td className="p-3 font-semibold text-slate-900 dark:text-slate-200">{rsvp.name}</td>
                         <td className="p-3 text-slate-600 dark:text-slate-300">{rsvp.message}</td>
