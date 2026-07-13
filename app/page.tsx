@@ -114,7 +114,7 @@ export default function LandingPage() {
                 onClick={() => router.push('/demo')} 
                 className="px-6 py-3 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-2xs"
               >
-                See Katalog Demo
+                Lihat Tema
               </button>
             </div>
           </div>
