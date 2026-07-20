@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useParams } from 'next/navigation';
 import { themesRegistry } from '@/lib/themes';
-import InvitationCountdown from './InvitationCountdown'; // ⚡ Mengimpor komponen countdown
-import InvitationFormWishes from './InvitationFormWishes'; // ⚡ Mengimpor komponen formulir rsvp
+import InvitationCountdown from './InvitationCountdown'; 
+import InvitationFormWishes from './InvitationFormWishes'; 
 
 export default function PublicInvitationPage() {
   const supabase = createClient();
@@ -228,18 +228,151 @@ export default function PublicInvitationPage() {
             <p className="text-xs text-stone-600 italic">"{customBlock.profile_prolog || 'Sedikit cerita mengenai tokoh utama dalam acara ini.'}"</p>
             
             {(invitation.type === 'pernikahan' || invitation.type === 'lamaran') ? (
-              <div className="font-serif text-sm font-bold text-stone-900 space-y-1">
-                <p>💍 {invitation.groom_name || 'Mempelai Pria'}</p>
-                <p className="text-xs font-sans text-stone-400 font-normal">&</p>
-                <p>💍 {invitation.bride_name || 'Mempelai Wanita'}</p>
+              /* TAMPILAN PREMIUM BARU: BINGKAI KAPSUL MENYESUAIKAN TEMA DENGAN ELEGAN */
+              <div className="w-full pt-2">
+                <div className="grid grid-cols-2 gap-4 items-start text-center">
+                  
+                  {/* MEMPELAI PRIA */}
+                  <div className="flex flex-col items-center space-y-2">
+                    {/* Border diikat langsung dengan properti warna tema: currentTheme.cardBorder */}
+                    <div className={`w-28 h-40 rounded-full overflow-hidden border-2 ${currentTheme.cardBorder} p-0.5 shadow-md bg-stone-50`}>
+                      <div className="w-full h-full rounded-full overflow-hidden relative">
+                        <img 
+                          src={customBlock.groom_photo_url || customBlock.profile_bottom_photo_url || '/placeholder-avatar.png'} 
+                          alt="Foto Pria" 
+                          className="w-full h-full object-cover object-center" 
+                        />
+                      </div>
+                    </div>
+                    {/* Detail Teks Identitas */}
+                    <div className="space-y-0.5">
+                      <h4 className={`font-serif text-xl font-bold ${currentTheme.accentText || 'text-stone-950'} tracking-wide leading-tight`}>
+                        {invitation.groom_name || 'Hiro'}
+                      </h4>
+                      {customBlock.groom_full_name && (
+                        <p className="text-xs font-semibold text-stone-700 leading-tight">
+                          {customBlock.groom_full_name}
+                        </p>
+                      )}
+                      <div className="text-[10px] text-stone-500 leading-tight pt-1">
+                        <p className="italic">{customBlock.groom_child_of || 'Putra Pertama dari'}</p>
+                        <p className="font-bold text-stone-700">
+                          {customBlock.groom_father ? `Bapak ${customBlock.groom_father}` : 'Bapak Sebastian Wijaya'}
+                        </p>
+                        <p className="text-[9px] my-0.5 text-stone-400">&</p>
+                        <p className="font-bold text-stone-700">
+                          {customBlock.groom_mother ? `Ibu ${customBlock.groom_mother}` : 'Ibu Melisa'}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Media Sosial */}
+                    <div className="flex items-center justify-center gap-2 pt-1">
+                      {customBlock.groom_ig && (
+                        <a
+  href={customBlock.groom_ig}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="w-6 h-6 rounded-full border bg-white flex items-center justify-center shadow-2xs hover:scale-105 transition-transform"
+  title="Instagram Pria"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-4 h-4 text-pink-600"
+  >
+    <path d="M7.75 2C4.57 2 2 4.57 2 7.75v8.5C2 19.43 4.57 22 7.75 22h8.5C19.43 22 22 19.43 22 16.25v-8.5C22 4.57 19.43 2 16.25 2h-8.5zm0 2h8.5A3.75 3.75 0 0 1 20 7.75v8.5A3.75 3.75 0 0 1 16.25 20h-8.5A3.75 3.75 0 0 1 4 16.25v-8.5A3.75 3.75 0 0 1 7.75 4zm8.75 1.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+  </svg>
+</a>
+                      )}
+                      {customBlock.groom_fb && (
+                        <a href={customBlock.groom_fb} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full border bg-white flex items-center justify-center text-xs shadow-2xs hover:scale-105 transition-transform" title="Facebook Pria">
+                          👥
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* MEMPELAI WANITA */}
+                  <div className="flex flex-col items-center space-y-2">
+                    {/* Border diikat langsung dengan properti warna tema: currentTheme.cardBorder */}
+                    <div className={`w-28 h-40 rounded-full overflow-hidden border-2 ${currentTheme.cardBorder} p-0.5 shadow-md bg-stone-50`}>
+                      <div className="w-full h-full rounded-full overflow-hidden relative">
+                        <img 
+                          src={customBlock.bride_photo_url || customBlock.profile_bottom_photo_url || '/placeholder-avatar.png'} 
+                          alt="Foto Wanita" 
+                          className="w-full h-full object-cover object-center" 
+                        />
+                      </div>
+                    </div>
+                    {/* Detail Teks Identitas */}
+                    <div className="space-y-0.5">
+                      <h4 className={`font-serif text-xl font-bold ${currentTheme.accentText || 'text-stone-950'} tracking-wide leading-tight`}>
+                        {invitation.bride_name || 'Tada'}
+                      </h4>
+                      {customBlock.bride_full_name && (
+                        <p className="text-xs font-semibold text-stone-700 leading-tight">
+                          {customBlock.bride_full_name}
+                        </p>
+                      )}
+                      <div className="text-[10px] text-stone-500 leading-tight pt-1">
+                        <p className="italic">{customBlock.bride_child_of || 'Putri Pertama dari'}</p>
+                        <p className="font-bold text-stone-700">
+                          {customBlock.bride_father ? `Bapak ${customBlock.bride_father}` : 'Bapak Hermawan'}
+                        </p>
+                        <p className="text-[9px] my-0.5 text-stone-400">&</p>
+                        <p className="font-bold text-stone-700">
+                          {customBlock.bride_mother ? `Ibu ${customBlock.bride_mother}` : 'Ibu Rahma'}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Media Sosial */}
+                    <div className="flex items-center justify-center gap-2 pt-1">
+                      {customBlock.bride_ig && (
+                        <a
+  href={customBlock.bride_ig}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="w-6 h-6 rounded-full border bg-white flex items-center justify-center shadow-2xs hover:scale-105 transition-transform"
+  title="Instagram Wanita"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className="w-4 h-4 text-pink-600"
+  >
+    <path d="M7.75 2C4.57 2 2 4.57 2 7.75v8.5C2 19.43 4.57 22 7.75 22h8.5C19.43 22 22 19.43 22 16.25v-8.5C22 4.57 19.43 2 16.25 2h-8.5zm0 2h8.5A3.75 3.75 0 0 1 20 7.75v8.5A3.75 3.75 0 0 1 16.25 20h-8.5A3.75 3.75 0 0 1 4 16.25v-8.5A3.75 3.75 0 0 1 7.75 4zm8.75 1.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+  </svg>
+</a>
+                      )}
+                      {customBlock.bride_fb && (
+                        <a href={customBlock.bride_fb} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full border bg-white flex items-center justify-center text-xs shadow-2xs hover:scale-105 transition-transform" title="Facebook Wanita">
+                          👥
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
               </div>
             ) : (
-              customBlock.profile_desc && <p className="text-xs text-stone-700 leading-relaxed font-medium bg-white p-2.5 border rounded-lg text-left">{customBlock.profile_desc}</p>
-            )}
-
-            {customBlock.profile_bottom_photo_url && (
-              <div className="w-full pt-2">
-                <img src={customBlock.profile_bottom_photo_url} alt="Profil Bawah" className="w-full h-48 object-cover rounded-xl border border-stone-200/60 shadow-xs" />
+              /* TAMPILAN NON PERNIKAHAN (UMUM) */
+              <div className="space-y-2">
+                {customBlock.profile_desc && (
+                  <p className="text-xs text-stone-700 leading-relaxed font-medium bg-white p-2.5 border rounded-lg text-left">
+                    {customBlock.profile_desc}
+                  </p>
+                )}
+                {customBlock.profile_bottom_photo_url && (
+                  <div className="w-full pt-2">
+                    <img 
+                      src={customBlock.profile_bottom_photo_url} 
+                      alt="Profil Bawah" 
+                      className={`w-full h-48 object-cover rounded-xl border ${currentTheme.cardBorder} shadow-xs`} 
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -414,7 +547,7 @@ export default function PublicInvitationPage() {
 
           <hr className="border-t-2 border-stone-200 my-6" />
 
-          {/* ⚡ MENYERAHKAN KONTROL FORM & RSVPS KE LAISAN SUB-KOMPONEN BARU */}
+          {/* FORM DOA & RSVPS */}
           <InvitationFormWishes 
             invitationId={invitation.id}
             theme={currentTheme}

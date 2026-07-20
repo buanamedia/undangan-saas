@@ -13,7 +13,6 @@ interface CreateInvitationModalProps {
   handleMusicUpload: (e: React.ChangeEvent<HTMLInputElement>, isEditForm?: boolean) => Promise<void>;
   handleSearchLocation: (isEdit?: boolean, isReception?: boolean) => Promise<void>;
   
-  // Meneruskan state/setter dari parent jika lokasi/foto masih dibutuhkan di luar modal
   locationAddress: string;
   setLocationAddress: (val: string) => void;
   mapsUrl: string;
@@ -70,9 +69,26 @@ export default function CreateInvitationModal({
   const [eventProlog, setEventProlog] = useState('Kami mengundang Anda untuk menghadiri acara kami...');
   const [eventDate, setEventDate] = useState('');
 
-  // STATE FOTO BAGIAN 1 & BAGIAN 3
+  // ⚡ STATE STRUKTUR BARU DETIL IDENTITAS MEMPELAI
+  const [groomFullName, setGroomFullName] = useState('');
+  const [groomChildOf, setGroomChildOf] = useState('');
+  const [groomFather, setGroomFather] = useState('');
+  const [groomMother, setGroomMother] = useState('');
+  const [groomIg, setGroomIg] = useState('');
+  const [groomFb, setGroomFb] = useState('');
+
+  const [brideFullName, setBrideFullName] = useState('');
+  const [brideChildOf, setBrideChildOf] = useState('');
+  const [brideFather, setBrideFather] = useState('');
+  const [brideMother, setBrideMother] = useState('');
+  const [brideIg, setBrideIg] = useState('');
+  const [brideFb, setBrideFb] = useState('');
+
+  // STATE BERKAS MEDIA / FOTO
   const [coverPhotoUrl, setCoverPhotoUrl] = useState('');
   const [profileBottomPhotoUrl, setProfileBottomPhotoUrl] = useState('');
+  const [groomPhotoUrl, setGroomPhotoUrl] = useState('');
+  const [bridePhotoUrl, setBridePhotoUrl] = useState('');
 
   // STATE TAMBAHAN: KHUSUS RESEPSI PERNIKAHAN
   const [receptionDate, setReceptionDate] = useState('');
@@ -97,6 +113,9 @@ export default function CreateInvitationModal({
     setCustomContent(''); setEventBlockTitle('Akad Nikah');
     setReceptionDate(''); setReceptionAddress(''); setReceptionMapsUrl('');
     setCoverPhotoUrl(''); setProfileBottomPhotoUrl('');
+    setGroomPhotoUrl(''); setBridePhotoUrl('');
+    setGroomFullName(''); setGroomChildOf(''); setGroomFather(''); setGroomMother(''); setGroomIg(''); setGroomFb('');
+    setBrideFullName(''); setBrideChildOf(''); setBrideFather(''); setBrideMother(''); setBrideIg(''); setBrideFb('');
     setSelectedTemplate('free');
     setCurrentStep(1); setFormMessage('');
   };
@@ -135,6 +154,20 @@ export default function CreateInvitationModal({
           profile_prolog: profileProlog || '',
           profile_desc: profileDesc || '',
           profile_bottom_photo_url: profileBottomPhotoUrl || '',
+          groom_photo_url: groomPhotoUrl || '', 
+          bride_photo_url: bridePhotoUrl || '', 
+          groom_full_name: groomFullName || '',
+          groom_child_of: groomChildOf || '',
+          groom_father: groomFather || '',
+          groom_mother: groomMother || '',
+          groom_ig: groomIg || '',
+          groom_fb: groomFb || '',
+          bride_full_name: brideFullName || '',
+          bride_child_of: brideChildOf || '',
+          bride_father: brideFather || '',
+          bride_mother: brideMother || '',
+          bride_ig: brideIg || '',
+          bride_fb: brideFb || '',
           event_block_title: eventBlockTitle || 'Akad Nikah',
           event_prolog: eventProlog || '',
           reception_date: receptionDate ? receptionDate.replace('T', ' ') : null,
@@ -283,28 +316,93 @@ export default function CreateInvitationModal({
                 )}
               </div>
               <textarea rows={2} placeholder="Prolog Informasi Acara" className="w-full p-2 border-2 rounded-lg resize-none" value={eventProlog} onChange={(e) => setEventProlog(e.target.value)} />
+              
               {(invitationType === 'pernikahan' || invitationType === 'lamaran') ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <input type="text" placeholder="Mempelai Pria" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg" value={groomName} onChange={(e) => setGroomName(e.target.value)} />
-                  <input type="text" placeholder="Mempelai Wanita" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg" value={brideName} onChange={(e) => setBrideName(e.target.value)} />
+                /* ⚡ STRUKTUR TAMPILAN PREMIUM BARU: PERNIKAHAN & LAMARAN */
+                <div className="space-y-4">
+                  {/* DETAIL TOKOH MEMPELAI PRIA */}
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <span className="font-bold text-slate-700 text-[10px] block uppercase text-teal-700">👨 Data Mempelai Pria</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="Nama Panggilan Pria" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={groomName} onChange={(e) => setGroomName(e.target.value)} />
+                      <input type="text" placeholder="Nama Lengkap Pria" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={groomFullName} onChange={(e) => setGroomFullName(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <input type="text" placeholder="Putra ke- (cth: Putra Pertama)" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={groomChildOf} onChange={(e) => setGroomChildOf(e.target.value)} />
+                      <input type="text" placeholder="Nama Ayah" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={groomFather} onChange={(e) => setGroomFather(e.target.value)} />
+                      <input type="text" placeholder="Nama Ibu" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={groomMother} onChange={(e) => setGroomMother(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="url" placeholder="Link Instagram Pria" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={groomIg} onChange={(e) => setGroomIg(e.target.value)} />
+                      <input type="url" placeholder="Link Facebook Pria" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={groomFb} onChange={(e) => setGroomFb(e.target.value)} />
+                    </div>
+                  </div>
+
+                  {/* DETAIL TOKOH MEMPELAI WANITA */}
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <span className="font-bold text-slate-700 text-[10px] block uppercase text-rose-700">👩 Data Mempelai Wanita</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" placeholder="Nama Panggilan Wanita" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={brideName} onChange={(e) => setBrideName(e.target.value)} />
+                      <input type="text" placeholder="Nama Lengkap Wanita" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white" value={brideFullName} onChange={(e) => setBrideFullName(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <input type="text" placeholder="Putri ke- (cth: Putri Kedua)" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={brideChildOf} onChange={(e) => setBrideChildOf(e.target.value)} />
+                      <input type="text" placeholder="Nama Ayah" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={brideFather} onChange={(e) => setBrideFather(e.target.value)} />
+                      <input type="text" placeholder="Nama Ibu" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={brideMother} onChange={(e) => setBrideMother(e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="url" placeholder="Link Instagram Wanita" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={brideIg} onChange={(e) => setBrideIg(e.target.value)} />
+                      <input type="url" placeholder="Link Facebook Wanita" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white text-[10px]" value={brideFb} onChange={(e) => setBrideFb(e.target.value)} />
+                    </div>
+                  </div>
+                  
+                  {/* UPLOAD BERKAS FOTO KEDUA MEMPELAI */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border-2 border-dashed rounded-xl bg-slate-50/60">
+                    <div className="space-y-1">
+                      <label className="block font-bold text-slate-600 text-[10px] uppercase">📸 Foto Mempelai Pria</label>
+                      <input type="file" accept="image/*" className="w-full text-[10px]" onChange={async (e) => {
+                        if(e.target.files && e.target.files[0]) {
+                          setFormMessage('Mengunggah foto pria...');
+                          const url = await uploadSingleFile(e.target.files[0]);
+                          if(url) { setGroomPhotoUrl(url); setFormMessage('✓ Foto pria terpasang'); }
+                        }
+                      }} />
+                      {groomPhotoUrl && <img src={groomPhotoUrl} className="w-12 h-16 object-cover rounded-xl border shadow-2xs mt-1" style={{aspectRatio: '3/4'}} />}
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="block font-bold text-slate-600 text-[10px] uppercase">📸 Foto Mempelai Wanita</label>
+                      <input type="file" accept="image/*" className="w-full text-[10px]" onChange={async (e) => {
+                        if(e.target.files && e.target.files[0]) {
+                          setFormMessage('Mengunggah foto wanita...');
+                          const url = await uploadSingleFile(e.target.files[0]);
+                          if(url) { setBridePhotoUrl(url); setFormMessage('✓ Foto wanita terpasang'); }
+                        }
+                      }} />
+                      {bridePhotoUrl && <img src={bridePhotoUrl} className="w-12 h-16 object-cover rounded-xl border shadow-2xs mt-1" style={{aspectRatio: '3/4'}} />}
+                    </div>
+                  </div>
                 </div>
               ) : (
-                <div>
-                  <input type="text" placeholder="Prolog Teks Profil Tokoh" className="w-full p-2 border-2 rounded-lg mb-2" value={profileProlog} onChange={(e) => setProfileProlog(e.target.value)} />
+                /* TAMPILAN PROFIL UNDANGAN NON-PERNIKAHAN (UMUM) */
+                <div className="space-y-2">
+                  <input type="text" placeholder="Prolog Teks Profil Tokoh" className="w-full p-2 border-2 rounded-lg" value={profileProlog} onChange={(e) => setProfileProlog(e.target.value)} />
                   <textarea rows={2} placeholder="Rincian Profil Tokoh Lengkap" className="w-full p-2 border-2 rounded-lg resize-none" value={profileDesc} onChange={(e) => setProfileDesc(e.target.value)} />
+                  
+                  <div className="p-3 border-2 rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
+                    <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama)</label>
+                    <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
+                      if(e.target.files && e.target.files[0]) {
+                        setFormMessage('Mengunggah foto profil bawah...');
+                        const url = await uploadSingleFile(e.target.files[0]);
+                        if(url) { setProfileBottomPhotoUrl(url); setFormMessage('✓ Foto bawah profil terpasang'); }
+                      }
+                    }} />
+                    {profileBottomPhotoUrl && <img src={profileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200 mt-1" />}
+                  </div>
                 </div>
               )}
-              <div className="p-3 border-2 rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
-                <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama)</label>
-                <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
-                  if(e.target.files && e.target.files[0]) {
-                    setFormMessage('Mengunggah foto profil bawah...');
-                    const url = await uploadSingleFile(e.target.files[0]);
-                    if(url) { setProfileBottomPhotoUrl(url); setFormMessage('✓ Foto bawah profil terpasang'); }
-                  }
-                }} />
-                {profileBottomPhotoUrl && <img src={profileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200 mt-1" />}
-              </div>
+
               {invitationType === 'pernikahan' ? (
                 <div className="space-y-4">
                   <div className="p-3 bg-rose-50/40 border-2 border-rose-200 rounded-xl space-y-2">
