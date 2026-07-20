@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Header from '../user/components/Header';
+import Footer from '../user/components/Footer';
 
 export default function TentangKamiPage() {
   const router = useRouter();
@@ -31,180 +33,141 @@ export default function TentangKamiPage() {
     checkSession();
   }, [supabase]);
 
+  const handlePrimaryAction = () => {
+    if (isLoggedIn) {
+      router.push('/user');
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const handleSecondaryAction = async () => {
+    if (isLoggedIn) {
+      const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?");
+      if (!confirmLogout) return;
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      router.push('/');
+    } else {
+      router.push('/register');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white text-slate-800 font-sans antialiased">
+    <div className="min-h-screen bg-white text-slate-800 font-sans antialiased flex flex-col justify-between">
       
-      {/* NAVBAR (IDENTIK DENGAN LANDING PAGE) */}
-      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          
-          {/* LOGO BRANDING BARU */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <img 
-              src="/logo/Logo.png" 
-              alt="Logo Undangan Digital" 
-              className="w-8 h-8 object-contain shrink-0" 
-            />
-            <div className="flex flex-col leading-none">
-              <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
-                Undangan <span className="text-blue-700">Digital</span>
-              </span>
-              <span className="text-[9px] font-semibold text-slate-400 tracking-wider mt-0.5">
-                by Buanamedia
-              </span>
-            </div>
-          </div>
-
-          {/* ⚡ PERBAIKAN DINAMIS: Tombol atas kanan menyesuaikan status login dengan warna PERSIS seperti di gambar */}
-          <div className="flex items-center gap-3">
-            {checkingAuth ? (
-              <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />
-            ) : isLoggedIn ? (
-              <button 
-                onClick={() => router.push('/user')} 
-                className="px-[18px] py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
-              >
-                Dashboard
-              </button>
-            ) : (
-              <>
-                {/* Tombol Masuk: Warna Slate Gelap Kebiruan sesuai gambar 2 */}
-                <button 
-                  onClick={() => router.push('/login')} 
-                  className="px-[18px] py-2.5 bg-[#2d3d51] hover:bg-[#23303f] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs tracking-wide"
-                >
-                  Masuk
-                </button>
-                {/* Tombol Daftar / Buat Undangan: Warna Biru Terang sesuai gambar 2 */}
-                <button 
-                  onClick={() => router.push('/register')} 
-                  className="px-[18px] py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
-                >
-                  Daftar
-                </button>
-              </>
-            )}
-          </div>
+      {checkingAuth ? (
+        <div className="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-50 h-16 flex items-center justify-between max-w-7xl mx-auto px-4 w-full">
+          <div className="w-32 h-6 bg-slate-100 animate-pulse rounded-lg" />
+          <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />
         </div>
-      </header>
+      ) : (
+        <Header 
+          onLogout={handleSecondaryAction}
+          onNavigateToPremium={handlePrimaryAction}
+          onNavigateHome={() => router.push('/')}
+          premiumLabel={isLoggedIn ? "Dashboard" : "Masuk"}
+          logoutLabel={isLoggedIn ? "Keluar" : "Daftar"}
+          premiumBgColor="bg-[#1d4ed8] hover:bg-blue-700" // ⚡ SEKARANG SUDAH BERUBAH MENJADI BIRU
+        />
+      )}
 
-      {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-linear-to-b from-blue-50/40 via-white to-white py-20 lg:py-24">
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold tracking-wide text-blue-800 bg-blue-100/60 rounded-full border border-blue-200">
-            ✨ Platform Undangan Digital No. 1 di Indonesia
-          </div>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-none">
-            Tentang <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-700 to-sky-500">Kami</span>
-          </h1>
-          <p className="text-slate-500 max-w-xl mx-auto text-xs sm:text-sm leading-relaxed">
-            Menyediakan solusi pembuatan undangan digital instan yang elegan, praktis, dan ramah lingkungan untuk momen spesial kebersamaan Anda.
-          </p>
-        </div>
-      </section>
-
-      {/* VISI & MISI SEKSI */}
-      <section className="py-12 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm select-none">🎯</div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Visi Kami</h2>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Menjadi platform generator undangan digital terdepan di Indonesia yang membantu jutaan orang merayakan kebahagiaan dengan cara yang lebih modern, efisien, dan berkelanjutan.
-              </p>
+      {/* MAIN CONTENT CONTAINER */}
+      <main className="grow">
+        {/* HERO SECTION */}
+        <section className="relative overflow-hidden bg-linear-to-b from-blue-50/40 via-white to-white py-20 lg:py-24">
+          <div className="max-w-4xl mx-auto px-4 text-center space-y-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold tracking-wide text-blue-800 bg-blue-100/60 rounded-full border border-blue-200">
+              ✨ Platform Undangan Digital No. 1 di Indonesia
             </div>
-
-            <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm select-none">💎</div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Misi Kami</h2>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Menyedikan teknologi desain mutakhir yang mudah digunakan oleh siapa saja, menyajikan performa loading undangan secepat kilat, serta menjaga keamanan data personal pengguna.
-              </p>
-            </div>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-none">
+              Tentang <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-700 to-sky-500">Kami</span>
+            </h1>
+            <p className="text-slate-500 max-w-xl mx-auto text-xs sm:text-sm leading-relaxed">
+              Menyediakan solusi pembuatan undangan digital instan yang elegan, praktis, dan ramah lingkungan untuk momen spesial kebersamaan Anda.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* MENGAPA MEMILIH LAYANAN KAMI */}
-      <section className="py-16 bg-slate-50 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase text-center">Mengapa Memilih Layanan Kami?</h2>
-            <p className="text-slate-500 text-xs sm:text-sm">Komitmen kami untuk memberikan pengalaman digital terbaik di setiap momen berharga.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {nilaiUtama.map((feat, index) => (
-              <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs hover:shadow-md transition-all space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg select-none">
-                  {feat.icon}
+        {/* VISI & MISI SEKSI */}
+        <section className="py-12 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm select-none">🎯</div>
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Visi Kami</h2>
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 tracking-wide">{feat.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{feat.desc}</p>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Menjadi platform generator undangan digital terdepan di Indonesia yang membantu jutaan orang merayakan kebahagiaan dengan cara yang lebih modern, efisien, dan berkelanjutan.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* CTA SECTION */}
-      <section className="py-20 bg-linear-to-r from-blue-800 to-blue-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-700/40 via-transparent to-transparent opacity-50"></div>
-        <div className="max-w-4xl mx-auto px-4 text-center space-y-6 relative z-10">
-          <h2 className="text-2xl sm:text-4xl font-black tracking-tight">Punya Pertanyaan atau Butuh Bantuan?</h2>
-          <p className="text-blue-100/80 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
-            Hubungi tim layanan bantuan kami atau mulai buat undangan gratis pertama Anda secara langsung sekarang juga.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <a 
-              href="https://wa.me/6281414159500"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer tracking-wider uppercase inline-flex items-center gap-2"
-            >
-              🟢 Hubungi Admin via WA
-            </a>
-            <button 
-              onClick={() => router.push('/user')} 
-              className="px-6 py-3 bg-white hover:bg-slate-50 text-blue-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all tracking-wider uppercase cursor-pointer"
-            >
-              Mulai Sekarang Juga
-            </button>
+              <div className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm select-none">💎</div>
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Misi Kami</h2>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Menyediakan teknologi desain mutakhir yang mudah digunakan oleh siapa saja, menyajikan performa loading undangan secepat kilat, serta menjaga keamanan data personal pengguna.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FOOTER (TERDAPAT TAMBAHAN MENU LINK BARU) */}
-      <footer className="border-t border-slate-100 py-8 bg-white text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 space-y-4">
-          
-          {/* MENU NAVIGASI FOOTER BARU */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
-            <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/demo')} className="hover:text-blue-700 transition-colors cursor-pointer">Tema</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors cursor-pointer">refund-policy</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors cursor-pointer">FAQ</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors cursor-pointer">syarat-ketentuan</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
+        {/* MENGAPA MEMILIH LAYANAN KAMI */}
+        <section className="py-16 bg-slate-50 border-y border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase text-center">Mengapa Memilih Layanan Kami?</h2>
+              <p className="text-slate-500 text-xs sm:text-sm">Komitmen kami untuk memberikan pengalaman digital terbaik di setiap momen berharga.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {nilaiUtama.map((feat, index) => (
+                <div key={index} className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-xs hover:shadow-md transition-all space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg select-none">
+                    {feat.icon}
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900 tracking-wide">{feat.title}</h3>
+                  <p className="text-xs text-slate-400 leading-relaxed">{feat.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
+        </section>
 
-          <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 pt-4">
-            <p className="font-bold text-slate-700">Undangan Digital &copy; 2026</p>
-            <p className="text-[10px] text-slate-400">by Buanamedia</p>
+        {/* CTA SECTION */}
+        <section className="py-20 bg-linear-to-r from-blue-800 to-blue-900 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-700/40 via-transparent to-transparent opacity-50"></div>
+          <div className="max-w-4xl mx-auto px-4 text-center space-y-6 relative z-10">
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight">Punya Pertanyaan atau Butuh Bantuan?</h2>
+            <p className="text-blue-100/80 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+              Hubungi tim layanan bantuan kami atau mulai buat undangan gratis pertama Anda secara langsung sekarang juga.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <a 
+                href="https://wa.me/6281414159500"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer tracking-wider uppercase inline-flex items-center gap-2"
+              >
+                🟢 Hubungi Admin via WA
+              </a>
+              <button 
+                onClick={() => router.push(isLoggedIn ? '/user' : '/login')} 
+                className="px-6 py-3 bg-white hover:bg-slate-50 text-blue-900 font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all tracking-wider uppercase cursor-pointer"
+              >
+                Mulai Sekarang Juga
+              </button>
+            </div>
           </div>
-          <p className="text-[11px] text-slate-400">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
-        </div>
-      </footer>
+        </section>
+      </main>
+
+      {/* FOOTER */}
+      <Footer onNavigate={(path) => router.push(path)} />
 
     </div>
   );

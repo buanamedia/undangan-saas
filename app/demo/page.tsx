@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // ⚡ Menggunakan Router Next.js
+import { useRouter } from 'next/navigation'; 
 import { themesRegistry } from '@/lib/themes';
 import { getDemoDataByType, demoWishesMock } from '@/lib/themes/demo-data';
 import { createClient } from '@/lib/supabase/client';
+import Header from '../user/components/Header'; // ⚡ Menggunakan komponen Header modular
+import Footer from '../user/components/Footer'; // ⚡ Menggunakan komponen Footer modular
 
 function InvitationCountdown({ targetDateString, isReception = false, theme }: { targetDateString: string; isReception?: boolean; theme: any }) {
   return (
@@ -22,7 +24,7 @@ function InvitationCountdown({ targetDateString, isReception = false, theme }: {
 }
 
 export default function DemoThemesPage() {
-  const router = useRouter(); // ⚡ Inisialisasi Router
+  const router = useRouter(); 
   const supabase = createClient();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
@@ -41,7 +43,6 @@ export default function DemoThemesPage() {
 
   const demoMusicUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
-  // Array untuk merender katalog kartu sesuai
   const availableThemesInCard = [
     { id: 'default', title: 'Elegant Amber', label: 'Khusus Pernikahan & Acara' },
     { id: 'pink', title: 'Romantic Pink', label: 'Khusus Pernikahan & Acara' },
@@ -114,64 +115,50 @@ export default function DemoThemesPage() {
     return inv.title.split(":")[0] || "Tamu Undangan";
   };
 
+  // Aksi Klik Tombol Utama Kiri pada Header
+  const handlePrimaryAction = () => {
+    if (isLoggedIn) {
+      router.push('/user');
+    } else {
+      router.push('/login');
+    }
+  };
+
+  // Aksi Klik Tombol Sekunder Kanan pada Header
+  const handleSecondaryAction = async () => {
+    if (isLoggedIn) {
+      const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?");
+      if (!confirmLogout) return;
+      await supabase.auth.signOut();
+      setIsLoggedIn(false);
+      router.push('/');
+    } else {
+      router.push('/register');
+    }
+  };
+
   return (
-    /* ⚡ PERBAIKAN UTAMA: Mengunci tinggi layar `h-screen` dan mematikan overflow luar agar tidak bisa di-scroll secara global */
     <div className={`h-screen w-screen text-stone-800 flex flex-col justify-between relative overflow-hidden font-sans antialiased`}>
        
       <audio ref={audioRef} src={demoMusicUrl} loop preload="auto" />
 
-      {/* ⚡ NAVBAR GLOBAL PERMANEN: Menggunakan `fixed top-0 left-0 w-full` terisolasi penuh agar mutlak diam */}
+      {/* ⚡ NAVBAR GLOBAL MODULAR DINAMIS (Hanya muncul saat pratinjau tema belum dibuka) */}
       {!isOpen && (
-        <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md w-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-             
-            {/* LOGO BRANDING */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-              <img 
-                src="/logo/Logo.png" 
-                alt="Logo Undangan Digital" 
-                className="w-8 h-8 object-contain shrink-0" 
-              />
-              <div className="flex flex-col leading-none">
-                <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
-                  Undangan <span className="text-blue-700">Digital</span>
-                </span>
-                <span className="text-[9px] font-semibold text-slate-400 tracking-wider mt-0.5">
-                  by Buanamedia
-                </span>
-              </div>
-            </div>
-
-            {/* ⚡ PERBAIKAN: Tombol Atas Kanan dibuat SAMA PERSIS ukuran, warna, dan posisinya dengan halaman Tentang Kami */}
-            <div className="flex items-center gap-3">
-              {checkingAuth ? (
-                <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />
-              ) : isLoggedIn ? (
-                <button 
-                  onClick={() => router.push('/user')} 
-                  className="px-[18px] py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
-                >
-                  Dashboard
-                </button>
-              ) : (
-                <>
-                  <button 
-                    onClick={() => router.push('/login')} 
-                    className="px-[18px] py-2.5 bg-[#2d3d51] hover:bg-[#23303f] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs tracking-wide"
-                  >
-                    Masuk
-                  </button>
-                  <button 
-                    onClick={() => router.push('/register')} 
-                    className="px-[18px] py-2.5 bg-[#1d4ed8] hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
-                  >
-                    Daftar
-                  </button>
-                </>
-              )}
-            </div>
+        checkingAuth ? (
+          <div className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md w-full flex items-center justify-between max-w-7xl mx-auto px-4">
+            <div className="w-32 h-6 bg-slate-100 animate-pulse rounded-lg" />
+            <div className="w-20 h-8 bg-slate-100 animate-pulse rounded-xl" />
           </div>
-        </header>
+        ) : (
+          <Header 
+            onLogout={handleSecondaryAction}
+            onNavigateToPremium={handlePrimaryAction}
+            onNavigateHome={() => router.push('/')}
+            premiumLabel={isLoggedIn ? "Dashboard" : "Masuk"}
+            logoutLabel={isLoggedIn ? "Keluar" : "Daftar"}
+            premiumBgColor="bg-[#1d4ed8] hover:bg-blue-700" // ⚡ Menggunakan warna biru untuk keselarasan halaman publik
+          />
+        )
       )}
 
       {/* BUTTON FLOATING MUTING (Hanya muncul saat pratinjau tema dibuka) */}
@@ -184,10 +171,10 @@ export default function DemoThemesPage() {
         </button>
       )}
 
-      {/* ⚡ KONTEN UTAMA: Diberikan margin atas `pt-16` agar tidak tertutup header, dan `overflow-y-auto` agar aktivitas scroll terisolasi hanya di dalam elemen ini */}
+      {/* KONTEN UTAMA */}
       <main className={`grow w-full flex flex-col items-center overflow-y-auto ${isOpen ? (currentTheme.bgPage) : 'bg-slate-50 pt-16'}`}>
          
-        {/* TAMPILAN 1: KATALOG KARTU UTAMA SEPERTI REFERENSI (KETIKA BELUM DIBUKA) */}
+        {/* TAMPILAN 1: KATALOG KARTU UTAMA */}
         {!isOpen ? (
           <div className="max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
              
@@ -264,28 +251,8 @@ export default function DemoThemesPage() {
               ))}
             </div>
 
-            {/* FOOTER DI DALAM MAIN SCROLL AGAR MENGIKUTI KONTEN */}
-            <footer className="border-t border-slate-100 py-8 bg-white text-center text-xs text-slate-400 w-full mt-12">
-              <div className="max-w-7xl mx-auto px-4 space-y-4">
-                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
-                  <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
-                  <span className="text-slate-300 hidden sm:inline">|</span>
-                  <button onClick={() => router.push('/demo')} className="text-blue-700 transition-colors cursor-pointer">Tema</button>
-                  <span className="text-slate-300 hidden sm:inline">|</span>
-                  <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors cursor-pointer">refund-policy</button>
-                  <span className="text-slate-300 hidden sm:inline">|</span>
-                  <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors cursor-pointer">FAQ</button>
-                  <span className="text-slate-300 hidden sm:inline">|</span>
-                  <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors cursor-pointer">syarat-ketentuan</button>
-                  <span className="text-slate-300 hidden sm:inline">|</span>
-                  <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
-                </div>
-                <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 pt-4">
-                  <p className="font-bold text-slate-700">Undangan Digital © 2026</p>
-                  <p className="text-[10px] text-slate-400">by Buanamedia</p>
-                </div>
-              </div>
-            </footer>
+            {/* ⚡ PANGGIL FOOTER MODULAR YANG BERSIH DI SINI DI DALAM MAIN CONTAINER */}
+            <Footer onNavigate={(path) => router.push(path)} />
              
           </div>
         ) : (

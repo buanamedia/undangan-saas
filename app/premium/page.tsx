@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Header from '../user/components/Header'; // ⚡ Menggunakan komponen Header modular
+import Footer from '../user/components/Footer'; // ⚡ Menggunakan komponen Footer modular
 
 export default function PremiumUpgradePage() {
   const supabase = createClient();
@@ -94,16 +96,15 @@ export default function PremiumUpgradePage() {
       if (voucherData) {
         const discountValue = Number(voucherData.discount_value) || 0;
         
-        // 🟢 FIX UTAMA: Cek tipe diskon dari database Anda
-        // Sesuaikan nama kolom tipe jika di database Anda bernama 'type', 'discount_type', dll.
+        // Cek tipe diskon dari database Anda
         const isRupiah = voucherData.type === 'fixed' || voucherData.discount_type === 'fixed' || String(voucherData.type).toLowerCase().includes('rupiah');
 
         if (isRupiah) {
           // Jika potongan Rupiah (e.g., Rp 50.000)
-          setDiscountPercent(0); // Set 0 agar tidak memunculkan teks % di UI pembayar
+          setDiscountPercent(0); 
           const calculatedAmount = basePrice - discountValue;
           setFinalAmount(calculatedAmount < 0 ? 0 : calculatedAmount);
-          setAppliedVoucher(`${code}_FIXED_${discountValue}`); // Penanda internal untuk render teks kustom
+          setAppliedVoucher(`${code}_FIXED_${discountValue}`); 
         } else {
           // Jika potongan Persentase (e.g., 50%)
           setDiscountPercent(discountValue);
@@ -163,6 +164,13 @@ export default function PremiumUpgradePage() {
     }
   };
 
+  const handleLogoutAction = async () => {
+    const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?");
+    if (!confirmLogout) return;
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -174,29 +182,15 @@ export default function PremiumUpgradePage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col justify-between transition-colors duration-200">
       
-      {/* ================= HEADER NAVBAR BARU BERSAMA LOGO ================= */}
-      <header className="border-b-2 border-slate-300 bg-white/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <img src="/logo/Logo.png" alt="Logo" className="w-8 h-8 object-contain shrink-0" />
-            <div className="flex flex-col leading-none">
-              <span className="font-black text-slate-900 tracking-tight text-sm sm:text-base">
-                Undangan <span className="text-blue-700">Digital</span>
-              </span>
-              <span className="text-[9px] font-semibold text-slate-400 tracking-wider mt-0.5">by Buanamedia</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => router.push('/user')}
-              className="text-xs font-bold text-white bg-slate-700 hover:bg-slate-800 px-[14px] py-2 rounded-xl transition-all cursor-pointer tracking-wide"
-            >
-              Kembali ke Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* ⚡ NAVBAR UTUH: Mengirim parameter warna premiumBgColor agar menjadi biru khusus untuk Dashboard */}
+      <Header 
+        onLogout={handleLogoutAction}
+        onNavigateToPremium={() => router.push('/user')} 
+        onNavigateHome={() => router.push('/')}
+        premiumLabel="Dashboard"
+        logoutLabel="Keluar"
+        premiumBgColor="bg-[#1d4ed8] hover:bg-blue-700" // ⚡ Kustom warna tombol dashboard menjadi Biru
+      />
 
       {/* ================= AREA UTAMA KONTEN TENGAH ================= */}
       <main className="grow flex items-center justify-center py-12 px-4">
@@ -235,10 +229,10 @@ export default function PremiumUpgradePage() {
                 <p>Kustom Blok Informasi Tambahan</p>
               </div>
               <div className="p-4 bg-white">
-                <button onClick={() => setStep(2)} className="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-md text-xs uppercase tracking-wider">
+                <button onClick={() => setStep(2)} className="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-md text-xs uppercase tracking-wider cursor-pointer">
                   Upgrade Sekarang
                 </button>
-                <button onClick={() => router.push('/user')} className="w-full mt-2 py-2 text-slate-400 hover:text-slate-600 font-semibold text-xs transition-colors">
+                <button onClick={() => router.push('/user')} className="w-full mt-2 py-2 text-slate-400 hover:text-slate-600 font-semibold text-xs transition-colors cursor-pointer">
                   Kembali ke Dashboard
                 </button>
               </div>
@@ -278,24 +272,24 @@ export default function PremiumUpgradePage() {
                         onChange={(e) => setVoucherCode(e.target.value)}
                         className="flex-1 px-3 py-2 border border-slate-300 bg-white rounded-xl focus:outline-none focus:border-blue-500 text-xs font-mono uppercase text-slate-800"
                       />
-                      <button type="button" onClick={() => handleApplyVoucher()} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors">
+                      <button type="button" onClick={() => handleApplyVoucher()} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors cursor-pointer">
                         Gunakan
                       </button>
                     </div>
                     {voucherError && <p className="text-[11px] text-red-600 font-medium">{voucherError}</p>}
                     {appliedVoucher && (
-  <p className="text-[11px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 animate-pulse">
-    ✓ Voucher {appliedVoucher.split('_FIXED_')[0]} berhasil digunakan! {' '}
-    {appliedVoucher.includes('_FIXED_') 
-      ? `Potongan Rp.${Number(appliedVoucher.split('_FIXED_')[1]).toLocaleString('id-ID')}.`
-      : `Potongan ${discountPercent}%.`
-    }
-  </p>
-)}
+                      <p className="text-[11px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 animate-pulse">
+                        ✓ Voucher {appliedVoucher.split('_FIXED_')[0]} berhasil digunakan! {' '}
+                        {appliedVoucher.includes('_FIXED_') 
+                          ? `Potongan Rp.${Number(appliedVoucher.split('_FIXED_')[1]).toLocaleString('id-ID')}.`
+                          : `Potongan ${discountPercent}%.`
+                        }
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* NOTIFIKASI ERROR DATABASE (TETAP DIPERTAHANKAN) */}
+                {/* NOTIFIKASI ERROR DATABASE */}
                 {dbError && (
                   <div className="p-2 bg-red-50 text-red-700 rounded border border-red-200 text-[11px]">
                     {dbError}
@@ -318,10 +312,10 @@ export default function PremiumUpgradePage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                <button type="button" onClick={() => setStep(1)} className="w-full sm:w-1/3 py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-600 font-bold rounded-xl">
+                <button type="button" onClick={() => setStep(1)} className="w-full sm:w-1/3 py-2.5 border border-slate-300 hover:bg-slate-50 text-slate-600 font-bold rounded-xl cursor-pointer">
                   Kembali
                 </button>
-                <button type="button" disabled={isProcessing} onClick={handleUpgradeAccount} className="w-full flex-1 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                <button type="button" disabled={isProcessing} onClick={handleUpgradeAccount} className="w-full flex-1 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 disabled:bg-slate-300 disabled:cursor-not-allowed cursor-pointer">
                   {isProcessing ? (
                     <span className="animate-pulse">Memproses Transaksi...</span>
                   ) : (
@@ -340,29 +334,8 @@ export default function PremiumUpgradePage() {
         </div>
       </main>
 
-      {/* ================= HEADER FOOTER BARU GLOBAL ================= */}
-      <footer className="border-t-2 border-slate-300 py-8 bg-white text-center text-xs text-slate-400 w-full transition-colors mt-auto">
-        <div className="max-w-7xl mx-auto px-4 space-y-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
-            <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors cursor-pointer">Tentang Kami</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/demo')} className="hover:text-blue-700 transition-colors cursor-pointer">Tema</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors cursor-pointer">refund-policy</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors cursor-pointer">FAQ</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors cursor-pointer">syarat-ketentuan</button>
-            <span className="text-slate-300 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors cursor-pointer">kontak</button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 pt-4">
-            <p className="font-bold text-slate-700">Undangan Digital &copy; 2026</p>
-            <p className="text-[10px] text-slate-400">by Buanamedia</p>
-          </div>
-          <p className="text-[11px] text-slate-400">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
-        </div>
-      </footer>
+      {/* FOOTER MODULAR */}
+      <Footer onNavigate={(path) => router.push(path)} />
 
     </div>
   );

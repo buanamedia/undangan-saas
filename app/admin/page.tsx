@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Header from '../user/components/Header'; // ⚡ Menggunakan komponen Header modular
+import Footer from '../user/components/Footer'; // ⚡ Menggunakan komponen Footer modular
 
 export default function AdminDashboard() {
   const supabase = createClient();
@@ -16,14 +18,14 @@ export default function AdminDashboard() {
   const [rsvpsList, setRsvpsList] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   
-  // ⚡ STATE BARU UNTUK SELEKSI JUDUL ACARA & EKSPOR
+  // STATE BARU UNTUK SELEKSI JUDUL ACARA & EKSPOR
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
 
-  // ⚡ STATE TRANSAKSI & TEMA TETAP DIPERTAHANKAN
+  // STATE TRANSAKSI & TEMA TETAP DIPERTAHANKAN
   const [transactionsList, setTransactionsList] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
-  // ⚡ STATE BARU UNTUK MENGHITUNG JUMLAH DINAMIS VOUCHER DARI DATABASE
+  // STATE BARU UNTUK MENGHITUNG JUMLAH DINAMIS VOUCHER DARI DATABASE
   const [vouchersCount, setVouchersCount] = useState<number>(0);
 
   // Efek Sinkronisasi Pilihan Mode Tema Dokumen
@@ -63,7 +65,7 @@ export default function AdminDashboard() {
       const { count: rsvpCount } = await supabase.from('rsvps').select('*', { count: 'exact', head: true });
       const { count: premiumCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_premium', true);
       
-      // ⚡ QUERY TAMBAHAN: Menghitung total data voucher yang ada di database public.vouchers
+      // QUERY TAMBAHAN: Menghitung total data voucher yang ada di database public.vouchers
       const { count: vCount } = await supabase.from('vouchers').select('*', { count: 'exact', head: true });
       setVouchersCount(vCount || 0);
 
@@ -159,7 +161,6 @@ export default function AdminDashboard() {
     }
   };
 
-  //ini untuk membersihkan musik dan poto user free//
   const cleanupUserMedia = async (userId: string) => {
     await fetch('/api/admin/cleanup-user-files', {
       method: 'POST',
@@ -203,7 +204,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // ⚡ EKSPOR TABEL PENGGUNA APLIKASI (EXCEL & PDF)
+  // EKSPOR TABEL PENGGUNA APLIKASI (EXCEL & PDF)
   const exportUsersToExcel = () => {
     let csvContent = "data:text/csv;charset=utf-8,Email,Username,Nomor WhatsApp,Role,Status Lisensi\n";
     usersList.forEach((u) => {
@@ -269,7 +270,7 @@ export default function AdminDashboard() {
     printWindow.document.close();
   };
 
-  // ⚡ EKSPOR TABEL UNDANGAN TERBIT (EXCEL & PDF)
+  // EKSPOR TABEL UNDANGAN TERBIT (EXCEL & PDF)
   const exportInvitationsToExcel = () => {
     const activeUserEmail = usersList.find(u => u.id === selectedUserId)?.email || 'User';
     let csvContent = `data:text/csv;charset=utf-8,Judul Acara,Tipe Acara,Slug Link\n`;
@@ -334,7 +335,7 @@ export default function AdminDashboard() {
     printWindow.document.close();
   };
 
-  // ⚡ EKSPOR DATA BUKU TAMU / RSVP (EXCEL & PDF)
+  // EKSPOR DATA BUKU TAMU / RSVP (EXCEL & PDF)
   const exportToExcel = () => {
     const activeInv = invitationsList.find(i => i.id === selectedInvitationId);
     const titleAcara = activeInv ? activeInv.title.replace(/[^a-zA-Z0-9]/g, '_') : 'Buku_Tamu';
@@ -407,7 +408,7 @@ export default function AdminDashboard() {
 
   const filteredInvitations = invitationsList.filter(inv => inv.user_id === selectedUserId);
   
-  // ⚡ FILTER DUA TINGKAT: Saring berdasarkan User Utama dulu, lalu saring berdasarkan Judul Acara jika dipilih
+  // FILTER DUA TINGKAT: Saring berdasarkan User Utama dulu, lalu saring berdasarkan Judul Acara jika dipilih
   const finalFilteredRsvps = rsvpsList.filter(rsvp => {
     const parentUserId = (rsvp.invitations as any)?.user_id || rsvp.user_id;
     const matchesUser = parentUserId === selectedUserId;
@@ -418,15 +419,10 @@ export default function AdminDashboard() {
     return matchesUser;
   });
 
-  // Pemfilteran daftar user premium untuk pencocokan data modal/transaksi eksternal jika dibutuhkan
-  const premiumUsersOnly = usersList.filter(u => 
-    u.is_premium === true || 
-    transactionsList.some(t => {
-      const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '');
-      const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
-      return userIdClean === txUserIdClean;
-    })
-  );
+  const handleLogoutAction = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   if (loading) {
     return (
@@ -439,35 +435,15 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col justify-between transition-colors duration-200">
       
-      {/* HEADER NAVBAR */}
-      <header className="border-b-2 border-slate-300 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <img src="/logo/Logo.png" alt="Logo Undangan Digital" className="w-8 h-8 object-contain shrink-0" />
-            <div className="flex flex-col leading-none">
-              <span className="font-black text-slate-900 dark:text-white tracking-tight text-sm sm:text-base">
-                Undangan <span className="text-blue-700 dark:text-blue-500">Digital</span>
-              </span>
-              <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 tracking-wider mt-0.5">by Buanamedia</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer border-2 border-slate-300 dark:border-slate-700"
-            >
-              {isDarkMode ? '☀️ Light' : '🌙 Dark'}
-            </button>
-            <button 
-              onClick={() => { supabase.auth.signOut(); router.push('/login'); }}
-              className="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-[14px] py-2 rounded-xl shadow-xs transition-all cursor-pointer tracking-wide"
-            >
-              Keluar Panel
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* ⚡ HEADER MODULAR GLOBAL DENGan INTEGRASI TEMA DARK/LIGHT */}
+      <Header 
+        onLogout={handleLogoutAction}
+        onNavigateToPremium={() => setIsDarkMode(!isDarkMode)} // Menggunakan tombol kiri untuk switch tema dinamis
+        onNavigateHome={() => router.push('/')}
+        premiumLabel={isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        logoutLabel="Keluar Panel"
+        premiumBgColor="bg-slate-700 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700"
+      />
 
       {/* ISI UTAMA DASHBOARD */}
       <main className="grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-slate-50/50 dark:bg-slate-950/20 transition-colors">
@@ -478,7 +454,6 @@ export default function AdminDashboard() {
 
         {/* ROW STATISTIK */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          
           {/* 1. Total Pengguna */}
           <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border-2 border-slate-300 dark:border-slate-800 transition-colors">
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Pengguna Terdaftar</p>
@@ -497,7 +472,7 @@ export default function AdminDashboard() {
             <p className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">{stats.premiumOrders} <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Transaksi</span></p>
           </div>
 
-          {/* 3. PERBAIKAN KARTU MANAJEMEN VOUCHER (MENAMPILKAN JUMLAH NOMINAL VOUCHER DINAMIS) */}
+          {/* 3. MANAJEMEN VOUCHER */}
           <div 
             onClick={() => router.push('/admin/vouchers')}
             className="bg-white dark:bg-slate-900 p-5 rounded-xl border-2 border-sky-300 dark:border-sky-900 hover:border-sky-500 dark:hover:border-sky-500 transition-all cursor-pointer group shadow-xs"
@@ -532,7 +507,6 @@ export default function AdminDashboard() {
               <p className="text-[11px] text-slate-400 dark:text-slate-500">💡 Klik pada baris pengguna untuk menyaring data detail undangan & rsvp di bawah</p>
             </div>
             
-            {/* ⚡ TOMBOL EKSPOR UNTUK DAFTAR PENGGUNA APLIKASI */}
             {usersList.length > 0 && (
               <div className="flex items-center gap-1.5">
                 <button
@@ -643,7 +617,6 @@ export default function AdminDashboard() {
 
         {/* SECTION 2 & 3: GRID DAFTAR UNDANGAN & BUKU TAMU */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
           {/* DAFTAR UNDANGAN TERBIT */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
             <div className="flex justify-between items-center flex-wrap gap-2">
@@ -652,7 +625,6 @@ export default function AdminDashboard() {
                 <p className="text-[10px] text-slate-400 dark:text-slate-500">🎯 Klik judul acara untuk menyaring Buku Tamu di kanan</p>
               </div>
 
-              {/* ⚡ TOMBOL EKSPOR UNTUK DAFTAR UNDANGAN TERBIT */}
               {filteredInvitations.length > 0 && (
                 <div className="flex items-center gap-1.5">
                   <button
@@ -725,7 +697,6 @@ export default function AdminDashboard() {
                 )}
               </div>
               
-              {/* ⚡ TOMBOL EXCEL & PDF HANYA KELUAR SAAT JUDUL ACARA DIPILIH */}
               {selectedInvitationId && finalFilteredRsvps.length > 0 && (
                 <div className="flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-200">
                   <button
@@ -782,28 +753,9 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* FOOTER NAVIGASI */}
-      <footer className="border-t-2 border-slate-300 dark:border-slate-800 py-8 bg-white dark:bg-slate-900 text-center text-xs text-slate-400 w-full transition-colors mt-auto">
-        <div className="max-w-7xl mx-auto px-4 space-y-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-slate-500 font-semibold text-[11px] sm:text-xs">
-            <button onClick={() => router.push('/tentang-kami')} className="hover:text-blue-700 transition-colors">Tentang Kami</button>
-            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/demo')} className="hover:text-blue-700 transition-colors">Tema</button>
-            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/refund-policy')} className="hover:text-blue-700 transition-colors">refund-policy</button>
-            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/faq')} className="hover:text-blue-700 transition-colors">FAQ</button>
-            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/syarat-ketentuan')} className="hover:text-blue-700 transition-colors">syarat-ketentuan</button>
-            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
-            <button onClick={() => router.push('/kontak')} className="hover:text-blue-700 transition-colors">kontak</button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-0.5 border-t border-slate-50 dark:border-slate-800 pt-4">
-            <p className="font-bold text-slate-700 dark:text-slate-300">Undangan Digital &copy; 2026</p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">by Buanamedia</p>
-          </div>
-        </div>
-      </footer>
+      {/* ⚡ COMPONENT FOOTER MODULAR */}
+      <Footer onNavigate={(path) => router.push(path)} />
+
     </div>
   );
 }

@@ -1,111 +1,11 @@
-// app/undangan/[slug]/page.tsx
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useParams } from 'next/navigation';
-import { themesRegistry } from '@/lib/themes'; // ⚡ Import registri tema Anda
-
-function InvitationCountdown({
-  targetDateString,
-  isReception = false,
-  theme, // ⚡ Terima data properti gaya tema aktif
-}: {
-  targetDateString: string;
-  isReception?: boolean;
-  theme: any;
-}) {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    isExpired: false,
-  });
-
-  useEffect(() => {
-    if (!targetDateString) return;
-
-    const calculateTime = () => {
-      const numbers = targetDateString.match(/\d+/g);
-      if (!numbers || numbers.length < 5) return;
-
-      const year = numbers[0];
-      const month = numbers[1].padStart(2, '0');
-      const day = numbers[2].padStart(2, '0');
-      const hour = numbers[3].padStart(2, '0');
-      const minute = numbers[4].padStart(2, '0');
-      const second = numbers[5] ? numbers[5].padStart(2, '0') : '00';
-
-      const isoTargetString = `${year}-${month}-${day}T${hour}:${minute}:${second}+07:00`;
-      const target = new Date(isoTargetString).getTime();
-      const now = Date.now();
-
-      const diff = target - now;
-
-      if (diff <= 0 || isNaN(diff)) {
-        setTimeLeft({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          isExpired: true,
-        });
-        return;
-      }
-
-      const totalMinutes = Math.floor(diff / (1000 * 60));
-      const totalHours = Math.floor(totalMinutes / 60);
-
-      const days = Math.floor(totalHours / 24);
-      const hours = totalHours % 24;
-      const minutes = totalMinutes % 60;
-
-      setTimeLeft({
-        days,
-        hours,
-        minutes,
-        isExpired: false,
-      });
-    };
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-
-    return () => clearInterval(interval);
-  }, [targetDateString]);
-
-  if (timeLeft.isExpired) {
-    return (
-      <div className="w-full text-center py-2 px-3 bg-rose-50 border border-rose-200 rounded-xl my-2">
-        <p className="text-[11px] font-black tracking-wider text-rose-600 animate-pulse">
-          ⚠️ MAAF, WAKTU ACARA SUDAH TERLEWATI (EXPIRED)
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`w-full py-3 px-4 ${theme.countdownBg} border ${theme.countdownBorder} rounded-xl my-2 text-center`}>
-      <p className={`text-[10px] font-bold ${theme.countdownNumber} tracking-widest uppercase mb-1.5`}>
-        Hitung Mundur {isReception ? "Resepsi" : "Acara"}
-      </p>
-
-      <div className="flex justify-center items-center gap-3 font-mono text-xs font-bold text-stone-800">
-        <div className="bg-white px-2.5 py-1 rounded border">
-          <span className={`${theme.countdownNumber} text-sm`}>{timeLeft.days}</span> Hari
-        </div>
-
-        <div className="bg-white px-2.5 py-1 rounded border">
-          <span className={`${theme.countdownNumber} text-sm`}>{timeLeft.hours}</span> Jam
-        </div>
-
-        <div className="bg-white px-2.5 py-1 rounded border">
-          <span className={`${theme.countdownNumber} text-sm`}>{timeLeft.minutes}</span> Menit
-        </div>
-      </div>
-    </div>
-  );
-}
+import { themesRegistry } from '@/lib/themes';
+import InvitationCountdown from './InvitationCountdown'; // ⚡ Mengimpor komponen countdown
+import InvitationFormWishes from './InvitationFormWishes'; // ⚡ Mengimpor komponen formulir rsvp
 
 export default function PublicInvitationPage() {
   const supabase = createClient();
@@ -120,24 +20,14 @@ export default function PublicInvitationPage() {
   const [safeImages, setSafeImages] = useState<string[]>([]);
   const [safeMusic, setSafeMusic] = useState<string>('');
   const [isMuted, setIsMuted] = useState(false);
-
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-
-  const [guestName, setGuestName] = useState('');
-  const [relation, setRelation] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [message, setMessage] = useState('');
-  const [attendance, setAttendance] = useState('hadir');
-  const [sendingWish, setSendingWish] = useState(false);
   const [wishesList, setWishesList] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!params?.slug) return;
       
-      const { data: invData, error } = await supabase
+      const { data: invData } = await supabase
         .from('invitations')
         .select('*')
         .eq('slug', params.slug)
@@ -196,9 +86,8 @@ export default function PublicInvitationPage() {
     };
     
     fetchData();
-  }, [params?.slug]);
+  }, [params?.slug, supabase]);
 
-  // Ambil objek tema dinamis dari database berdasarkan template_id
   const currentTheme = themesRegistry[invitation?.template_id] || themesRegistry.default;
 
   const handlePrevPhoto = (e: React.MouseEvent) => {
@@ -221,13 +110,6 @@ export default function PublicInvitationPage() {
     return `https://maps.google.com/maps?q=${encodeURIComponent(targetQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
   };
 
-  const cleanExternalRouteUrl = (rawUrl: string, addressBackup: string) => {
-    if (rawUrl && rawUrl.startsWith("http") && !rawUrl.includes("output=embed") && !rawUrl.includes("embed")) {
-      return rawUrl;
-    }
-    return `https://maps.google.com/maps?q=${encodeURIComponent(addressBackup || rawUrl || "Lokasi Acara")}`;
-  };
-
   const handleOpenInvitation = () => {
     setIsOpen(true);
     setTimeout(() => {
@@ -244,34 +126,6 @@ export default function PublicInvitationPage() {
     if (audioRef.current) {
       audioRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
-    }
-  };
-
-  const handleSubmitWish = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!guestName || !message) return alert("Nama dan Ucapan wajib diisi!");
-    setSendingWish(true);
-    try {
-      const newWish = {
-        invitation_id: invitation.id,
-        name: guestName,
-        relation: relation || null,
-        email: email || null,
-        phone: phone || null,
-        address: address || null,
-        message: message,
-        attendance: attendance
-      };
-
-      const { data, error } = await supabase.from('rsvps').insert(newWish).select('*').single();
-      if (error) throw error;
-      alert("✨ Terima kasih! Doa dan harapan Anda berhasil dikirim.");
-      setWishesList((prev) => [data || newWish, ...prev]);
-      setGuestName(''); setRelation(''); setEmail(''); setPhone(''); setAddress(''); setMessage('');
-    } catch (err: any) {
-      alert("Gagal mengirimkan ucapan: " + err.message);
-    } finally {
-      setSendingWish(false);
     }
   };
 
@@ -315,12 +169,10 @@ export default function PublicInvitationPage() {
 
   const eventDateFormatted = formatLocalDateString(invitation.event_date);
   const eventTimeFormatted = formatLocalTimeString(invitation.event_date);
-
   const receptionDateFormatted = formatLocalDateString(customBlock.reception_date);
   const receptionTimeFormatted = formatLocalTimeString(customBlock.reception_date);
 
   return (
-    // ⚡ Diubah: Latar belakang menggunakan skema warna dinamis tema aktif
     <div className={`min-h-screen ${currentTheme.bgPage} ${currentTheme.primaryText} flex flex-col items-center relative overflow-x-hidden font-sans ${isOpen ? 'pb-28' : ''} transition-all duration-500`}>
       
       {safeMusic && <audio ref={audioRef} src={safeMusic} loop preload="auto" autoPlay={false} controls={false} style={{ display: 'none' }} />}
@@ -333,7 +185,6 @@ export default function PublicInvitationPage() {
 
       {/* COVER UTAMA */}
       {!isOpen ? (
-        // ⚡ Diubah: Latar cover mengikuti skema warna tema secara dinamis agar terlihat serasi
         <div className={`fixed inset-0 ${currentTheme.bgPage} text-white flex flex-col items-center justify-center p-6 text-center z-50 animate-in fade-in duration-300`}>
           <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] z-0" />
           {customBlock.cover_photo_url && (
@@ -349,15 +200,14 @@ export default function PublicInvitationPage() {
               onClick={handleOpenInvitation} 
               className={`px-6 py-3 ${currentTheme.buttonBg} ${currentTheme.buttonHover} text-white font-bold text-xs tracking-wider uppercase rounded-xl shadow-md transition-all cursor-pointer transform active:scale-95`}
             >
-               💌 {customBlock.cover_prolog || 'Buka Undangan'}
+                💌 {customBlock.cover_prolog || 'Buka Undangan'}
             </button>
           </div>
         </div>
       ) : (
-        // ⚡ Diubah: Container card utama, border, dan teks mengikuti aturan class tema aktif
         <div className={`w-full max-w-md bg-white p-6 md:my-8 border ${currentTheme.cardBorder} rounded-2xl shadow-xl space-y-8 animate-in slide-in-from-bottom duration-500 pb-6`}>
           
-          {/* BLOK SECTION 1: PEMBUKA */}
+          {/* PEMBUKA */}
           <div id="pembuka" className="text-center space-y-2 scroll-mt-4">
             <span className={`text-[10px] uppercase font-bold tracking-widest ${currentTheme.badgeText} ${currentTheme.badgeBg} px-2.5 py-0.5 rounded-md border ${currentTheme.badgeBorder}`}>
               Undangan {invitation.type || 'Acara'}
@@ -372,7 +222,7 @@ export default function PublicInvitationPage() {
 
           <hr className="border-t-2 border-stone-200" />
 
-          {/* BLOK SECTION 2: PROFIL TOKOH */}
+          {/* PROFIL TOKOH */}
           <div id="profil" className="p-4 bg-stone-50/50 border border-stone-200/60 rounded-xl space-y-3 text-center scroll-mt-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">Profil Utama</h3>
             <p className="text-xs text-stone-600 italic">"{customBlock.profile_prolog || 'Sedikit cerita mengenai tokoh utama dalam acara ini.'}"</p>
@@ -396,7 +246,7 @@ export default function PublicInvitationPage() {
 
           <hr className="border-t-2 border-stone-200" />
 
-          {/* BLOK SECTION 3: JADWAL/INFORMASI ACARA */}
+          {/* JADWAL ACARA */}
           <div id="jadwal" className="space-y-6 pt-2 scroll-mt-4">
             <div className="text-center">
               <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">Informasi Pelaksanaan Acara</h3>
@@ -405,7 +255,6 @@ export default function PublicInvitationPage() {
 
             {invitation.type === 'pernikahan' ? (
               <div className="space-y-6">
-                {/* 1. KOTAK ACARA 1 */}
                 <div className="p-4 rounded-xl border border-stone-200/60 bg-stone-50/40 space-y-3">
                   <h4 className={`font-serif font-bold ${currentTheme.accentText} text-sm text-center uppercase`}>
                     ✨ {customBlock.event_block_title || 'Akad Nikah'}
@@ -415,15 +264,11 @@ export default function PublicInvitationPage() {
                     {eventTimeFormatted && <p className="font-mono text-stone-600">⏰ Pukul {eventTimeFormatted} WIB s/d Selesai</p>}
                     <p className="text-stone-500 pt-1 border-t border-stone-200/40 mt-1">📍 {invitation.location_address || 'Belum Diatur'}</p>
                   </div>
-                  
                   <div className="w-full h-36 rounded-lg overflow-hidden border border-stone-200 bg-white">
                     <iframe width="100%" height="100%" className="border-0" src={cleanMapEmbedUrl(invitation.maps_url, invitation.location_address)} allowFullScreen={true} loading="lazy"></iframe>
                   </div>
-                  
-                  
                 </div>
 
-                {/* 2. KOTAK ACARA 2: RESEPSI PERNIKAHAN */}
                 {customBlock.reception_address && (
                   <>
                     <hr className="border-t border-dashed border-stone-200 my-4" />
@@ -435,20 +280,16 @@ export default function PublicInvitationPage() {
                         <p className="text-stone-500 pt-1 border-t border-stone-200/40 mt-1">📍 {customBlock.reception_address}</p>
                       </div>
 
-                      {/* Kirim currentTheme ke komponen countdown */}
                       {customBlock.reception_date && <InvitationCountdown targetDateString={customBlock.reception_date} isReception={true} theme={currentTheme} />}
 
                       <div className="w-full h-36 rounded-lg overflow-hidden border border-stone-200 bg-white">
                         <iframe width="100%" height="100%" className="border-0" src={cleanMapEmbedUrl(customBlock.reception_maps_url, customBlock.reception_address)} allowFullScreen={true} loading="lazy"></iframe>
                       </div>
-                      
-                      
                     </div>
                   </>
                 )}
               </div>
             ) : (
-              /* SATU ACARA UTAMA STANDAR (NON-PERNIKAHAN) */
               <div className="space-y-4">
                 <div className="space-y-3 text-center text-xs bg-stone-50/60 p-4 rounded-xl border border-stone-200/60">
                   <h4 className={`font-serif font-bold ${currentTheme.accentText} text-sm mb-1 uppercase`}>
@@ -466,12 +307,11 @@ export default function PublicInvitationPage() {
                 <div className="w-full h-44 rounded-xl overflow-hidden border border-stone-200 bg-white shadow-inner">
                   <iframe width="100%" height="100%" className="border-0" src={cleanMapEmbedUrl(invitation.maps_url, invitation.location_address)} allowFullScreen={true} loading="lazy"></iframe>
                 </div>
-                
               </div>
             )}
           </div>
 
-          {/* BLOK SECTION 4: GALERI FOTO */}
+          {/* GALERI FOTO */}
           {safeImages.length > 0 && invitation.template_id !== 'free' && (
             <div id="galeri" className="scroll-mt-4">
               <hr className="border-t-2 border-stone-200 my-6" />
@@ -493,7 +333,6 @@ export default function PublicInvitationPage() {
                 </div>
               </div>
 
-              {/* LIGHTBOX SLIDER POPUP */}
               {lightboxIndex !== null && (
                 <div onClick={() => setLightboxIndex(null)} className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4 animate-in fade-in duration-200">
                   <button onClick={() => setLightboxIndex(null)} className="absolute top-6 right-6 text-white text-xl font-bold bg-white/10 w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">✕</button>
@@ -524,7 +363,7 @@ export default function PublicInvitationPage() {
             </>
           )}
 
-          {/* BLOK SECTION 5: KADO REKENING DIGITAL */}
+          {/* KADO DIGITAL */}
           {invitation.gift_accounts && invitation.gift_accounts.length > 0 && invitation.template_id !== 'free' && (
             <div id="kado" className="scroll-mt-4">
               <hr className="border-t-2 border-stone-200 my-6" />
@@ -575,60 +414,14 @@ export default function PublicInvitationPage() {
 
           <hr className="border-t-2 border-stone-200 my-6" />
 
-          {/* BLOK SECTION 6: FORM DOA & HARAPAN TAMU */}
-          {/* ⚡ Diubah: Elemen form menggunakan bg dan border dari tema dinamis */}
-          <div id="ucapan" className={`scroll-mt-4 max-w-md mx-auto my-4 p-6 ${currentTheme.formBg} rounded-2xl border ${currentTheme.cardBorder} text-center font-sans`}>
-            <h2 className="text-base font-bold text-stone-800">Doa dan Harapan</h2>
-            <p className="text-[11px] text-stone-500 mt-1 mb-5">Saya sangat berterima kasih atas doa dan harapan yang telah Anda berikan</p>
-
-            <form onSubmit={handleSubmitWish} className="space-y-3 text-left" autoComplete="off">
-              <input type="text" placeholder="Tulis nama lengkap Anda" className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-800" value={guestName} onChange={(e) => setGuestName(e.target.value)} required />
-              <input type="text" placeholder="Hubungan dengan pemilik acara (optional)" className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-800" value={relation} onChange={(e) => setRelation(e.target.value)} />
-              <input type="email" placeholder="Tulis alamat email Anda (optional)" className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-800" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <input type="tel" placeholder="Tulis nomor handphone Anda (optional)" className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-800" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              <input type="text" placeholder="Tulis alamat tinggal Anda" className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs text-stone-800" value={address} onChange={(e) => setAddress(e.target.value)} />
-              <textarea rows={4} placeholder="Tuliskan ucapan atau doa untuk pemilik acara" className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs resize-none text-stone-800" value={message} onChange={(e) => setMessage(e.target.value)} required />
-
-              <div className="py-2 space-y-2">
-                <p className="text-xs font-semibold text-stone-700">Apakah Anda akan hadir menghadiri acara ?</p>
-                <div className="flex flex-col gap-2 text-xs text-stone-600">
-                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="attendance" value="hadir" checked={attendance === 'hadir'} onChange={() => setAttendance('hadir')} /> Saya akan hadir</label>
-                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="attendance" value="tidak_hadir" checked={attendance === 'tidak_hadir'} onChange={() => setAttendance('tidak_hadir')} /> Saya tidak akan hadir</label>
-                </div>
-              </div>
-
-              {/* ⚡ Diubah: Button form mengikuti class warna tombol tema */}
-              <button type="submit" disabled={sendingWish} className={`w-full py-3 ${currentTheme.formBtn} ${currentTheme.formBtnHover} disabled:bg-stone-400 text-white font-bold text-xs rounded-lg uppercase tracking-wider transition-all cursor-pointer`}>
-                {sendingWish ? "Mengirim..." : "Kirim"}
-              </button>
-            </form>
-
-            <hr className="border-t-2 border-stone-200 my-6" />
-
-            <div className="pt-2 text-left space-y-3">
-              <h3 className="text-xs font-bold text-stone-700 uppercase tracking-wider">Ucapan Doa & Kehadiran ({wishesList.length})</h3>
-              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                {wishesList.length === 0 ? (
-                  <p className="text-center text-stone-400 py-4 italic text-[11px]">Belum ada ucapan. Jadilah yang pertama memberikan doa!</p>
-                ) : (
-                  wishesList.map((wish, index) => (
-                    <div key={index} className="p-4 bg-white rounded-xl border border-stone-200 shadow-2xs text-center space-y-3 animate-in fade-in duration-300">
-                      <div>
-                        <span className="font-bold text-stone-600 text-xs">
-                          {wish.name} {wish.address ? ` - ${wish.address}` : ''}
-                        </span>
-                      </div>
-                      <hr className="border-t border-stone-200 my-1 w-full" />
-                      <p className="text-stone-600 text-xs leading-relaxed px-2">{wish.message}</p>
-                      <div className="text-[10px] text-stone-400 font-medium pt-1">
-                        {wish.created_at ? formatLocalDateString(wish.created_at) : formatLocalDateString(new Date().toISOString())}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
+          {/* ⚡ MENYERAHKAN KONTROL FORM & RSVPS KE LAISAN SUB-KOMPONEN BARU */}
+          <InvitationFormWishes 
+            invitationId={invitation.id}
+            theme={currentTheme}
+            wishesList={wishesList}
+            setWishesList={setWishesList}
+            formatLocalDateString={formatLocalDateString}
+          />
 
           {/* FOOTER NAMA TOKOH */}
           <div className="text-center pt-4 border-t border-stone-100">
