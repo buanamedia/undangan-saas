@@ -45,6 +45,9 @@ export default function UserDashboard() {
   const [editReceptionAddress, setEditReceptionAddress] = useState('');
   const [editReceptionMapsUrl, setEditReceptionMapsUrl] = useState('');
 
+  // Menangani DOM Origin secara aman untuk SSR
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+
   const refreshInvitations = async (userId: string) => {
     const { data: invList, error } = await supabase
       .from('invitations')
@@ -125,7 +128,6 @@ export default function UserDashboard() {
     }
   };
 
-  // HELPER UPLOAD SINGLE FILE (HANYA DIPANGGIL SAAT SUBMIT FINAL)
   const uploadSingleFile = async (file: File, folder: 'gallery' | 'music' = 'gallery'): Promise<string | null> => {
     const userPrefix = (userProfile?.username || userProfile?.full_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
     const fileExt = file.name.split('.').pop() || (folder === 'music' ? 'mp3' : 'jpg');
@@ -214,20 +216,17 @@ export default function UserDashboard() {
     setIsEditModalOpen(true);
   };
 
-  // 🗑️ FITUR HAPUS PERMANEN (TABEL DATABASE + BERSIHKAN FILE DI STORAGE)
   const handleDeleteInvitation = async (id: string, name: string) => {
     const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus undangan "${name}" beserta seluruh file fotonya di Storage?`);
     if (!confirmDelete) return;
 
     try {
-      // 1. Ambil detail data undangan SEBELUM dihapus untuk mencatat semua URL file foto & musik
       const { data: inv } = await supabase
         .from('invitations')
         .select('*')
         .eq('id', id)
         .maybeSingle();
 
-      // 2. Hapus data dari Database terlebih dahulu
       await supabase.from('rsvps').delete().eq('invitation_id', id);
       const { error: deleteDbError } = await supabase.from('invitations').delete().eq('id', id);
 
@@ -236,38 +235,33 @@ export default function UserDashboard() {
         return;
       }
 
-      // 3. Perbarui Tampilan Dashboard Seketika
       setInvitations((prev) => prev.filter((item) => item.id !== id));
       if (selectedInvForShare?.id === id) {
         setSelectedInvForShare(null);
       }
 
-      // 4. EKSEKUSI PEMBERSIHAN FILE DI STORAGE
       if (inv) {
         const galleryPathsToDelete: string[] = [];
         const musicPathsToDelete: string[] = [];
         const ext = inv.custom_details || {};
 
-        // 🎯 FUNGSI EKSPLISIT UNTUK MENGAMBIL NAMA FILE MURNI
         const getFileNameFromUrl = (publicUrl: string | null, bucketName: string) => {
           if (!publicUrl) return null;
           try {
             const urlObj = new URL(publicUrl);
-            const pathname = urlObj.pathname; // Misal: /storage/v1/object/public/gallery/agus-gallery-123.jpg
+            const pathname = urlObj.pathname;
             const searchKey = `/${bucketName}/`;
             const index = pathname.indexOf(searchKey);
             if (index !== -1) {
               return decodeURIComponent(pathname.substring(index + searchKey.length));
             }
           } catch (e) {
-            // Fallback jika berupa tautan relatif
             const parts = publicUrl.split(`/${bucketName}/`);
             if (parts.length > 1) return decodeURIComponent(parts[1].split('?')[0]);
           }
           return null;
         };
 
-        // Kumpulkan semua file gambar dari tabel
         if (Array.isArray(inv.gallery_images)) {
           inv.gallery_images.forEach((url: string) => {
             const file = getFileNameFromUrl(url, 'gallery');
@@ -287,11 +281,9 @@ export default function UserDashboard() {
         const profileBottomFile = getFileNameFromUrl(ext.profile_bottom_photo_url, 'gallery');
         if (profileBottomFile) galleryPathsToDelete.push(profileBottomFile);
 
-        // Kumpulkan file musik
         const musicFile = getFileNameFromUrl(inv.bg_music_url, 'music');
         if (musicFile) musicPathsToDelete.push(musicFile);
 
-        // 🚀 KIRIM PERINTAH DELETE KE BUCKET STORAGE SUPABASE
         if (galleryPathsToDelete.length > 0) {
           const { error: storageErr } = await supabase.storage.from('gallery').remove(galleryPathsToDelete);
           if (storageErr) console.error("Gagal hapus foto dari Storage:", storageErr.message);
@@ -395,7 +387,7 @@ export default function UserDashboard() {
                 <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-slate-200 text-[10px] text-slate-600 leading-relaxed">
                   <span className="font-bold text-slate-700">Catatan:</span><br />
                   Selain anda menggunakan fitur ini, anda juga bisa langsung share URL domain anda yaitu dengan menshare url:<br /><br />
-                  <span className="font-bold text-slate-800 break-all select-all">{`${window.location.origin}/undangan/${selectedInvForShare.slug}/kepada:NamaTeman-Tempat`}</span>.<br /><br />
+                  <span className="font-bold text-slate-800 break-all select-all">{`${origin}/undangan/${selectedInvForShare.slug}/kepada:NamaTeman-Tempat`}</span>.<br /><br />
                   Anda tinggal mengganti Nama Teman dan Tempat disesuikan dengan tujuan anda.
                 </div>
 
@@ -416,7 +408,7 @@ export default function UserDashboard() {
                           </tr>
                         ) : (
                           guestsList.map((guest, idx) => {
-                            const baseUrl = `${window.location.origin}/undangan/${selectedInvForShare.slug}`;
+                            const baseUrl = `${origin}/undangan/${selectedInvForShare.slug}`;
                             const customUrl = `${baseUrl}?to=${encodeURIComponent(guest.name)}${guest.address ? `&addr=${encodeURIComponent(guest.address)}` : ''}`;
                             const waText = `Halo *${guest.name}*, Kami mengundang Anda untuk menghadiri acara kami. Silakan buka tautan undangan digital resmi berikut untuk informasi lengkap: ${customUrl}`;
                             const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
@@ -505,6 +497,7 @@ export default function UserDashboard() {
         setEditReceptionAddress={setEditReceptionAddress}
         editReceptionMapsUrl={editReceptionMapsUrl}
         setEditReceptionMapsUrl={setEditReceptionMapsUrl}
+        uploadingMusic={false} /* 👈 FIX: Penambahan prop yang hilang */
       />
 
       {/* 3. MODAL VIEW HARAPAN / DOA TAMU */}

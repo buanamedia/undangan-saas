@@ -39,7 +39,7 @@ export default function DemoThemesPage() {
   
   const currentTheme = themesRegistry[activeThemeId] || themesRegistry.default;
   const inv = getDemoDataByType(activeType);
-  const ext = inv.custom_details;
+  const ext = (inv.custom_details || {}) as any;
 
   const demoMusicUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
 
