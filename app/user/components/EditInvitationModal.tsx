@@ -8,13 +8,11 @@ interface EditInvitationModalProps {
   userProfile: any;
   supabase: any;
   refreshInvitations: (userId: string) => Promise<void>;
-  uploadSingleFile: (file: File) => Promise<string | null>;
-  handlePhotoUpload: (e: React.ChangeEvent<HTMLInputElement>, isEditForm?: boolean) => Promise<void>;
-  handleMusicUpload: (e: React.ChangeEvent<HTMLInputElement>, isEditForm?: boolean) => Promise<void>;
+  uploadSingleFile?: (file: File) => Promise<string | null>;
+  handleMusicUpload?: (e: React.ChangeEvent<HTMLInputElement>, isEditForm?: boolean) => Promise<string | null | void>;
   handleSearchLocation: (isEdit?: boolean, isReception?: boolean) => Promise<void>;
   editingInvitationData: any;
 
-  // State maps & address kustom yang dikontrol bersama dengan parent
   editLocationAddress: string;
   setEditLocationAddress: (val: string) => void;
   editMapsUrl: string;
@@ -23,7 +21,6 @@ interface EditInvitationModalProps {
   setEditReceptionAddress: (val: string) => void;
   editReceptionMapsUrl: string;
   setEditReceptionMapsUrl: (val: string) => void;
-  uploadingImage: boolean;
   uploadingMusic: boolean;
 }
 
@@ -34,7 +31,6 @@ export default function EditInvitationModal({
   supabase,
   refreshInvitations,
   uploadSingleFile,
-  handlePhotoUpload,
   handleMusicUpload,
   handleSearchLocation,
   editingInvitationData,
@@ -46,12 +42,8 @@ export default function EditInvitationModal({
   setEditReceptionAddress,
   editReceptionMapsUrl,
   setEditReceptionMapsUrl,
-  uploadingImage,
   uploadingMusic,
 }: EditInvitationModalProps) {
-  // ==========================================
-  // STATE LOCAL FORM EDIT UNDANGAN
-  // ==========================================
   const [editStep, setEditStep] = useState(1);
   const [editSlug, setEditSlug] = useState('');
   const [editInvitationType, setEditInvitationType] = useState('');
@@ -68,7 +60,6 @@ export default function EditInvitationModal({
   const [editEventProlog, setEditEventProlog] = useState('Kami mengundang Anda untuk menghadiri acara kami...');
   const [editEventDate, setEditEventDate] = useState('');
 
-  // ⚡ STATE STRUKTUR BARU DETIL IDENTITAS MEMPELAI (EDIT)
   const [editGroomFullName, setEditGroomFullName] = useState('');
   const [editGroomChildOf, setEditGroomChildOf] = useState('');
   const [editGroomFather, setEditGroomFather] = useState('');
@@ -83,17 +74,17 @@ export default function EditInvitationModal({
   const [editBrideIg, setEditBrideIg] = useState('');
   const [editBrideFb, setEditBrideFb] = useState('');
 
-  // STATE BERKAS MEDIA / FOTO (EDIT)
   const [editCoverPhotoUrl, setEditCoverPhotoUrl] = useState('');
   const [editProfileBottomPhotoUrl, setEditProfileBottomPhotoUrl] = useState('');
   const [editGroomPhotoUrl, setEditGroomPhotoUrl] = useState('');
   const [editBridePhotoUrl, setEditBridePhotoUrl] = useState('');
 
-  // 🟢 AMAN: STATE PENGELOLAAN MEDIA GALERI & MUSIK DIUBAH MENJADI STATE LOKAL
   const [editUploadedPhotos, setEditUploadedPhotos] = useState<string[]>([]);
   const [editBgMusicUrl, setEditBgMusicUrl] = useState('');
 
-  // STATE TAMBAHAN: KHUSUS RESEPSI PERNIKAHAN (EDIT)
+  const [uploadingSingle, setUploadingSingle] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+
   const [editReceptionDate, setEditReceptionDate] = useState('');
 
   const [editGalleryProlog, setEditGalleryProlog] = useState('Momen-momen yang berhasil kami abadikan...');
@@ -109,7 +100,6 @@ export default function EditInvitationModal({
   const [editFormMessage, setEditFormMessage] = useState('');
   const [editLoading, setEditLoading] = useState(false);
 
-  // Sync data ketika modal dibuka atau data undangan dari parent berubah
   useEffect(() => {
     if (editingInvitationData && isOpen) {
       setEditSlug(editingInvitationData.slug || '');
@@ -166,13 +156,67 @@ export default function EditInvitationModal({
     }
   }, [editingInvitationData, isOpen, userProfile, setEditLocationAddress, setEditMapsUrl, setEditReceptionAddress, setEditReceptionMapsUrl]);
 
-  // Logika pembantu jika fungsi upload dari parent memutasi array internal secara langsung
-  // Ini mendeteksi perubahan dari luar (window/parent ref share) khusus ketika user klik input file
-  const handleTriggerPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Jalankan fungsi upload bawaan parent
-    await handlePhotoUpload(e, true);
-    // Setelah upload selesai, sync ulang array gambar dari object global atau parent state jika diperlukan
-    // Namun idealnya, jika state dikelola mandiri, proses penampungan data di step 4 aman.
+  const handleSinglePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>, setPhotoState: (url: string) => void, label: string) => {
+    if (e.target.files && e.target.files[0]) {
+      if (typeof uploadSingleFile !== 'function') {
+        setEditFormMessage(`Fungsi uploadSingleFile belum terpasang dari Dashboard.`);
+        return;
+      }
+      setUploadingSingle(true);
+      setEditFormMessage(`Mengunggah ${label}...`);
+      try {
+        const url = await uploadSingleFile(e.target.files[0]);
+        if (url) {
+          setPhotoState(url);
+          setEditFormMessage(`✓ ${label} berhasil dipasang`);
+        } else {
+          setEditFormMessage(`Gagal mengunggah ${label}`);
+        }
+      } catch (err: any) {
+        setEditFormMessage(`Gagal unggah ${label}: ${err.message}`);
+      } finally {
+        setUploadingSingle(false);
+      }
+    }
+  };
+
+  const handleMultiplePhotoUploadEdit = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (typeof uploadSingleFile !== 'function') {
+      setEditFormMessage(`Fungsi uploadSingleFile belum terpasang dari Dashboard.`);
+      return;
+    }
+
+    setUploadingGallery(true);
+    setEditFormMessage('Mengunggah foto galeri...');
+
+    try {
+      const uploadPromises = Array.from(files).map((file) => uploadSingleFile(file));
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const validUrls = uploadedUrls.filter((url): url is string => url !== null);
+
+      setEditUploadedPhotos((prev) => [...prev, ...validUrls]);
+      setEditFormMessage('✓ Foto galeri berhasil ditambahkan');
+    } catch (err: any) {
+      setEditFormMessage(`Gagal unggah foto galeri: ${err.message}`);
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleRemovePhotoEdit = (indexToRemove: number) => {
+    setEditUploadedPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const handleMusicUploadEdit = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (handleMusicUpload) {
+      const res = await handleMusicUpload(e, true);
+      if (typeof res === 'string') {
+        setEditBgMusicUrl(res);
+      }
+    }
   };
 
   const handleUpdateInvitation = async (e: React.FormEvent) => {
@@ -307,17 +351,18 @@ export default function EditInvitationModal({
                   <input type="text" placeholder="nama-link" className="w-full px-3 py-2 border-2 border-slate-300 rounded-r-lg min-w-0" value={editSlug} onChange={(e) => setEditSlug(e.target.value)} />
                 </div>
               </div>
+
               <div className="p-3 border-2 rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
                 <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Profil / Halaman Pembuka (Sampul)</label>
-                <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
-                  if(e.target.files && e.target.files[0]) {
-                    setEditFormMessage('Mengunggah foto sampul...');
-                    const url = await uploadSingleFile(e.target.files[0]);
-                    if(url) { setEditCoverPhotoUrl(url); setEditFormMessage('✓ Foto sampul terpasang'); }
-                  }
-                }} />
-                {editCoverPhotoUrl && <img src={editCoverPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200 mt-1" />}
+                <input type="file" accept="image/*" className="w-full text-xs" onChange={(e) => handleSinglePhotoChange(e, setEditCoverPhotoUrl, 'Foto sampul')} />
+                {editCoverPhotoUrl && (
+                  <div className="relative w-16 h-16 mt-1">
+                    <img src={editCoverPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200" />
+                    <button type="button" onClick={() => setEditCoverPhotoUrl('')} className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-bold rounded-full w-5 h-5 text-[10px] flex items-center justify-center shadow hover:bg-rose-700">✕</button>
+                  </div>
+                )}
               </div>
+
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={onClose} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                 <button type="button" disabled={!editSlug || !editInvitationType || !editEventTitle} onClick={() => { setEditFormMessage(''); setEditStep(2); }} className="flex-1 py-2 bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg font-bold">Lanjut Pilih Tema</button>
@@ -376,7 +421,6 @@ export default function EditInvitationModal({
               
               {(editInvitationType === 'pernikahan' || editInvitationType === 'lamaran') ? (
                 <div className="space-y-4">
-                  {/* DETAIL TOKOH MEMPELAI PRIA */}
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                     <span className="font-bold text-slate-700 text-[10px] block uppercase text-teal-700">👨 Data Mempelai Pria</span>
                     <div className="grid grid-cols-2 gap-2">
@@ -394,7 +438,6 @@ export default function EditInvitationModal({
                     </div>
                   </div>
 
-                  {/* DETAIL TOKOH MEMPELAI WANITA */}
                   <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                     <span className="font-bold text-slate-700 text-[10px] block uppercase text-rose-700">👩 Data Mempelai Wanita</span>
                     <div className="grid grid-cols-2 gap-2">
@@ -412,30 +455,27 @@ export default function EditInvitationModal({
                     </div>
                   </div>
                   
-                  {/* UPLOAD BERKAS FOTO KEDUA MEMPELAI */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border-2 border-dashed rounded-xl bg-slate-50/60">
                     <div className="space-y-1">
                       <label className="block font-bold text-slate-600 text-[10px] uppercase">📸 Foto Mempelai Pria</label>
-                      <input type="file" accept="image/*" className="w-full text-[10px]" onChange={async (e) => {
-                        if(e.target.files && e.target.files[0]) {
-                          setEditFormMessage('Mengunggah foto pria...');
-                          const url = await uploadSingleFile(e.target.files[0]);
-                          if(url) { setEditGroomPhotoUrl(url); setEditFormMessage('✓ Foto pria terpasang'); }
-                        }
-                      }} />
-                      {editGroomPhotoUrl && <img src={editGroomPhotoUrl} className="w-12 h-16 object-cover rounded-xl border shadow-2xs mt-1" style={{aspectRatio: '3/4'}} />}
+                      <input type="file" accept="image/*" className="w-full text-[10px]" onChange={(e) => handleSinglePhotoChange(e, setEditGroomPhotoUrl, 'Foto pria')} />
+                      {editGroomPhotoUrl && (
+                        <div className="relative w-12 h-16 mt-1">
+                          <img src={editGroomPhotoUrl} className="w-12 h-16 object-cover rounded-xl border shadow-2xs" style={{aspectRatio: '3/4'}} />
+                          <button type="button" onClick={() => setEditGroomPhotoUrl('')} className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-bold rounded-full w-4 h-4 text-[9px] flex items-center justify-center shadow hover:bg-rose-700">✕</button>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="space-y-1">
                       <label className="block font-bold text-slate-600 text-[10px] uppercase">📸 Foto Mempelai Wanita</label>
-                      <input type="file" accept="image/*" className="w-full text-[10px]" onChange={async (e) => {
-                        if(e.target.files && e.target.files[0]) {
-                          setEditFormMessage('Mengunggah foto wanita...');
-                          const url = await uploadSingleFile(e.target.files[0]);
-                          if(url) { setEditBridePhotoUrl(url); setEditFormMessage('✓ Foto wanita terpasang'); }
-                        }
-                      }} />
-                      {editBridePhotoUrl && <img src={editBridePhotoUrl} className="w-12 h-16 object-cover rounded-xl border shadow-2xs mt-1" style={{aspectRatio: '3/4'}} />}
+                      <input type="file" accept="image/*" className="w-full text-[10px]" onChange={(e) => handleSinglePhotoChange(e, setEditBridePhotoUrl, 'Foto wanita')} />
+                      {editBridePhotoUrl && (
+                        <div className="relative w-12 h-16 mt-1">
+                          <img src={editBridePhotoUrl} className="w-12 h-16 object-cover rounded-xl border shadow-2xs" style={{aspectRatio: '3/4'}} />
+                          <button type="button" onClick={() => setEditBridePhotoUrl('')} className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-bold rounded-full w-4 h-4 text-[9px] flex items-center justify-center shadow hover:bg-rose-700">✕</button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -446,14 +486,13 @@ export default function EditInvitationModal({
                   
                   <div className="p-3 border-2 rounded-xl bg-teal-50/40 border-teal-200 space-y-1.5">
                     <label className="block font-bold text-teal-800 text-[10px] uppercase">📸 Foto Tambahan (Di Bawah Profil Utama)</label>
-                    <input type="file" accept="image/*" className="w-full text-xs" onChange={async (e) => {
-                      if(e.target.files && e.target.files[0]) {
-                        setEditFormMessage('Mengunggah foto profil bawah...');
-                        const url = await uploadSingleFile(e.target.files[0]);
-                        if(url) { setEditProfileBottomPhotoUrl(url); setEditFormMessage('✓ Foto bawah profil terpasang'); }
-                      }
-                    }} />
-                    {editProfileBottomPhotoUrl && <img src={editProfileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200 mt-1" />}
+                    <input type="file" accept="image/*" className="w-full text-xs" onChange={(e) => handleSinglePhotoChange(e, setEditProfileBottomPhotoUrl, 'Foto profil bawah')} />
+                    {editProfileBottomPhotoUrl && (
+                      <div className="relative w-16 h-16 mt-1">
+                        <img src={editProfileBottomPhotoUrl} className="w-16 h-16 object-cover rounded border-2 border-teal-200" />
+                        <button type="button" onClick={() => setEditProfileBottomPhotoUrl('')} className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-bold rounded-full w-5 h-5 text-[10px] flex items-center justify-center shadow hover:bg-rose-700">✕</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -509,26 +548,41 @@ export default function EditInvitationModal({
           {editStep === 4 && (
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
               <h3 className="text-sm font-bold text-slate-900">Ubah Bagian 4: Galeri, Kado, Musik & Custom Blok</h3>
+              
               <div className="p-3 border-2 rounded-xl bg-slate-50/50 space-y-1.5">
                 <label className="block text-[10px] font-bold text-teal-700 uppercase tracking-wider">📁 1. Tambah Foto Galeri</label>
                 <input type="text" placeholder="Momen-momen yang berhasil kami abadikan..." className="w-full p-2 border-2 rounded-lg bg-white" value={editGalleryProlog} onChange={(e) => setEditGalleryProlog(e.target.value)} />
-                <input type="file" accept="image/*" multiple onChange={handleTriggerPhotoUpload} className="w-full text-xs" />
-                {uploadingImage && <p className="text-teal-600 animate-pulse text-[10px]">Mengunggah berkas gambar...</p>}
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 mt-1">
-                  {editUploadedPhotos.map((url, i) => <img key={i} src={url} className="w-8 h-8 object-cover rounded border-2 border-teal-200 shadow-2xs" />)}
+                <input type="file" accept="image/*" multiple onChange={handleMultiplePhotoUploadEdit} className="w-full text-xs" />
+                {uploadingGallery && <p className="text-teal-600 animate-pulse text-[10px]">Mengunggah berkas gambar...</p>}
+                
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mt-2">
+                  {editUploadedPhotos.map((url, i) => (
+                    <div key={i} className="relative group">
+                      <img src={url} className="w-12 h-12 object-cover rounded-lg border-2 border-teal-200 shadow-2xs" />
+                      <button type="button" onClick={() => handleRemovePhotoEdit(i)} className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-bold rounded-full w-4 h-4 text-[9px] flex items-center justify-center shadow hover:bg-rose-700">✕</button>
+                    </div>
+                  ))}
                 </div>
               </div>
+
               <div className="p-3 border-2 rounded-xl bg-slate-50/50 space-y-1">
                 <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">🎬 2. Galeri Video Youtube</label>
                 <input type="text" placeholder="Mari saksikan cuplikan video kebahagiaan kami." className="w-full p-2 border-2 rounded-lg bg-white" value={editVideoProlog} onChange={(e) => setEditVideoProlog(e.target.value)} />
                 <input type="url" placeholder="Link Video YouTube" className="w-full px-2 py-1.5 border-2 border-slate-300 rounded-lg bg-white mt-1" value={editVideoUrl} onChange={(e) => setEditVideoUrl(e.target.value)} />
               </div>
+
               <div className="p-3 border-2 rounded-xl bg-slate-50/50 space-y-1.5">
                 <label className="block text-[10px] font-bold text-teal-700 uppercase tracking-wider">🎵 3. Upload Musik Latar Belakang (.mp3)</label>
-                <input type="file" accept="audio/mp3,audio/*" onChange={(e) => handleMusicUpload(e, true)} className="w-full text-xs" />
+                <input type="file" accept="audio/mp3,audio/*" onChange={handleMusicUploadEdit} className="w-full text-xs" />
                 {uploadingMusic && <p className="text-teal-600 animate-pulse text-[10px]">Mengunggah berkas suara...</p>}
-                {editBgMusicUrl && <p className="text-emerald-600 text-[10px] font-bold">✓ Musik Latar Terpasang</p>}
+                {editBgMusicUrl && (
+                  <div className="flex items-center justify-between text-[10px] bg-emerald-50 text-emerald-700 p-1.5 rounded border border-emerald-200 font-bold">
+                    <span>✓ Musik Latar Terpasang</span>
+                    <button type="button" onClick={() => setEditBgMusicUrl('')} className="text-rose-600 font-bold hover:underline">Hapus Musik</button>
+                  </div>
+                )}
               </div>
+
               <div className="p-3 border-2 rounded-xl border-slate-200 space-y-2">
                 <span className="font-bold text-teal-700 block">Kado Digital</span>
                 <input type="text" placeholder="Terima kasih atas doa yang telah Anda berikan..." className="w-full p-2 border-2 rounded bg-white" value={editGiftProlog} onChange={(e) => setEditGiftProlog(e.target.value)} />
@@ -541,16 +595,18 @@ export default function EditInvitationModal({
                 ))}
                 <button type="button" onClick={() => setEditGiftAccounts([...editGiftAccounts, {name:'', bank:'', number:''}])} className="text-[11px] text-teal-600 font-bold hover:underline">+ Rekening</button>
               </div>
+
               <div className="p-3 border-2 rounded-xl border-slate-200 space-y-2">
                 <span className="font-bold text-slate-700 block">Blok Custom</span>
                 <input type="text" placeholder="Turut Mengundang" className="w-full p-2 border-2 rounded bg-white" value={editCustomTitle} onChange={(e) => setEditCustomTitle(e.target.value)} />
                 <input type="text" placeholder="Prolog Teks Turut Mengundang" className="w-full p-2 border-2 rounded bg-white" value={editCustomProlog} onChange={(e) => setEditCustomProlog(e.target.value)} />
                 <textarea rows={2} placeholder="Isi Konten Custom" className="w-full p-2 border-2 rounded resize-none bg-white" value={editCustomContent} onChange={(e) => setEditCustomContent(e.target.value)} />
               </div>
+
               <div className="flex gap-2 pt-2 border-t border-slate-100">
                 <button type="button" onClick={onClose} className="w-1/3 py-2 bg-slate-100 rounded-lg">Batal</button>
                 <button type="button" onClick={() => setEditStep(3)} className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-lg">← Kembali</button>
-                <button type="submit" disabled={editLoading || uploadingImage || uploadingMusic} className="flex-1 py-2 bg-sky-600 disabled:bg-slate-400 text-white rounded-lg font-bold flex items-center justify-center gap-1 cursor-pointer">Simpan</button>
+                <button type="submit" disabled={editLoading || uploadingSingle || uploadingGallery || uploadingMusic} className="flex-1 py-2 bg-sky-600 disabled:bg-slate-400 text-white rounded-lg font-bold flex items-center justify-center gap-1 cursor-pointer">Simpan</button>
               </div>
             </div>
           )}

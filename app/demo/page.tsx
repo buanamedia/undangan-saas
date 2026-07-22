@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { themesRegistry } from '@/lib/themes';
 import { getDemoDataByType, demoWishesMock } from '@/lib/themes/demo-data';
 import { createClient } from '@/lib/supabase/client';
-import Header from '../user/components/Header'; // ⚡ Menggunakan komponen Header modular
-import Footer from '../user/components/Footer'; // ⚡ Menggunakan komponen Footer modular
+import Header from '../user/components/Header'; 
+import Footer from '../user/components/Footer'; 
 
 function InvitationCountdown({ targetDateString, isReception = false, theme }: { targetDateString: string; isReception?: boolean; theme: any }) {
   return (
@@ -115,7 +115,6 @@ export default function DemoThemesPage() {
     return inv.title.split(":")[0] || "Tamu Undangan";
   };
 
-  // Aksi Klik Tombol Utama Kiri pada Header
   const handlePrimaryAction = () => {
     if (isLoggedIn) {
       router.push('/user');
@@ -124,7 +123,6 @@ export default function DemoThemesPage() {
     }
   };
 
-  // Aksi Klik Tombol Sekunder Kanan pada Header
   const handleSecondaryAction = async () => {
     if (isLoggedIn) {
       const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar dari aplikasi?");
@@ -142,7 +140,7 @@ export default function DemoThemesPage() {
        
       <audio ref={audioRef} src={demoMusicUrl} loop preload="auto" />
 
-      {/* ⚡ NAVBAR GLOBAL MODULAR DINAMIS (Hanya muncul saat pratinjau tema belum dibuka) */}
+      {/* NAVBAR GLOBAL MODULAR DINAMIS */}
       {!isOpen && (
         checkingAuth ? (
           <div className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md w-full flex items-center justify-between max-w-7xl mx-auto px-4">
@@ -156,12 +154,12 @@ export default function DemoThemesPage() {
             onNavigateHome={() => router.push('/')}
             premiumLabel={isLoggedIn ? "Dashboard" : "Masuk"}
             logoutLabel={isLoggedIn ? "Keluar" : "Daftar"}
-            premiumBgColor="bg-[#1d4ed8] hover:bg-blue-700" // ⚡ Menggunakan warna biru untuk keselarasan halaman publik
+            premiumBgColor="bg-[#1d4ed8] hover:bg-blue-700"
           />
         )
       )}
 
-      {/* BUTTON FLOATING MUTING (Hanya muncul saat pratinjau tema dibuka) */}
+      {/* BUTTON FLOATING MUTING */}
       {isOpen && (
         <button 
           onClick={toggleMute} 
@@ -251,14 +249,13 @@ export default function DemoThemesPage() {
               ))}
             </div>
 
-            {/* ⚡ PANGGIL FOOTER MODULAR YANG BERSIH DI SINI DI DALAM MAIN CONTAINER */}
             <Footer onNavigate={(path) => router.push(path)} />
-             
+              
           </div>
         ) : (
-          /* TAMPILAN 2: INTEGRASI ISI MATERI TEMA KUSTOM LENGKAP SAAT TOMBOL DEMO DIKLIK */
+          /* TAMPILAN 2: PRATINJAU DEMO UNDANGAN LENGKAP */
           <div className="w-full max-w-md flex flex-col gap-4 px-4 sm:px-0 py-6">
-             
+              
             <button 
               onClick={handleBackToCatalog}
               className="w-full py-3 bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs tracking-wide uppercase rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -267,7 +264,7 @@ export default function DemoThemesPage() {
             </button>
 
             <div className={`w-full bg-white p-6 border ${currentTheme.cardBorder} rounded-2xl shadow-sm space-y-8 pb-20 animate-in fade-in duration-300`}>
-               
+                
               {/* SECTION 1: PEMBUKA */}
               <div id="pembuka" className="text-center space-y-2 scroll-mt-4">
                 <span className={`text-[10px] uppercase font-bold tracking-widest ${currentTheme.badgeText} ${currentTheme.badgeBg} px-2.5 py-0.5 rounded-md border ${currentTheme.badgeBorder}`}>
@@ -283,19 +280,123 @@ export default function DemoThemesPage() {
 
               <hr className="border-t-2 border-stone-300" />
 
-              {/* SECTION 2: PROFIL TOKOH */}
+              {/* SECTION 2: PROFIL TOKOH (SESUAI DENGAN FORMAT MIKRO ILUSTRASI & TEKS BARU) */}
               <div id="profil" className="p-4 bg-stone-50 border rounded-xl space-y-3 text-center scroll-mt-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400">Profil Utama</h3>
                 <p className="text-xs text-stone-600 italic">"{ext.profile_prolog}"</p>
-                 
+                  
                 {activeType === 'pernikahan' || activeType === 'lamaran' ? (
-                  <div className="font-serif text-sm font-bold text-stone-900 space-y-1">
-                    <p>💍 {inv.groom_name}</p>
-                    <p className="text-xs font-sans text-stone-400 font-normal">&</p>
-                    <p>💍 {inv.bride_name}</p>
+                  <div className="w-full pt-2">
+                    <div className="grid grid-cols-2 gap-4 items-start text-center">
+                      
+                      {/* MEMPELAI PRIA */}
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className={`w-28 h-40 rounded-full overflow-hidden border-2 ${currentTheme.cardBorder} p-0.5 shadow-md bg-stone-50`}>
+                          <div className="w-full h-full rounded-full overflow-hidden relative">
+                            <img 
+                              src={ext.groom_photo_url || ext.profile_bottom_photo_url || '/placeholder-avatar.png'} 
+                              alt="Foto Pria" 
+                              className="w-full h-full object-cover object-center" 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Nama Panggilan (miring) & Nama Lengkap Berjarak */}
+                        <div className="space-y-0.5 w-full">
+                          <h4 className={`font-serif text-xl font-bold italic ${currentTheme.accentText || 'text-stone-950'} tracking-wide leading-tight mb-1`}>
+                            {inv.groom_name || 'Fitri'}
+                          </h4>
+                          {ext.groom_full_name && (
+                            <p className="text-xs font-semibold text-stone-700 leading-tight mt-1">
+                              {ext.groom_full_name}
+                            </p>
+                          )}
+                          <div className="text-[10px] text-stone-500 leading-tight pt-1">
+                            <p className="italic">{ext.groom_child_of || 'Putra Pertama dari'}</p>
+                            <p className="font-bold text-stone-700">
+                              {ext.groom_father ? `Bapak ${ext.groom_father}` : 'Bapak Sebastian Wijaya'}
+                            </p>
+                            <p className="text-[9px] my-0.5 text-stone-400">&</p>
+                            <p className="font-bold text-stone-700">
+                              {ext.groom_mother ? `Ibu ${ext.groom_mother}` : 'Ibu Melisa'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Sosial Media Pria */}
+                        <div className="flex items-center justify-center gap-2 pt-1">
+                          {ext.groom_ig && (
+                            <a href={ext.groom_ig} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full border bg-white flex items-center justify-center shadow-2xs hover:scale-105 transition-transform" title="Instagram Pria">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-pink-600">
+                                <path d="M7.75 2C4.57 2 2 4.57 2 7.75v8.5C2 19.43 4.57 22 7.75 22h8.5C19.43 22 22 19.43 22 16.25v-8.5C22 4.57 19.43 2 16.25 2h-8.5zm0 2h8.5A3.75 3.75 0 0 1 20 7.75v8.5A3.75 3.75 0 0 1 16.25 20h-8.5A3.75 3.75 0 0 1 4 16.25v-8.5A3.75 3.75 0 0 1 7.75 4zm8.75 1.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+                              </svg>
+                            </a>
+                          )}
+                          {ext.groom_fb && (
+                            <a href={ext.groom_fb} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full border bg-white flex items-center justify-center text-xs shadow-2xs hover:scale-105 transition-transform" title="Facebook Pria">
+                              👥
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* MEMPELAI WANITA */}
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className={`w-28 h-40 rounded-full overflow-hidden border-2 ${currentTheme.cardBorder} p-0.5 shadow-md bg-stone-50`}>
+                          <div className="w-full h-full rounded-full overflow-hidden relative">
+                            <img 
+                              src={ext.bride_photo_url || ext.profile_bottom_photo_url || '/placeholder-avatar.png'} 
+                              alt="Foto Wanita" 
+                              className="w-full h-full object-cover object-center" 
+                            />
+                          </div>
+                        </div>
+
+                        {/* Nama Panggilan (miring) & Nama Lengkap Berjarak */}
+                        <div className="space-y-0.5 w-full">
+                          <h4 className={`font-serif text-xl font-bold italic ${currentTheme.accentText || 'text-stone-950'} tracking-wide leading-tight mb-1`}>
+                            {inv.bride_name || 'Jaka'}
+                          </h4>
+                          {ext.bride_full_name && (
+                            <p className="text-xs font-semibold text-stone-700 leading-tight mt-1">
+                              {ext.bride_full_name}
+                            </p>
+                          )}
+                          <div className="text-[10px] text-stone-500 leading-tight pt-1">
+                            <p className="italic">{ext.bride_child_of || 'Putri Pertama dari'}</p>
+                            <p className="font-bold text-stone-700">
+                              {ext.bride_father ? `Bapak ${ext.bride_father}` : 'Bapak Hermawan'}
+                            </p>
+                            <p className="text-[9px] my-0.5 text-stone-400">&</p>
+                            <p className="font-bold text-stone-700">
+                              {ext.bride_mother ? `Ibu ${ext.bride_mother}` : 'Ibu Rahma'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Sosial Media Wanita */}
+                        <div className="flex items-center justify-center gap-2 pt-1">
+                          {ext.bride_ig && (
+                            <a href={ext.bride_ig} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full border bg-white flex items-center justify-center shadow-2xs hover:scale-105 transition-transform" title="Instagram Wanita">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-pink-600">
+                                <path d="M7.75 2C4.57 2 2 4.57 2 7.75v8.5C2 19.43 4.57 22 7.75 22h8.5C19.43 22 22 19.43 22 16.25v-8.5C22 4.57 19.43 2 16.25 2h-8.5zm0 2h8.5A3.75 3.75 0 0 1 20 7.75v8.5A3.75 3.75 0 0 1 16.25 20h-8.5A3.75 3.75 0 0 1 4 16.25v-8.5A3.75 3.75 0 0 1 7.75 4zm8.75 1.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+                              </svg>
+                            </a>
+                          )}
+                          {ext.bride_fb && (
+                            <a href={ext.bride_fb} target="_blank" rel="noopener noreferrer" className="w-6 h-6 rounded-full border bg-white flex items-center justify-center text-xs shadow-2xs hover:scale-105 transition-transform" title="Facebook Wanita">
+                              👥
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-stone-700 leading-relaxed font-semibold bg-white p-2.5 border rounded-lg text-center uppercase tracking-wide">{inv.title.split(":")[1] || inv.title}</p>
+                  <p className="text-xs text-stone-700 leading-relaxed font-semibold bg-white p-2.5 border rounded-lg text-center uppercase tracking-wide">
+                    {inv.title.split(":")[1] || inv.title}
+                  </p>
                 )}
 
                 {ext.profile_bottom_photo_url && (
@@ -385,7 +486,7 @@ export default function DemoThemesPage() {
                     <p className="text-[10px] text-stone-400">{ext.gift_prolog}</p>
                     {ext.gift_way && <p className="text-[10px] text-stone-500 bg-stone-50 p-2 border rounded-lg mt-2 text-left">{ext.gift_way}</p>}
                   </div>
-                   
+                    
                   <div className="space-y-4 pt-1 max-w-xs mx-auto">
                     {inv.gift_accounts.map((acc: any, idx: number) => (
                       <div key={idx} className="p-6 bg-white border-2 border-stone-300 rounded-2xl shadow-xs flex flex-col items-center text-center space-y-4">
@@ -450,7 +551,7 @@ export default function DemoThemesPage() {
         )}
       </main>
 
-      {/* FOOTER FLOATING NAVIGATION (Hanya muncul ketika demo undangan aktif dibuka) */}
+      {/* FOOTER FLOATING NAVIGATION */}
       {isOpen && (
         <div className="fixed bottom-4 z-40 w-full max-w-md left-1/2 -translate-x-1/2 px-4 animate-in slide-in-from-bottom duration-300">
           <div className="w-full bg-white/95 backdrop-blur-md border border-stone-200 rounded-2xl shadow-xl p-3 flex items-center justify-between gap-1">

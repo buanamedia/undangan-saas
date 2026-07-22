@@ -5,8 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import CreateInvitationModal from './components/CreateInvitationModal';
 import EditInvitationModal from './components/EditInvitationModal';
-import Header from './components/Header'; // ⚡ IMPORT COMPONENT HEADER BARU
-import Footer from './components/Footer'; // ⚡ IMPORT COMPONENT FOOTER BARU
+import Header from './components/Header';
+import Footer from './components/Footer';
 
 export default function UserDashboard() {
   const supabase = createClient();
@@ -34,17 +34,12 @@ export default function UserDashboard() {
   // DATA MENTAH YANG AKAN DI-PASS KE LAYER MODAL EDIT
   const [editingInvitationData, setEditingInvitationData] = useState<any>(null);
 
-  // STATE YANG DIKONTROL BERSAMA UNTUK FORM & EVENT
+  // STATE MAPS/ALAMAT UNTUK PENGEDITAN/KREASI
   const [locationAddress, setLocationAddress] = useState('');
   const [mapsUrl, setMapsUrl] = useState('');
   const [receptionAddress, setReceptionAddress] = useState('');
   const [receptionMapsUrl, setReceptionMapsUrl] = useState('');
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
-  const [bgMusicUrl, setBgMusicUrl] = useState('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadingMusic, setUploadingMusic] = useState(false);
 
-  // STATE MAPS/ALAMAT UNTUK PENGEDITAN (DITERUSKAN KE MODAL EDIT)
   const [editLocationAddress, setEditLocationAddress] = useState('');
   const [editMapsUrl, setEditMapsUrl] = useState('');
   const [editReceptionAddress, setEditReceptionAddress] = useState('');
@@ -130,53 +125,19 @@ export default function UserDashboard() {
     }
   };
 
-  const uploadSingleFile = async (file: File): Promise<string | null> => {
+  // HELPER UPLOAD SINGLE FILE (HANYA DIPANGGIL SAAT SUBMIT FINAL)
+  const uploadSingleFile = async (file: File, folder: 'gallery' | 'music' = 'gallery'): Promise<string | null> => {
     const userPrefix = (userProfile?.username || userProfile?.full_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const fileExt = file.name.split('.').pop() || 'jpg';
-    const fileName = `${userPrefix}-sampul-${Date.now()}.${fileExt}`;
-    const { error } = await supabase.storage.from('gallery').upload(fileName, file, { cacheControl: '3600', upsert: false });
+    const fileExt = file.name.split('.').pop() || (folder === 'music' ? 'mp3' : 'jpg');
+    const fileName = `${userPrefix}-${folder}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+    
+    const { error } = await supabase.storage.from(folder).upload(fileName, file, { cacheControl: '3600', upsert: false });
     if (!error) {
-      const { data } = supabase.storage.from('gallery').getPublicUrl(fileName);
+      const { data } = supabase.storage.from(folder).getPublicUrl(fileName);
       return data?.publicUrl || null;
     }
+    console.error(`Upload error pada ${folder}:`, error);
     return null;
-  };
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEditForm = false) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    setUploadingImage(true);
-    const userPrefix = (userProfile?.username || userProfile?.full_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const files = Array.from(e.target.files);
-    const urls: string[] = [];
-    
-    let counter = 1;
-    for (const file of files) {
-      const fileExt = file.name.split('.').pop() || 'jpg';
-      const customFileName = `${userPrefix}-galeri-${counter}-${Date.now()}.${fileExt}`;
-      const { error = null } = await supabase.storage.from('gallery').upload(customFileName, file, { cacheControl: '3600', upsert: false });
-      if (!error) {
-        const { data } = supabase.storage.from('gallery').getPublicUrl(customFileName);
-        if (data?.publicUrl) urls.push(data.publicUrl);
-      }
-      counter++;
-    }
-    setUploadedPhotos((prev) => [...prev, ...urls]);
-    setUploadingImage(false);
-  };
-
-  const handleMusicUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEditForm = false) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    setUploadingMusic(true);
-    const userPrefix = (userProfile?.username || userProfile?.full_name || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const file = e.target.files[0];
-    const fileExt = file.name.split('.').pop() || 'mp3';
-    const fileName = `${userPrefix}-musik-${Date.now()}.${fileExt}`;
-    const { error } = await supabase.storage.from('music').upload(fileName, file, { cacheControl: '3600', upsert: false });
-    if (!error) {
-      const { data } = supabase.storage.from('music').getPublicUrl(fileName);
-      if (data?.publicUrl) setBgMusicUrl(data.publicUrl);
-    }
-    setUploadingMusic(false);
   };
 
   const handleSearchLocation = async (isEdit = false, isReception = false) => {
@@ -253,25 +214,106 @@ export default function UserDashboard() {
     setIsEditModalOpen(true);
   };
 
+  // 🗑️ FITUR HAPUS PERMANEN (TABEL DATABASE + BERSIHKAN FILE DI STORAGE)
   const handleDeleteInvitation = async (id: string, name: string) => {
-    const confirmDelete = window.confirm(`Hapus permanen undangan "${name}"?`);
+    const confirmDelete = window.confirm(`Apakah Anda yakin ingin menghapus undangan "${name}" beserta seluruh file fotonya di Storage?`);
     if (!confirmDelete) return;
+
     try {
+      // 1. Ambil detail data undangan SEBELUM dihapus untuk mencatat semua URL file foto & musik
+      const { data: inv } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      // 2. Hapus data dari Database terlebih dahulu
       await supabase.from('rsvps').delete().eq('invitation_id', id);
-      const { error } = await supabase.from('invitations').delete().eq('id', id);
-      if (!error) {
-        setInvitations(invitations.filter((inv) => inv.id !== id));
-        alert('🗑️ Undangan berhasil dihapus.');
+      const { error: deleteDbError } = await supabase.from('invitations').delete().eq('id', id);
+
+      if (deleteDbError) {
+        alert(`🚨 Gagal Hapus Database: ${deleteDbError.message}`);
+        return;
       }
-    } catch (err: any) { alert(err.message); }
+
+      // 3. Perbarui Tampilan Dashboard Seketika
+      setInvitations((prev) => prev.filter((item) => item.id !== id));
+      if (selectedInvForShare?.id === id) {
+        setSelectedInvForShare(null);
+      }
+
+      // 4. EKSEKUSI PEMBERSIHAN FILE DI STORAGE
+      if (inv) {
+        const galleryPathsToDelete: string[] = [];
+        const musicPathsToDelete: string[] = [];
+        const ext = inv.custom_details || {};
+
+        // 🎯 FUNGSI EKSPLISIT UNTUK MENGAMBIL NAMA FILE MURNI
+        const getFileNameFromUrl = (publicUrl: string | null, bucketName: string) => {
+          if (!publicUrl) return null;
+          try {
+            const urlObj = new URL(publicUrl);
+            const pathname = urlObj.pathname; // Misal: /storage/v1/object/public/gallery/agus-gallery-123.jpg
+            const searchKey = `/${bucketName}/`;
+            const index = pathname.indexOf(searchKey);
+            if (index !== -1) {
+              return decodeURIComponent(pathname.substring(index + searchKey.length));
+            }
+          } catch (e) {
+            // Fallback jika berupa tautan relatif
+            const parts = publicUrl.split(`/${bucketName}/`);
+            if (parts.length > 1) return decodeURIComponent(parts[1].split('?')[0]);
+          }
+          return null;
+        };
+
+        // Kumpulkan semua file gambar dari tabel
+        if (Array.isArray(inv.gallery_images)) {
+          inv.gallery_images.forEach((url: string) => {
+            const file = getFileNameFromUrl(url, 'gallery');
+            if (file) galleryPathsToDelete.push(file);
+          });
+        }
+
+        const coverFile = getFileNameFromUrl(ext.cover_photo_url, 'gallery');
+        if (coverFile) galleryPathsToDelete.push(coverFile);
+
+        const groomFile = getFileNameFromUrl(ext.groom_photo_url, 'gallery');
+        if (groomFile) galleryPathsToDelete.push(groomFile);
+
+        const brideFile = getFileNameFromUrl(ext.bride_photo_url, 'gallery');
+        if (brideFile) galleryPathsToDelete.push(brideFile);
+
+        const profileBottomFile = getFileNameFromUrl(ext.profile_bottom_photo_url, 'gallery');
+        if (profileBottomFile) galleryPathsToDelete.push(profileBottomFile);
+
+        // Kumpulkan file musik
+        const musicFile = getFileNameFromUrl(inv.bg_music_url, 'music');
+        if (musicFile) musicPathsToDelete.push(musicFile);
+
+        // 🚀 KIRIM PERINTAH DELETE KE BUCKET STORAGE SUPABASE
+        if (galleryPathsToDelete.length > 0) {
+          const { error: storageErr } = await supabase.storage.from('gallery').remove(galleryPathsToDelete);
+          if (storageErr) console.error("Gagal hapus foto dari Storage:", storageErr.message);
+        }
+
+        if (musicPathsToDelete.length > 0) {
+          const { error: musicErr } = await supabase.storage.from('music').remove(musicPathsToDelete);
+          if (musicErr) console.error("Gagal hapus musik dari Storage:", musicErr.message);
+        }
+      }
+
+      alert('🗑️ Undangan di database dan seluruh file fotonya di Storage berhasil terhapus bersih!');
+
+    } catch (err: any) {
+      alert(`🚨 Terjadi kesalahan: ${err.message}`);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xs font-bold text-sky-600 animate-pulse">MEMUAT DASHBOARD...</p></div>;
 
   return (
     <div className="min-h-screen bg-white text-slate-800 font-sans antialiased flex flex-col justify-between">
-      
-      {/* ⚡ PANGGIL COMPONENT HEADER TERPISAH DI SINI */}
       <Header 
         onLogout={handleLogout}
         onNavigateToPremium={() => router.push('/premium')}
@@ -404,7 +446,6 @@ export default function UserDashboard() {
         </div>
       </main>
 
-      {/* ⚡ PANGGIL COMPONENT FOOTER TERPISAH DI SINI */}
       <Footer onNavigate={(path) => router.push(path)} />
 
       {showProfileModal && (
@@ -427,7 +468,7 @@ export default function UserDashboard() {
         </div>
       )}
 
-      {/* 1. LAYER COMPONENT MODAL: TAMBAH UNDANGAN BARU */}
+      {/* 1. MODAL TAMBAH UNDANGAN BARU */}
       <CreateInvitationModal 
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -435,8 +476,6 @@ export default function UserDashboard() {
         supabase={supabase}
         refreshInvitations={refreshInvitations}
         uploadSingleFile={uploadSingleFile}
-        handlePhotoUpload={handlePhotoUpload}
-        handleMusicUpload={handleMusicUpload}
         handleSearchLocation={handleSearchLocation}
         locationAddress={locationAddress}
         setLocationAddress={setLocationAddress}
@@ -446,19 +485,16 @@ export default function UserDashboard() {
         setReceptionAddress={setReceptionAddress}
         receptionMapsUrl={receptionMapsUrl}
         setReceptionMapsUrl={setReceptionMapsUrl}
-        uploadedPhotos={uploadedPhotos}
-        bgMusicUrl={bgMusicUrl}
-        uploadingImage={uploadingImage}
-        uploadingMusic={uploadingMusic}
       />
 
-      {/* 2. LAYER COMPONENT MODAL: EDIT UNDANGAN LAMA */}
+      {/* 2. MODAL EDIT UNDANGAN LAMA */}
       <EditInvitationModal 
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         userProfile={userProfile}
         supabase={supabase}
         refreshInvitations={refreshInvitations}
+        uploadSingleFile={uploadSingleFile}
         handleSearchLocation={handleSearchLocation}
         editingInvitationData={editingInvitationData}
         editLocationAddress={editLocationAddress}
@@ -471,7 +507,7 @@ export default function UserDashboard() {
         setEditReceptionMapsUrl={setEditReceptionMapsUrl}
       />
 
-      {/* 3. LAYER COMPONENT MODAL: VIEW HARAPAN / DOA TAMU */}
+      {/* 3. MODAL VIEW HARAPAN / DOA TAMU */}
       {isWishesModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-2xl border-2 border-slate-200 max-w-lg w-full p-4 sm:p-6 space-y-4 my-auto relative text-xs">
