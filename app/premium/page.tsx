@@ -26,12 +26,12 @@ export default function PremiumUpgradePage() {
 
   // State Paket yang Dipilih (Default ke 1 Bulan atau Unlimited)
   const [packages, setPackages] = useState<PackagePlan[]>([
-    { id: '1_MONTH', name: 'Paket 1 Bulan', duration_months: 1, price: 35000, original_price: 50000, description: 'Masa aktif 1 Bulan' },
-    { id: '3_MONTHS', name: 'Paket 3 Bulan', duration_months: 3, price: 75000, original_price: 100000, description: 'Masa aktif 3 Bulan' },
-    { id: '6_MONTHS', name: 'Paket 6 Bulan', duration_months: 6, price: 120000, original_price: 180000, description: 'Masa aktif 6 Bulan' },
-    { id: '1_YEAR', name: 'Paket 1 Tahun', duration_months: 12, price: 200000, original_price: 300000, description: 'Masa aktif 1 Tahun' },
-    { id: 'UNLIMITED', name: 'Akses Unlimited', duration_months: null, price: 300000, original_price: 500000, description: 'Tanpa Batas Waktu (Lifetime)' },
-  ]);
+  { id: '1_MONTH', name: 'Paket 1 Bulan', duration_months: 1, price: 35000, original_price: 50000, description: 'Masa aktif 1 Bulan' },
+  { id: '3_MONTHS', name: 'Paket 3 Bulan', duration_months: 3, price: 75000, original_price: 100000, description: 'Masa aktif 3 Bulan' },
+  { id: '6_MONTHS', name: 'Paket 6 Bulan', duration_months: 6, price: 120000, original_price: 180000, description: 'Masa aktif 6 Bulan' },
+  { id: '1_YEAR', name: 'Paket 1 Tahun', duration_months: 12, price: 200000, original_price: 300000, description: 'Masa aktif 1 Tahun' }, // 👈 12 BULAN
+  { id: 'UNLIMITED', name: 'Akses Unlimited', duration_months: null, price: 300000, original_price: 500000, description: 'Tanpa Batas Waktu' },
+]);
 
   const [selectedPackage, setSelectedPackage] = useState<PackagePlan>(packages[0]);
 
@@ -161,20 +161,19 @@ export default function PremiumUpgradePage() {
       const voucherToSend = appliedVoucher || voucherCode || null;
 
       const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: orderInvoiceId,
-          amount: finalAmount,
-          packageId: selectedPackage.id,
-          packageName: selectedPackage.name,
-          durationMonths: selectedPackage.duration_months,
-          customerName: userProfile?.full_name || 'Pembeli',
-          customerEmail: userProfile?.email || session.user.email,
-          userId: session.user.id,
-          voucherCode: voucherToSend ? voucherToSend.trim().toUpperCase() : null
-        }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    orderId: orderInvoiceId,
+    amount: finalAmount,
+    packageId: selectedPackage.id,               // Mengirim '1_YEAR'
+    durationMonths: selectedPackage.duration_months, // Mengirim 12
+    customerName: userProfile?.full_name || 'Pembeli',
+    customerEmail: userProfile?.email || session.user.email,
+    userId: session.user.id,
+    voucherCode: voucherToSend ? voucherToSend.trim().toUpperCase() : null
+  }),
+});
 
       const data = await response.json();
       if (data.success && data.url) {
