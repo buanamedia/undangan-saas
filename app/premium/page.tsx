@@ -24,14 +24,14 @@ export default function PremiumUpgradePage() {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // State Paket yang Dipilih (Default ke 1 Bulan atau Unlimited)
+  // 🟢 DAFTAR PAKET STANDARD (Master Reference)
   const [packages, setPackages] = useState<PackagePlan[]>([
-  { id: '1_MONTH', name: 'Paket 1 Bulan', duration_months: 1, price: 35000, original_price: 50000, description: 'Masa aktif 1 Bulan' },
-  { id: '3_MONTHS', name: 'Paket 3 Bulan', duration_months: 3, price: 75000, original_price: 100000, description: 'Masa aktif 3 Bulan' },
-  { id: '6_MONTHS', name: 'Paket 6 Bulan', duration_months: 6, price: 120000, original_price: 180000, description: 'Masa aktif 6 Bulan' },
-  { id: '1_YEAR', name: 'Paket 1 Tahun', duration_months: 12, price: 200000, original_price: 300000, description: 'Masa aktif 1 Tahun' }, // 👈 12 BULAN
-  { id: 'UNLIMITED', name: 'Akses Unlimited', duration_months: null, price: 300000, original_price: 500000, description: 'Tanpa Batas Waktu' },
-]);
+    { id: '1_MONTH', name: 'Paket 1 Bulan', duration_months: 1, price: 35000, original_price: 50000, description: 'Masa aktif 1 Bulan' },
+    { id: '3_MONTHS', name: 'Paket 3 Bulan', duration_months: 3, price: 75000, original_price: 100000, description: 'Masa aktif 3 Bulan' },
+    { id: '6_MONTHS', name: 'Paket 6 Bulan', duration_months: 6, price: 120000, original_price: 180000, description: 'Masa aktif 6 Bulan' },
+    { id: '1_YEAR', name: 'Paket 1 Tahun', duration_months: 12, price: 200000, original_price: 300000, description: 'Masa aktif 1 Tahun' },
+    { id: 'UNLIMITED', name: 'Akses Unlimited', duration_months: null, price: 300000, original_price: 500000, description: 'Tanpa Batas Waktu' },
+  ]);
 
   const [selectedPackage, setSelectedPackage] = useState<PackagePlan>(packages[0]);
 
@@ -41,7 +41,6 @@ export default function PremiumUpgradePage() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [finalAmount, setFinalAmount] = useState(packages[0].price);
   const [voucherError, setVoucherError] = useState('');
-  const [dbError, setDbError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -61,13 +60,23 @@ export default function PremiumUpgradePage() {
         setUserProfile(profile);
       }
 
-      // Ambil daftar paket dari database jika ada
+      // 🟢 MENGAMBIL PAKET DARI DB JIKA ADA (DENGAN SAFE MAPPING DURATION)
       try {
         const { data: pkgData } = await supabase.from('packages').select('*');
         if (pkgData && pkgData.length > 0) {
-          setPackages(pkgData);
-          setSelectedPackage(pkgData[0]);
-          setFinalAmount(pkgData[0].price);
+          const formattedPackages: PackagePlan[] = pkgData.map((p) => ({
+            id: p.id || p.package_id || '1_MONTH',
+            name: p.name || 'Paket Premium',
+            // Pastikan jika ID-nya 1_YEAR, duration_months pasti bernilai 12
+            duration_months: p.id === '1_YEAR' ? 12 : (p.duration_months !== undefined ? p.duration_months : (p.duration || null)),
+            price: Number(p.price) || 0,
+            original_price: Number(p.original_price) || Number(p.price) || 0,
+            description: p.description || '',
+          }));
+
+          setPackages(formattedPackages);
+          setSelectedPackage(formattedPackages[0]);
+          setFinalAmount(formattedPackages[0].price);
         }
       } catch (err) {
         console.error("Gagal fetch packages:", err);
@@ -148,6 +157,7 @@ export default function PremiumUpgradePage() {
     }
   };
 
+  // 🟢 PROSES CHECKOUT DENGAN JAMINAN DATA LENGKAP
   const handleUpgradeAccount = async () => {
     setIsProcessing(true);
     try {
@@ -160,20 +170,32 @@ export default function PremiumUpgradePage() {
       const orderInvoiceId = `INV-${session.user.id}-${Date.now()}`;
       const voucherToSend = appliedVoucher || voucherCode || null;
 
+      // Logika Penentuan Durasi Persisi
+      let targetDurationMonths = selectedPackage.duration_months;
+      if (selectedPackage.id === '1_YEAR') targetDurationMonths = 12;
+      if (selectedPackage.id === '1_MONTH') targetDurationMonths = 1;
+      if (selectedPackage.id === '3_MONTHS') targetDurationMonths = 3;
+      if (selectedPackage.id === '6_MONTHS') targetDurationMonths = 6;
+      if (selectedPackage.id === 'UNLIMITED') targetDurationMonths = null;
+
       const response = await fetch('/api/checkout', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    orderId: orderInvoiceId,
-    amount: finalAmount,
-    packageId: selectedPackage.id,               // Mengirim '1_YEAR'
-    durationMonths: selectedPackage.duration_months, // Mengirim 12
-    customerName: userProfile?.full_name || 'Pembeli',
-    customerEmail: userProfile?.email || session.user.email,
-    userId: session.user.id,
-    voucherCode: voucherToSend ? voucherToSend.trim().toUpperCase() : null
-  }),
-});
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderId: orderInvoiceId, 
+          amount: finalAmount,         
+          customerName: userProfile?.full_name || 'Pembeli',
+          customerEmail: userProfile?.email || session.user.email,
+          userId: session.user.id,
+          voucherCode: voucherToSend ? voucherToSend.trim().toUpperCase() : null,
+          
+          // 🟢 TERKIRIM DENGAN JELAS KE BACKEND:
+          packageId: selectedPackage.id,              // contoh: '1_YEAR'
+          durationMonths: targetDurationMonths,        // contoh: 12
+        }),
+      });
 
       const data = await response.json();
       if (data.success && data.url) {
