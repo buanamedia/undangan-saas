@@ -17,12 +17,19 @@ function generateDokuSignature(clientId: string, requestId: string, timestamp: s
 export async function POST(request: Request) {
   try {
     const bodyData = await request.json();
-    const orderId = bodyData.orderId;
+    const directUserId = bodyData.userId || null;
     const amount = bodyData.amount;
     const customerName = bodyData.customerName;
     const customerEmail = bodyData.customerEmail;
-    const directUserId = bodyData.userId || null;
     const targetVoucherCode = bodyData.voucherCode ? String(bodyData.voucherCode).trim() : null;
+
+    // 🟢 1. JAMIN INVOICE UNIK DAN SELALU BARU
+    // Menggunakan timestamp milidetik agar tidak mungkin ada dua invoice yang sama
+    const orderId = `INV-${directUserId || 'GUEST'}-${Date.now()}`;
+
+    // 🟢 DATA DURAASI DAN PAKET DARI FRONTEND
+    const packageId = bodyData.packageId || 'UNLIMITED';
+    const durationMonths = bodyData.durationMonths !== undefined ? bodyData.durationMonths : null;
 
     const clientId = process.env.DOKU_CLIENT_ID!;
     const secretKey = process.env.DOKU_SECRET_KEY!;
@@ -65,40 +72,48 @@ export async function POST(request: Request) {
           auth: { persistSession: false, autoRefreshToken: false }
         });
 
-        // 1. Simpan log transaksi ke tabel transactions
+        // 🟢 2. SOLUSI RE-SUBSCRIBE: BERSAHABAT DENGAN TRANSAKSI PENDING LAMA
+        // Hapus/batalkan status transaksi 'pending' lama milik user ini yang belum pernah dibayar
         await supabaseAdmin
+          .from('transactions')
+          .delete()
+          .eq('user_id', directUserId)
+          .eq('status', 'pending');
+
+        // 🟢 3. CATAT LOG TRANSAKSI BARU LENGKAP
+        const { error: insertError } = await supabaseAdmin
           .from('transactions')
           .insert([
             {
               user_id: directUserId,
               amount: amount,
-              status: 'pending',
-              invoice: orderId,
-              voucher: targetVoucherCode
+              status: 'pending',              // Status awal checkout
+              invoice: orderId,               // Invoice unik baru
+              voucher: targetVoucherCode,
+              package_id: packageId,           // ID Paket baru (misal '1_MONTH', '3_MONTHS', 'UNLIMITED')
+              duration_months: durationMonths, // Durasi bulan
+              created_at: new Date().toISOString()
             }
           ]);
 
-        // 2. Update kolom uses_count di tabel vouchers
+        if (insertError) {
+          console.error("Gagal mencatat transaksi baru ke Supabase:", insertError.message);
+        }
+
+        // 🟢 4. UPDATE VOUCHER USAGE COUNT
         if (targetVoucherCode && targetVoucherCode !== "") {
           const { data: currentVoucher, error: fetchError } = await supabaseAdmin
             .from('vouchers')
             .select('uses_count')
-            .eq('code', targetVoucherCode) // 🟢 DISESUAIKAN: Menggunakan kolom 'code'
+            .eq('code', targetVoucherCode)
             .maybeSingle();
 
-          if (!fetchError) {
-            let baseCount = 0;
-            if (currentVoucher && currentVoucher.uses_count !== null && currentVoucher.uses_count !== undefined) {
-              const parsed = Number(currentVoucher.uses_count);
-              if (!isNaN(parsed)) baseCount = parsed;
-            }
-
-            const nextCount = baseCount + 1;
-
+          if (!fetchError && currentVoucher) {
+            const baseCount = Number(currentVoucher.uses_count) || 0;
             await supabaseAdmin
               .from('vouchers')
-              .update({ uses_count: nextCount })
-              .eq('code', targetVoucherCode); // 🟢 DISESUAIKAN: Menggunakan kolom 'code'
+              .update({ uses_count: baseCount + 1 })
+              .eq('code', targetVoucherCode);
           }
         }
       }

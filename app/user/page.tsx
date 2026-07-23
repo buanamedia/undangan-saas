@@ -7,6 +7,7 @@ import CreateInvitationModal from './components/CreateInvitationModal';
 import EditInvitationModal from './components/EditInvitationModal';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import { isPremiumActive, getRemainingDays } from '@/lib/checkPremium'; // 🟢 Import Helper Premium
 
 export default function UserDashboard() {
   const supabase = createClient();
@@ -85,7 +86,8 @@ export default function UserDashboard() {
           id: session.user.id,
           email: session.user.email,
           full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'User',
-          is_premium: false,
+          package_plan: 'FREE',
+          premium_expires_at: null,
           role: 'user'
         };
         const { error: insertError } = await supabase.from('profiles').insert(newProfile);
@@ -302,6 +304,10 @@ export default function UserDashboard() {
     }
   };
 
+  // 🟢 CEK STATUS PREMIUM DENGAN HELPER
+  const hasPremiumAccess = userProfile?.is_premium && isPremiumActive(userProfile);
+  const remainingDays = getRemainingDays(userProfile?.premium_expires_at);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><p className="text-xs font-bold text-sky-600 animate-pulse">MEMUAT DASHBOARD...</p></div>;
 
   return (
@@ -314,14 +320,27 @@ export default function UserDashboard() {
 
       <div className="bg-slate-50 border-b border-slate-200/60 px-4 sm:px-6 py-4 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
-          <h1 onClick={() => setShowProfileModal(true)} className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 truncate cursor-pointer hover:opacity-80 transition-opacity select-none">
-            <span>Halo, {userProfile?.full_name || userProfile?.username || 'User'} 👤</span>
-            {userProfile?.is_premium ? (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-950 bg-linear-to-r from-amber-300 via-yellow-400 to-amber-500 rounded-full shadow-md border border-amber-200">PREMIUM</span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase bg-slate-200 text-slate-500 rounded-full tracking-wider border border-slate-300/40">FREE</span>
-            )}
-          </h1>
+         <h1 onClick={() => setShowProfileModal(true)} className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-3 truncate cursor-pointer hover:opacity-80 transition-opacity select-none">
+  <span>Halo, {userProfile?.full_name || userProfile?.username || 'User'} 👤</span>
+  
+  {/* 🟢 TAMPILAN BADGE & MASA AKTIF SPESIFIK */}
+  {hasPremiumAccess ? (
+    <div className="flex flex-col items-start gap-0.5">
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-amber-950 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 rounded-full shadow-md border border-amber-200">
+        PREMIUM
+      </span>
+      <span className="text-[10px] text-slate-500 font-semibold tracking-tight">
+        {userProfile?.package_plan === 'UNLIMITED' || !userProfile?.premium_expires_at 
+          ? 'Masa Aktif: Unlimited (Tanpa Batas)' 
+          : `Aktif s/d: ${new Date(userProfile.premium_expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} (${remainingDays} hr lagi)`}
+      </span>
+    </div>
+  ) : (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase bg-slate-200 text-slate-500 rounded-full tracking-wider border border-slate-300/40">
+      FREE
+    </span>
+  )}
+</h1>
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => setIsCreateModalOpen(true)} className="px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all whitespace-nowrap">+ Undangan</button>
             <button onClick={() => router.push('/demo')} className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all whitespace-nowrap">Lihat Tema</button>
@@ -440,6 +459,7 @@ export default function UserDashboard() {
 
       <Footer onNavigate={(path) => router.push(path)} />
 
+      {/* MODAL DETAIL PROFILE */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white border-2 border-slate-300 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden flex flex-col text-xs">
@@ -453,6 +473,22 @@ export default function UserDashboard() {
                 <div className="flex flex-col gap-0.5"><span className="font-bold text-slate-900">Username Terdaftar:</span><span className="text-slate-600 font-mono bg-slate-50 p-2 rounded-lg border-2">{userProfile?.username || '-'}</span></div>
                 <div className="flex flex-col gap-0.5"><span className="font-bold text-slate-900">Alamat Email:</span><span className="text-slate-600 bg-slate-50 p-2 rounded-lg border-2">{userProfile?.email || '-'}</span></div>
                 <div className="flex flex-col gap-0.5"><span className="font-bold text-slate-900">Nomor Kontak WhatsApp:</span><span className="text-slate-600 bg-slate-50 p-2 rounded-lg border-2">{userProfile?.phone || '-'}</span></div>
+                
+                {/* 🟢 INFORMASI MASA AKTIF PAKET */}
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold text-slate-900">Status Paket:</span>
+                  <span className="text-slate-600 bg-slate-50 p-2 rounded-lg border-2 font-bold">
+                    {hasPremiumAccess ? (
+                      <span className="text-emerald-600">
+                        {userProfile?.package_plan === 'UNLIMITED' 
+                          ? 'Aktif (Unlimited / Lifetime)' 
+                          : `Aktif s/d ${new Date(userProfile.premium_expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} (${remainingDays} Hari Lagi)`}
+                      </span>
+                    ) : (
+                      <span className="text-rose-600">Free / Tidak Aktif</span>
+                    )}
+                  </span>
+                </div>
               </div>
               <button type="button" disabled={isUpdatingPassword} onClick={handleUserChangePasswordDirect} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-xs text-center">🔑 {isUpdatingPassword ? 'Mengamankan Server...' : 'Ganti & Reset Password'}</button>
             </div>
@@ -497,7 +533,7 @@ export default function UserDashboard() {
         setEditReceptionAddress={setEditReceptionAddress}
         editReceptionMapsUrl={editReceptionMapsUrl}
         setEditReceptionMapsUrl={setEditReceptionMapsUrl}
-        uploadingMusic={false} /* 👈 FIX: Penambahan prop yang hilang */
+        uploadingMusic={false}
       />
 
       {/* 3. MODAL VIEW HARAPAN / DOA TAMU */}

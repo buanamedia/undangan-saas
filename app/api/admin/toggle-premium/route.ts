@@ -1,62 +1,62 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
-// WAJIB menggunakan huruf besar 'POST' agar dikenali Next.js App Router
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
-      return NextResponse.json(
-        { error: 'SUPABASE_SERVICE_ROLE_KEY belum terpasang di .env.local' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Missing Supabase keys' }, { status: 500 });
     }
 
-    // Inisialisasi menggunakan Service Role untuk bypass RLS
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
+      auth: { persistSession: false, autoRefreshToken: false }
     });
 
-    const { userId, currentStatus } = await request.json();
+    const body = await request.json();
+    const { userId, currentStatus, packagePlan = '1_MONTH', durationMonths = 1 } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'ID Pengguna tidak valid' }, { status: 400 });
     }
 
-    // Menghitung status baru yang akan diset
     const nextStatus = !currentStatus;
 
-    // ⚡ LOGIKA OTOMATISASI: Jika status dikembalikan ke FALSE (Free User), hapus data transaksinya
-    if (nextStatus === false) {
-      console.log(`Mengembalikan ke Free User. Menghapus riwayat transaksi untuk user: ${userId}`);
-      
-      const { error: deleteTxError } = await supabaseAdmin
-        .from('transactions')
-        .delete()
-        .eq('user_id', userId);
+    let updateData: any = {};
 
-      if (deleteTxError) {
-        console.error("Gagal menghapus data transaksi pendukung:", deleteTxError);
-        // Catatan: Anda bisa melempar error di sini jika penghapusan transaksi wajib sukses
+    if (nextStatus) {
+      // 🟢 JIKA DI-UPGRADE KE PREMIUM
+      let expiresAt: string | null = null;
+      if (durationMonths && durationMonths > 0) {
+        const now = new Date();
+        now.setMonth(now.getMonth() + durationMonths);
+        expiresAt = now.toISOString();
       }
+
+      updateData = {
+        is_premium: true,
+        package_plan: packagePlan,
+        premium_expires_at: expiresAt,
+      };
+    } else {
+      // 🔴 JIKA DIBATALKAN KE FREE
+      updateData = {
+        is_premium: false,
+        package_plan: 'FREE',
+        premium_expires_at: null,
+      };
     }
 
-    // Eksekusi update langsung ke tabel profiles berdasarkan ID (Sesuai kode asli Anda)
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('profiles')
-      .update({ is_premium: nextStatus })
-      .eq('id', userId)
-      .select();
+      .update(updateData)
+      .eq('id', userId);
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, message: 'Status lisensi berhasil diperbarui!' });
+    return NextResponse.json({ success: true, message: 'Status berhasil diperbarui!' });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Gagal internal server' }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
