@@ -11,7 +11,7 @@ export default function AdminVouchersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [vouchersList, setVouchersList] = useState<any[]>([]);
 
-  // Form States
+  // Form States untuk Buat Voucher
   const [code, setCode] = useState('');
   const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
   const [discountValue, setDiscountValue] = useState<number>(0);
@@ -21,6 +21,11 @@ export default function AdminVouchersPage() {
   // States: Masa Berlaku Voucher
   const [validFrom, setValidFrom] = useState('');
   const [validUntil, setValidUntil] = useState('');
+
+  // 🟢 STATES BARU: MODAL EDIT KUOTA VOUCHER
+  const [editingVoucher, setEditingVoucher] = useState<any>(null);
+  const [newMaxUses, setNewMaxUses] = useState<number>(0);
+  const [isUpdatingQuota, setIsUpdatingQuota] = useState<boolean>(false);
 
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
@@ -149,7 +154,43 @@ export default function AdminVouchersPage() {
     }
   };
 
-  // ⚡ FUNGSI BARU: EXPORT EXCEL (CSV)
+  // 🟢 FUNGSI BUKA MODAL EDIT KUOTA
+  const handleOpenEditQuota = (voucher: any) => {
+    setEditingVoucher(voucher);
+    setNewMaxUses(voucher.max_uses || 0);
+  };
+
+  // 🟢 FUNGSI SIMPAN PERUBAHAN KUOTA KE SUPABASE
+  const handleSaveQuota = async () => {
+    if (!editingVoucher) return;
+    if (newMaxUses < editingVoucher.uses_count) {
+      alert(`Kuota tidak boleh lebih kecil dari pemakaian saat ini (${editingVoucher.uses_count})!`);
+      return;
+    }
+
+    try {
+      setIsUpdatingQuota(true);
+      const { error } = await supabase
+        .from('vouchers')
+        .update({ max_uses: Number(newMaxUses) })
+        .eq('id', editingVoucher.id);
+
+      if (error) throw error;
+
+      setVouchersList((prev) =>
+        prev.map((v) => (v.id === editingVoucher.id ? { ...v, max_uses: Number(newMaxUses) } : v))
+      );
+
+      alert(`✅ Kuota voucher ${editingVoucher.code} berhasil diperbarui menjadi ${newMaxUses}!`);
+      setEditingVoucher(null);
+    } catch (err: any) {
+      alert(`Gagal memperbarui kuota: ${err.message}`);
+    } finally {
+      setIsUpdatingQuota(false);
+    }
+  };
+
+  // FUNGSI EXPORT EXCEL (CSV)
   const exportVouchersToExcel = () => {
     let csvContent = "data:text/csv;charset=utf-8,Kode Voucher,Tipe Diskon,Nilai Potongan,Kuota Terpakai,Kuota Maksimal,Status Aktif\n";
     vouchersList.forEach((v) => {
@@ -166,7 +207,7 @@ export default function AdminVouchersPage() {
     document.body.removeChild(link);
   };
 
-  // ⚡ FUNGSI BARU: EXPORT PDF
+  // FUNGSI EXPORT PDF
   const exportVouchersToPDF = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -371,7 +412,7 @@ export default function AdminVouchersPage() {
           {/* KOLOM DAFTAR LIST VOUCHER */}
           <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-300 dark:border-slate-800 p-5 space-y-4 transition-colors">
             
-            {/* ⚡ HEADER TABEL DENGAN SELEKSI TOMBOL EKSPOR */}
+            {/* HEADER TABEL DENGAN SELEKSI TOMBOL EKSPOR */}
             <div className="flex justify-between items-center flex-wrap gap-2">
               <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">
                 Daftar Voucher Tersedia ({vouchersList.length})
@@ -424,7 +465,7 @@ export default function AdminVouchersPage() {
                           }
                         </td>
                         <td className="p-3 text-center font-mono">
-                          {voucher.uses_count} / <span className="text-slate-400">{voucher.max_uses}</span>
+                          {voucher.uses_count} / <span className="text-slate-400 font-bold">{voucher.max_uses}</span>
                         </td>
                         <td className="p-3 text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
                           {voucher.valid_from ? (
@@ -445,6 +486,13 @@ export default function AdminVouchersPage() {
                         </td>
                         <td className="p-3 text-right">
                           <div className="flex justify-end items-center gap-1.5">
+                            {/* 🟢 TOMBOL EDIT KUOTA */}
+                            <button
+                              onClick={() => handleOpenEditQuota(voucher)}
+                              className="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] rounded-md transition-all cursor-pointer shadow-xs"
+                            >
+                              ✏️ Edit Kuota
+                            </button>
                             <button
                               onClick={() => handleToggleVoucherStatus(voucher.id, voucher.is_active)}
                               className={`px-2 py-1 font-bold text-[10px] rounded-md transition-all cursor-pointer ${voucher.is_active ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-green-600 text-white hover:bg-green-700'}`}
@@ -469,6 +517,69 @@ export default function AdminVouchersPage() {
 
         </div>
       </main>
+
+      {/* 🟢 MODAL DIALOG POP-UP EDIT KUOTA VOUCHER */}
+      {editingVoucher && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <span>✏️</span> Edit Kuota Voucher
+              </h3>
+              <button 
+                onClick={() => setEditingVoucher(null)} 
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-base cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+                <p className="text-[11px] text-slate-500">Kode Voucher:</p>
+                <p className="font-mono font-black text-blue-600 dark:text-blue-400 text-sm tracking-wider uppercase">
+                  {editingVoucher.code}
+                </p>
+                <p className="text-[10px] text-slate-400 pt-1">
+                  Pemakaian Saat Ini: <strong className="text-slate-700 dark:text-slate-300">{editingVoucher.uses_count} kali</strong>
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Kuota Maksimal Pemakaian Baru:
+                </label>
+                <input
+                  type="number"
+                  min={editingVoucher.uses_count}
+                  className="w-full px-3 py-2 border-2 border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-bold focus:outline-none focus:border-blue-500 text-sm bg-slate-50 dark:bg-slate-950"
+                  value={newMaxUses}
+                  onChange={(e) => setNewMaxUses(Number(e.target.value))}
+                />
+                <p className="text-[10px] text-slate-400 mt-1 italic">
+                  * Kuota minimal harus &ge; {editingVoucher.uses_count} (pemakaian saat ini)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setEditingVoucher(null)}
+                className="w-1/2 py-2 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSaveQuota}
+                disabled={isUpdatingQuota}
+                className="w-1/2 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md cursor-pointer disabled:opacity-50"
+              >
+                {isUpdatingQuota ? 'Simpan...' : 'Simpan Kuota'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER NAVIGASI */}
       <footer className="border-t-2 border-slate-300 dark:border-slate-800 py-8 bg-white dark:bg-slate-900 text-center text-xs text-slate-400 w-full transition-colors mt-auto">
