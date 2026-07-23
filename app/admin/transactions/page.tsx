@@ -482,6 +482,7 @@ export default function AdminTransactionsPage() {
           </div>
           <p className="text-[11px] text-slate-400 dark:text-slate-500">Solusi Undangan Digital Elegan, Praktis, dan Tanpa Batas.</p>
         </div>
+        
       </footer>
     </div>
   );
