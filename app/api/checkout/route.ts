@@ -28,7 +28,13 @@ export async function POST(request: Request) {
     const amount = bodyData.amount;
     const customerName = bodyData.customerName;
     const customerEmail = bodyData.customerEmail;
-    const targetVoucherCode = bodyData.voucherCode ? String(bodyData.voucherCode).trim() : null;
+    
+    // Ambil kode murni (bersihkan dari flag internal _FIXED_ jika ada)
+    let rawVoucher = bodyData.voucherCode ? String(bodyData.voucherCode).trim() : null;
+    if (rawVoucher && rawVoucher.includes('_FIXED_')) {
+      rawVoucher = rawVoucher.split('_FIXED_')[0];
+    }
+    const targetVoucherCode = rawVoucher ? rawVoucher.toUpperCase() : null;
 
     // 🟢 Invoice Unik dengan Timestamp Angka Murni untuk invoice_number
     const currentTimestamp = Date.now();
@@ -93,7 +99,7 @@ export async function POST(request: Request) {
           auth: { persistSession: false, autoRefreshToken: false }
         });
 
-        // 🟢 SIMPAN TRANSAKSI BARU (Amankan baik kolom 'invoice' maupun 'invoice_number')
+        // 🟢 1. SIMPAN TRANSAKSI BARU KE DATABASE
         const { error: insertError } = await supabaseAdmin
           .from('transactions')
           .insert([
@@ -102,7 +108,7 @@ export async function POST(request: Request) {
               amount: amount,
               status: 'pending',
               invoice: orderId,                          // e.g. "INV-uuid-1234567"
-              invoice_number: currentTimestamp,          // e.g. 1234567 (cocok untuk field int8)
+              invoice_number: currentTimestamp,          // e.g. 1234567 (int8)
               voucher: targetVoucherCode,
               package_id: packageId,                     // e.g. '6_MONTHS'
               duration_months: durationMonths,           // e.g. 6
@@ -114,6 +120,33 @@ export async function POST(request: Request) {
           console.error("💥 GAGAL INSERT TRANSAKSI TO SUPABASE:", insertError.message);
         } else {
           console.log("✅ TRANSAKSI BERHASIL DICATAT KE DATABASE!");
+        }
+
+        // 🟢 2. PENINGKATAN AMAN PEMAKAIAN VOUCHER (MEMERIKSA KUOTA TERLEBIH DAHULU)
+        if (targetVoucherCode && targetVoucherCode !== "") {
+          const { data: voucherData, error: voucherFetchError } = await supabaseAdmin
+            .from('vouchers')
+            .select('uses_count, max_uses, is_active')
+            .eq('code', targetVoucherCode)
+            .maybeSingle();
+
+          if (!voucherFetchError && voucherData) {
+            const currentUses = Number(voucherData.uses_count) || 0;
+            const maxUses = Number(voucherData.max_uses) || 0;
+            const isActive = voucherData.is_active !== false;
+
+            // Hanya tambah hitungan jika voucher AKTIF dan KUOTA MASIH TERSEDIA
+            if (isActive && (maxUses === 0 || currentUses < maxUses)) {
+              await supabaseAdmin
+                .from('vouchers')
+                .update({ uses_count: currentUses + 1 })
+                .eq('code', targetVoucherCode);
+
+              console.log(`✅ Voucher ${targetVoucherCode} berhasil diupdate: ${currentUses + 1}/${maxUses}`);
+            } else {
+              console.warn(`⚠️ Voucher ${targetVoucherCode} tidak diupdate karena kuota penuh atau tidak aktif.`);
+            }
+          }
         }
       }
 

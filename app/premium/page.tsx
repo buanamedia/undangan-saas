@@ -67,7 +67,6 @@ export default function PremiumUpgradePage() {
           const formattedPackages: PackagePlan[] = pkgData.map((p) => ({
             id: p.id || p.package_id || '1_MONTH',
             name: p.name || 'Paket Premium',
-            // Pastikan jika ID-nya 1_YEAR, duration_months pasti bernilai 12
             duration_months: p.id === '1_YEAR' ? 12 : (p.duration_months !== undefined ? p.duration_months : (p.duration || null)),
             price: Number(p.price) || 0,
             original_price: Number(p.original_price) || Number(p.price) || 0,
@@ -106,7 +105,7 @@ export default function PremiumUpgradePage() {
     }
   };
 
-  // Validasi Voucher
+  // 🟢 VALIDASI VOUCHER DENGAN CEK KUOTA & MASA BERLAKU
   const handleApplyVoucher = async (forcedCode?: string) => {
     setVoucherError('');
     const code = (forcedCode || voucherCode).trim().toUpperCase();
@@ -125,39 +124,75 @@ export default function PremiumUpgradePage() {
         .eq('code', code)
         .maybeSingle();
 
-      if (error) {
-        setVoucherError(`Gagal memeriksa database: ${error.message}`);
-        return;
-      }
-
-      if (voucherData) {
-        const discountValue = Number(voucherData.discount_value) || 0;
-        const isRupiah = voucherData.type === 'fixed' || voucherData.discount_type === 'fixed' || String(voucherData.type).toLowerCase().includes('rupiah');
-
-        if (isRupiah) {
-          setDiscountPercent(0);
-          const calculatedAmount = selectedPackage.price - discountValue;
-          setFinalAmount(calculatedAmount < 0 ? 0 : calculatedAmount);
-          setAppliedVoucher(`${code}_FIXED_${discountValue}`);
-        } else {
-          setDiscountPercent(discountValue);
-          setFinalAmount(selectedPackage.price - (selectedPackage.price * discountValue) / 100);
-          setAppliedVoucher(code);
-        }
-
-        if (forcedCode) setVoucherCode(code);
-      } else {
+      if (error || !voucherData) {
         setVoucherError('Kode voucher tidak ditemukan.');
         setAppliedVoucher('');
         setDiscountPercent(0);
         setFinalAmount(selectedPackage.price);
+        return;
       }
+
+      // 1. CEK STATUS AKTIF
+      if (voucherData.is_active === false) {
+        setVoucherError('Voucher ini sedang tidak aktif.');
+        setAppliedVoucher('');
+        setDiscountPercent(0);
+        setFinalAmount(selectedPackage.price);
+        return;
+      }
+
+      // 2. CEK KUOTA MAKSIMAL PEMAKAIAN
+      const currentUses = Number(voucherData.uses_count) || 0;
+      const maxUses = Number(voucherData.max_uses) || 0;
+
+      if (maxUses > 0 && currentUses >= maxUses) {
+        setVoucherError(`Kuota pemakaian voucher ${code} sudah habis (${currentUses}/${maxUses}).`);
+        setAppliedVoucher('');
+        setDiscountPercent(0);
+        setFinalAmount(selectedPackage.price);
+        return;
+      }
+
+      // 3. CEK TANGGAL KEDALUWARSA VOUCHER
+      const now = new Date();
+      if (voucherData.start_date && new Date(voucherData.start_date) > now) {
+        setVoucherError('Voucher ini belum mulai berlaku.');
+        setAppliedVoucher('');
+        setDiscountPercent(0);
+        setFinalAmount(selectedPackage.price);
+        return;
+      }
+      if (voucherData.end_date && new Date(voucherData.end_date) < now) {
+        setVoucherError('Voucher ini sudah kadaluarsa.');
+        setAppliedVoucher('');
+        setDiscountPercent(0);
+        setFinalAmount(selectedPackage.price);
+        return;
+      }
+
+      // LOLOS VALIDASI: HITUNG DISKON
+      const discountValue = Number(voucherData.discount_value) || 0;
+      const isRupiah = voucherData.type === 'fixed' || voucherData.discount_type === 'fixed' || String(voucherData.type).toLowerCase().includes('rupiah');
+
+      if (isRupiah) {
+        setDiscountPercent(0);
+        const calculatedAmount = selectedPackage.price - discountValue;
+        setFinalAmount(calculatedAmount < 0 ? 0 : calculatedAmount);
+        setAppliedVoucher(`${code}_FIXED_${discountValue}`);
+      } else {
+        setDiscountPercent(discountValue);
+        setFinalAmount(selectedPackage.price - (selectedPackage.price * discountValue) / 100);
+        setAppliedVoucher(code);
+      }
+
+      if (forcedCode) setVoucherCode(code);
+
     } catch (err: any) {
       setVoucherError('Terjadi kesalahan sistem saat memeriksa voucher.');
     }
   };
 
-  // 🟢 PROSES CHECKOUT DENGAN JAMINAN DATA LENGKAP
+  // 🟢 PROSES CHECKOUT
   const handleUpgradeAccount = async () => {
     setIsProcessing(true);
     try {
@@ -170,7 +205,6 @@ export default function PremiumUpgradePage() {
       const orderInvoiceId = `INV-${session.user.id}-${Date.now()}`;
       const voucherToSend = appliedVoucher || voucherCode || null;
 
-      // Logika Penentuan Durasi Persisi
       let targetDurationMonths = selectedPackage.duration_months;
       if (selectedPackage.id === '1_YEAR') targetDurationMonths = 12;
       if (selectedPackage.id === '1_MONTH') targetDurationMonths = 1;
@@ -190,10 +224,8 @@ export default function PremiumUpgradePage() {
           customerEmail: userProfile?.email || session.user.email,
           userId: session.user.id,
           voucherCode: voucherToSend ? voucherToSend.trim().toUpperCase() : null,
-          
-          // 🟢 TERKIRIM DENGAN JELAS KE BACKEND:
-          packageId: selectedPackage.id,              // contoh: '1_YEAR'
-          durationMonths: targetDurationMonths,        // contoh: 12
+          packageId: selectedPackage.id,
+          durationMonths: targetDurationMonths,
         }),
       });
 
