@@ -5,10 +5,10 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    const invoiceNumber = body.order?.invoice_number; // Format: INV-[USER_ID]-[TIMESTAMP]
+    const invoiceNumber = body.order?.invoice_number;
     const transactionStatus = body.transaction?.status || body.transaction_status;
 
-    console.log(`Menerima Webhook DOKU. Invoice: ${invoiceNumber} | Status: ${transactionStatus}`);
+    console.log(`[DOKU WEBHOOK] Invoice: ${invoiceNumber} | Status: ${transactionStatus}`);
 
     if (transactionStatus === 'SUCCESS' || transactionStatus === 'success' || transactionStatus === 'SUCCESSFUL') {
       
@@ -17,48 +17,60 @@ export async function POST(request: Request) {
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       );
 
-      if (!invoiceNumber || !invoiceNumber.startsWith('INV-')) {
-        console.error("Format invoice tidak valid.");
-        return new Response('Invalid Invoice Format', { status: 400 });
+      if (!invoiceNumber) {
+        return new Response('Invoice missing', { status: 400 });
       }
 
-      // 1. Ekstraksi UUID Supabase secara utuh
-      const cleanStr = invoiceNumber.replace('INV-', ''); 
-      const lastDashIndex = cleanStr.lastIndexOf('-'); 
-      const targetUserId = cleanStr.substring(0, lastDashIndex); 
-
-      console.log(`Mengeksekusi upgrade premium di Supabase untuk User ID: ${targetUserId}`);
-
-      // 2. AMBIL DATA TRANSAKSI AWAL UNTUK BACA DURASI PAKET
-      const { data: existingTrx, error: trxFetchError } = await supabaseAdmin
+      // 1. CARI TRANSAKSI DARI DATABASE
+      const { data: existingTrx } = await supabaseAdmin
         .from('transactions')
         .select('*')
         .eq('invoice', invoiceNumber)
         .maybeSingle();
 
-      let durationMonths: number | null = null;
-      let packagePlan: string = 'PREMIUM';
+      // Ekstraksi User ID
+      let targetUserId = existingTrx?.user_id;
 
-      if (existingTrx) {
-        durationMonths = existingTrx.duration_months !== undefined ? existingTrx.duration_months : null;
-        packagePlan = existingTrx.package_id || 'PREMIUM';
+      if (!targetUserId && invoiceNumber.startsWith('INV-')) {
+        const cleanStr = invoiceNumber.replace('INV-', ''); 
+        const lastDashIndex = cleanStr.lastIndexOf('-'); 
+        targetUserId = cleanStr.substring(0, lastDashIndex);
       }
 
-      // 🟢 3. AMBIL PROFIL USER SAAT INI UNTUK AKUMULASI TANGGAL
+      if (!targetUserId) {
+        return new Response('User ID not found', { status: 404 });
+      }
+
+      // 🟢 2. PENENTUAN PAKET & DURASI BULAN (DENGAN STRICT MAPPING)
+      let rawPackageId = existingTrx?.package_id || '1_YEAR';
+      let durationMonths: number | null = existingTrx?.duration_months !== undefined && existingTrx?.duration_months !== null
+        ? Number(existingTrx.duration_months)
+        : null;
+
+      // Jika durationMonths tidak terbaca dari transaksi, petakan paksa dari package_id
+      if (durationMonths === null) {
+        if (rawPackageId === '1_YEAR') durationMonths = 12;
+        else if (rawPackageId === '6_MONTHS') durationMonths = 6;
+        else if (rawPackageId === '3_MONTHS') durationMonths = 3;
+        else if (rawPackageId === '1_MONTH') durationMonths = 1;
+        else if (rawPackageId === 'UNLIMITED') durationMonths = null;
+        else durationMonths = 12; // Default jika dari frontend '1_YEAR'
+      }
+
+      // 🟢 3. AMBIL PROFIL USER SAAT INI
       const { data: currentProfile } = await supabaseAdmin
         .from('profiles')
         .select('package_plan, premium_expires_at')
         .eq('id', targetUserId)
         .maybeSingle();
 
-      // 🟢 4. HITUNG TANGGAL KADALUARSA (SMART EXPIRY CALCULATION)
+      // 🟢 4. HITUNG TANGGAL EXPIRED (TIDAK BOLEH NULL UNTUK 12 BULAN)
       let expiresAtIso: string | null = null;
-      const durationNum = Number(durationMonths);
 
-      if (durationMonths !== null && durationNum > 0) {
+      if (durationMonths && durationMonths > 0) {
         let baseDate = new Date();
 
-        // Jika user masih punya tanggal kadaluarsa aktif, tambahkan dari tanggal kadaluarsa lama tersebut
+        // Jika akun masih aktif, akumulasi dari tanggal kadaluarsa lama
         if (currentProfile?.premium_expires_at) {
           const oldExpiry = new Date(currentProfile.premium_expires_at);
           if (oldExpiry > baseDate) {
@@ -66,62 +78,36 @@ export async function POST(request: Request) {
           }
         }
 
-        baseDate.setMonth(baseDate.getMonth() + durationNum);
+        baseDate.setMonth(baseDate.getMonth() + durationMonths);
         expiresAtIso = baseDate.toISOString();
       } else {
-        // Jika UNLIMITED / LIFETIME (durationMonths === null atau 0)
-        expiresAtIso = null;
+        expiresAtIso = null; // Khusus Unlimited
       }
 
-      // 5. UPDATE PROFIL USER (is_premium, package_plan, & premium_expires_at)
+      // 🟢 5. UPDATE PROFILES DENGAN NAMA PAKET & EXPIRED DATE PERSISI
       const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({ 
           is_premium: true,
-          package_plan: packagePlan,
-          premium_expires_at: expiresAtIso
+          package_plan: rawPackageId, // misal '1_YEAR'
+          premium_expires_at: expiresAtIso // Tanggal 12 bulan ke depan
         })
         .eq('id', targetUserId); 
 
       if (updateError) {
-        console.error("Gagal mengupdate database via Webhook:", updateError.message);
-        return new Response(`Database Update Error: ${updateError.message}`, { status: 500 });
+        console.error("[DOKU WEBHOOK] Update Profile Error:", updateError.message);
+        return new Response(`Update Error: ${updateError.message}`, { status: 500 });
       }
 
-      // 6. UPDATE STATUS TRANSAKSI MENJADI 'SUCCESS'
-      const { error: logError } = await supabaseAdmin
+      // 6. UPDATE TRANSAKSI JADI SUCCESS
+      await supabaseAdmin
         .from('transactions') 
-        .update({
-          status: 'SUCCESS',
-        })
+        .update({ status: 'SUCCESS' })
         .eq('invoice', invoiceNumber);
 
-      // Backup jika transaksi belum ada di DB (Insert log baru)
-      if (logError || !existingTrx) {
-        const amountPaid = Number(body.order?.amount);
-        const invoiceParts = invoiceNumber.split('-');
-        const numericInvoice = Number(invoiceParts[invoiceParts.length - 1]);
+      console.log(`✅ [SUKSES WEBHOOK] User ${targetUserId} diperbarui ke ${rawPackageId}. Expired: ${expiresAtIso}`);
 
-        await supabaseAdmin
-          .from('transactions') 
-          .insert({
-            user_id: targetUserId,
-            invoice: invoiceNumber,
-            invoice_number: numericInvoice, 
-            amount: amountPaid,             
-            status: 'SUCCESS',
-            package_id: packagePlan,
-            duration_months: durationMonths,
-            created_at: new Date().toISOString()
-          });
-      }
-
-      console.log(`[SUKSES] User ID ${targetUserId} diperbarui ke ${packagePlan}. Expired: ${expiresAtIso || 'Lifetime'}`);
-
-      return new Response('OK', { 
-        status: 200,
-        headers: { 'Content-Type': 'text/plain' }
-      });
+      return new Response('OK', { status: 200 });
     }
 
     return new Response('Processed', { status: 200 });
