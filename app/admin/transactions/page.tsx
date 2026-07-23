@@ -28,71 +28,55 @@ export default function AdminTransactionsPage() {
   }, [isDarkMode]);
 
   const loadTransactionsData = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push('/login'); return; }
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/login'); return; }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
 
-      if (!profile || profile.role !== 'admin') {
-        alert('Akses Ditolak!');
-        router.push('/user');
-        return;
-      }
-
-      // 1. Ambil Data User Lengkap
-      const { data: allUsers, error: userError } = await supabase
-        .from('profiles')
-        .select('id, role, is_premium, created_at, email, username, phone, full_name');
-
-      if (userError) {
-        console.error("Error fetching users:", userError);
-      } else {
-        setUsersList(allUsers || []);
-      }
-
-      // 2. Ambil Master Data Vouchers
-      try {
-        const { data: allVouchers } = await supabase
-          .from('vouchers')
-          .select('code, discount_value');
-        setVouchersList(allVouchers || []);
-      } catch (vErr) {
-        console.error("Gagal memuat master data vouchers:", vErr);
-      }
-
-      // 🟢 3. AMBIL SEMUA TRANSAKSI (DIURUTKAN DARI YANG TERBARU - DESCENDING)
-      try {
-        const { data: allTransactions, error: txError } = await supabase
-          .from('transactions')
-          .select('*')
-          .order('created_at', { ascending: false }); // 👈 Mengurutkan agar ID 49 (terbaru) muncul di atas
-
-        if (txError) {
-          console.error("Gagal ambil data transaksi utama:", txError);
-          const { data: fallbackRes } = await supabase
-            .from('transactions')
-            .select('*')
-            .order('created_at', { ascending: false });
-          
-          setTransactionsList(fallbackRes || []);
-        } else {
-          setTransactionsList(allTransactions || []);
-        }
-      } catch (e) {
-        console.error("Error pada query transaksi:", e);
-      }
-
-    } catch (error) {
-      console.error('Gagal memuat rincian transaksi:', error);
-    } finally {
-      setLoading(false);
+    if (!profile || profile.role !== 'admin') {
+      alert('Akses Ditolak!');
+      router.push('/user');
+      return;
     }
-  };
+
+    // 1. Ambil Data User
+    const { data: allUsers } = await supabase
+      .from('profiles')
+      .select('id, role, is_premium, created_at, email, username, phone, full_name');
+    setUsersList(allUsers || []);
+
+    // 2. Ambil Master Data Vouchers
+    try {
+      const { data: allVouchers } = await supabase.from('vouchers').select('code, discount_value');
+      setVouchersList(allVouchers || []);
+    } catch (vErr) {
+      console.error("Gagal memuat master data vouchers:", vErr);
+    }
+
+    // 🟢 3. AMBIL SELURUH TRANSAKSI (SELECT SAFE) DIURUTKAN DARI TERBARU
+    const { data: allTransactions, error: txError } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (txError) {
+      console.error("Gagal ambil data transaksi:", txError.message);
+    } else {
+      console.log("Data transaksi berhasil didapat:", allTransactions);
+      setTransactionsList(allTransactions || []);
+    }
+
+  } catch (error) {
+    console.error('Gagal memuat rincian transaksi:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadTransactionsData();
