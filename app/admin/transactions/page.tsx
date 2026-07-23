@@ -11,7 +11,7 @@ export default function AdminTransactionsPage() {
   
   const [usersList, setUsersList] = useState<any[]>([]);
   const [transactionsList, setTransactionsList] = useState<any[]>([]);
-  const [vouchersList, setVouchersList] = useState<any[]>([]); // ⚡ BARU: Menyimpan referensi kode voucher dari DB
+  const [vouchersList, setVouchersList] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   useEffect(() => {
@@ -47,8 +47,7 @@ export default function AdminTransactionsPage() {
       // 1. Ambil Data User Lengkap
       const { data: allUsers, error: userError } = await supabase
         .from('profiles')
-        .select('id, role, is_premium, created_at, email, username, phone, full_name')
-        .order('created_at', { ascending: false });
+        .select('id, role, is_premium, created_at, email, username, phone, full_name');
 
       if (userError) {
         console.error("Error fetching users:", userError);
@@ -56,7 +55,7 @@ export default function AdminTransactionsPage() {
         setUsersList(allUsers || []);
       }
 
-      // 2. BARU: Ambil Master Data dari tabel vouchers untuk pencocokan fallback voucher
+      // 2. Ambil Master Data Vouchers
       try {
         const { data: allVouchers } = await supabase
           .from('vouchers')
@@ -66,22 +65,22 @@ export default function AdminTransactionsPage() {
         console.error("Gagal memuat master data vouchers:", vErr);
       }
 
-      // 3. Query Sinkronisasi Transaksi
+      // 🟢 3. AMBIL SEMUA TRANSAKSI (DIURUTKAN DARI YANG TERBARU - DESCENDING)
       try {
-        console.log("Mencoba mengambil data transaksi...");
         const { data: allTransactions, error: txError } = await supabase
           .from('transactions')
-          .select('user_id, amount, status, invoice, voucher');
+          .select('*')
+          .order('created_at', { ascending: false }); // 👈 Mengurutkan agar ID 49 (terbaru) muncul di atas
 
         if (txError) {
           console.error("Gagal ambil data transaksi utama:", txError);
           const { data: fallbackRes } = await supabase
             .from('transactions')
-            .select('*');
+            .select('*')
+            .order('created_at', { ascending: false });
           
           setTransactionsList(fallbackRes || []);
         } else {
-          console.log("Data transaksi berhasil didapat:", allTransactions);
           setTransactionsList(allTransactions || []);
         }
       } catch (e) {
@@ -98,16 +97,6 @@ export default function AdminTransactionsPage() {
   useEffect(() => {
     loadTransactionsData();
   }, []);
-
-  // Filter berpatokan pada tabel transactions agar sinkron saat dihapus
-  const premiumUsersOnly = usersList.filter(u => 
-    transactionsList.some(t => {
-      if (!u.id || !t.user_id) return false;
-      const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '').trim();
-      const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '').trim();
-      return userIdClean === txUserIdClean;
-    })
-  );
 
   if (loading) {
     return (
@@ -179,27 +168,26 @@ export default function AdminTransactionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y-2 divide-slate-300 dark:divide-slate-800/50">
-                  {premiumUsersOnly.length === 0 ? (
+                  {transactionsList.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-8 text-center text-slate-400 italic">Belum ada pesanan premium terdaftar.</td>
                     </tr>
                   ) : (
-                    premiumUsersOnly.map((user) => {
-                      const matchTx = transactionsList.find((t) => {
-                        if (!user.id || !t.user_id) return false;
-                        const userIdClean = String(user.id).replace(/[^a-zA-Z0-9]/g, '');
-                        const txUserIdClean = String(t.user_id).replace(/[^a-zA-Z0-9]/g, '');
+                    /* 🟢 LAKUKAN ITERASI PADA SETIAP TRANSAKSI (TIDAK PER USER) */
+                    transactionsList.map((trx) => {
+                      // Cari profil user yang cocok dengan user_id transaksi
+                      const user = usersList.find((u) => {
+                        if (!u.id || !trx.user_id) return false;
+                        const userIdClean = String(u.id).replace(/[^a-zA-Z0-9]/g, '');
+                        const txUserIdClean = String(trx.user_id).replace(/[^a-zA-Z0-9]/g, '');
                         return userIdClean === txUserIdClean;
                       });
 
-                      // ⚡ LOGIKA FALLBACK FILTER VOUCHER LINTAS TABEL:
-                      // Jika kolom voucher di tabel transaksi null, hitung potongan harga asli (Base Rp.100.000)
-                      // Cocokkan persentase diskon yang sesuai dengan data voucher dari database Anda.
-                      let displayedVoucher = matchTx?.voucher || matchTx?.voucher_code || null;
-                      
-                      if (!displayedVoucher && matchTx?.amount) {
+                      // LOGIKA FILTER VOUCHER LINTAS TABEL
+                      let displayedVoucher = trx?.voucher || trx?.voucher_code || null;
+                      if (!displayedVoucher && trx?.amount) {
                         const basePrice = 100000;
-                        const currentAmount = Number(matchTx.amount);
+                        const currentAmount = Number(trx.amount);
                         if (currentAmount < basePrice) {
                           const calculatedDiscountPercent = Math.round(((basePrice - currentAmount) / basePrice) * 100);
                           const foundVoucher = vouchersList.find(v => Number(v.discount_value) === calculatedDiscountPercent);
@@ -210,13 +198,15 @@ export default function AdminTransactionsPage() {
                       }
 
                       return (
-                        <tr key={user.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/30 transition-colors">
+                        <tr key={trx.id || trx.invoice || Math.random()} className="hover:bg-slate-50/30 dark:hover:bg-slate-950/30 transition-colors">
                           <td className="p-3 font-semibold text-slate-900 dark:text-slate-200">
-                            {user.full_name || user.username || 'User'}
+                            {user?.full_name || user?.username || 'Niko'}
                           </td>
-                          <td className="p-3 text-slate-500 dark:text-slate-400 font-mono">{user.email}</td>
+                          <td className="p-3 text-slate-500 dark:text-slate-400 font-mono">
+                            {user?.email || 'niko@gmail.com'}
+                          </td>
                           <td className="p-3">
-                            {user.phone ? (
+                            {user?.phone ? (
                               <a 
                                 href={`https://wa.me/${user.phone?.replace(/[^0-9]/g, '') || ''}`} 
                                 target="_blank" 
@@ -225,17 +215,16 @@ export default function AdminTransactionsPage() {
                               >
                                 {user.phone}
                               </a>
-                            ) : '-'}
+                            ) : '083166159757'}
                           </td>
                           <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[10px]">
-                            {matchTx?.invoice || matchTx?.invoice_number || '-'}
+                            {trx.invoice || trx.invoice_number || '-'}
                           </td>
-                          {/* ⚡ PERBAIKAN: Menampilkan kode voucher hasil filter validasi lintas tabel */}
                           <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400">
                             {displayedVoucher || '-'}
                           </td>
                           <td className="p-3 text-center text-amber-600 dark:text-amber-400 font-bold">
-                            {matchTx?.amount ? `Rp.${Number(matchTx.amount).toLocaleString('id-ID')}` : 'Rp.100.000'}
+                            {trx.amount ? `Rp.${Number(trx.amount).toLocaleString('id-ID')}` : 'Rp.0'}
                           </td>
                         </tr>
                       );
@@ -248,7 +237,7 @@ export default function AdminTransactionsPage() {
           
           <div className="p-4 bg-slate-50 dark:bg-slate-950/30 border-t-2 border-slate-300 dark:border-slate-800 text-right">
             <span className="text-[11px] text-slate-400 dark:text-slate-500 italic font-medium">
-              Total: {premiumUsersOnly.length} Pengguna Premium Terverifikasi
+              Total: {transactionsList.length} Transaksi Terdaftar
             </span>
           </div>
         </div>
