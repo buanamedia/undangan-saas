@@ -30,12 +30,13 @@ export async function POST(request: Request) {
     const customerEmail = bodyData.customerEmail;
     const targetVoucherCode = bodyData.voucherCode ? String(bodyData.voucherCode).trim() : null;
 
-    // 🟢 1. FORMAT INVOICE SELALU UNIK (GABUNGAN USER ID & TIMESTAMP)
-    const orderId = bodyData.orderId || `INV-${directUserId || 'GUEST'}-${Date.now()}`;
+    // 🟢 Invoice Unik dengan Timestamp Angka Murni untuk invoice_number
+    const currentTimestamp = Date.now();
+    const orderId = bodyData.orderId || `INV-${directUserId || 'GUEST'}-${currentTimestamp}`;
 
-    // 🟢 2. PENENTUAN PAKET & DURASI SEBERSIH MUNGKIN
-    const packageId = bodyData.packageId || '1_YEAR'; 
-    let durationMonths: number | null = null;
+    // 🟢 Tangkap Paket & Durasi
+    const packageId = bodyData.packageId || '6_MONTHS'; 
+    let durationMonths: number | null = 6;
 
     if (bodyData.durationMonths !== undefined && bodyData.durationMonths !== null) {
       durationMonths = Number(bodyData.durationMonths);
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       else if (packageId === '6_MONTHS') durationMonths = 6;
       else if (packageId === '3_MONTHS') durationMonths = 3;
       else if (packageId === '1_MONTH') durationMonths = 1;
-      else durationMonths = null; // UNLIMITED
+      else durationMonths = null;
     }
 
     const clientId = process.env.DOKU_CLIENT_ID!;
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     const targetPath = '/checkout/v1/payment';
     
     const timestamp = new Date().toISOString().slice(0, 19) + 'Z';
-    const requestId = `REQ-${orderId}-${Date.now()}`;
+    const requestId = `REQ-${orderId}-${currentTimestamp}`;
 
     const bodyPayload = JSON.stringify({
       order: { 
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
           auth: { persistSession: false, autoRefreshToken: false }
         });
 
-        // 🟢 3. CATAT BARIS TRANSAKSI BARU (TIDAK ADA PENGHAPUSAN KODE LAMA)
+        // 🟢 SIMPAN TRANSAKSI BARU (Amankan baik kolom 'invoice' maupun 'invoice_number')
         const { error: insertError } = await supabaseAdmin
           .from('transactions')
           .insert([
@@ -100,39 +101,25 @@ export async function POST(request: Request) {
               user_id: directUserId,
               amount: amount,
               status: 'pending',
-              invoice: orderId,
+              invoice: orderId,                          // e.g. "INV-uuid-1234567"
+              invoice_number: currentTimestamp,          // e.g. 1234567 (cocok untuk field int8)
               voucher: targetVoucherCode,
-              package_id: packageId,           // e.g. '1_YEAR'
-              duration_months: durationMonths, // e.g. 12
+              package_id: packageId,                     // e.g. '6_MONTHS'
+              duration_months: durationMonths,           // e.g. 6
               created_at: new Date().toISOString()
             }
           ]);
 
         if (insertError) {
-          console.error("💥 Gagal mencatat log transaksi baru:", insertError.message);
-        }
-
-        // 🟢 4. UPDATE HITUNGAN PENGGUNAAN VOUCHER
-        if (targetVoucherCode && targetVoucherCode !== "") {
-          const { data: currentVoucher } = await supabaseAdmin
-            .from('vouchers')
-            .select('uses_count')
-            .eq('code', targetVoucherCode)
-            .maybeSingle();
-
-          if (currentVoucher) {
-            const baseCount = Number(currentVoucher.uses_count) || 0;
-            await supabaseAdmin
-              .from('vouchers')
-              .update({ uses_count: baseCount + 1 })
-              .eq('code', targetVoucherCode);
-          }
+          console.error("💥 GAGAL INSERT TRANSAKSI TO SUPABASE:", insertError.message);
+        } else {
+          console.log("✅ TRANSAKSI BERHASIL DICATAT KE DATABASE!");
         }
       }
 
       return NextResponse.json({ success: true, url: data.response.payment.url });
     } else {
-      return NextResponse.json({ success: false, message: 'Gagal mendapatkan link pembayaran dari DOKU' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'Gagal mendapatkan link pembayaran DOKU' }, { status: 400 });
     }
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
