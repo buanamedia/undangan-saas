@@ -146,7 +146,7 @@ export default function PremiumUpgradePage() {
       const maxUses = Number(voucherData.max_uses) || 0;
 
       if (maxUses > 0 && currentUses >= maxUses) {
-        setVoucherError(`Kuota pemakaian voucher ${code} sudah habis (${currentUses}/${maxUses}).`);
+        setVoucherError(`Kuota pemakaian voucher ${code} sudah habis.`);
         setAppliedVoucher('');
         setDiscountPercent(0);
         setFinalAmount(selectedPackage.price);
